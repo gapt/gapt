@@ -49,14 +49,14 @@ object FirstSchema6 extends TacticsProof {
   val esChiSc = Sequent(Seq("Ant_0" -> hof" POR(s(n),a)"), Seq("Suc_0" -> hof"POR(s(n),a)"))
   // Proof of chi basecase
   val chiBc = Lemma(esChiBc) {
-    unfold("POR").`atMost`(1).`in`("Suc_0")
-    unfold("POR").`atMost`(1).`in`("Ant_0")
+    unfold("POR").atMost(1).in("Suc_0")
+    unfold("POR").atMost(1).in("Ant_0")
     trivial
   }
   // Proof of chi Stepcase
   val chiSc = Lemma(esChiSc) {
-    unfold("POR").`atMost`(1).`in`("Suc_0")
-    unfold("POR").`atMost`(1).`in`("Ant_0")
+    unfold("POR").atMost(1).in("Suc_0")
+    unfold("POR").atMost(1).in("Ant_0")
     orR
     orL
     trivial

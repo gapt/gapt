@@ -261,7 +261,7 @@ object minimizeRecursionScheme {
   def apply(recSchem: RecursionScheme, targets: Iterable[(Expr, Expr)], targetFilter: TargetFilter.Type = TargetFilter.default, solver: MaxSATSolver = bestAvailableMaxSatSolver, weight: Rule => Int = _ => 1) = {
     val fvs = freeVariables(targets.map(_._1)).union(freeVariables(targets.map(_._2)))
     val nameGen = rename.awayFrom(constants.nonLogical(targets.map(_._1)).union(constants.nonLogical(targets.map(_._2))))
-    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen.`fresh`(name), ty))
+    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen.fresh(name), ty))
     val targets_ = grounding(targets.toSet)
 
     val formula = new RecSchemGenLangFormula(recSchem, targetFilter)
@@ -269,13 +269,13 @@ object minimizeRecursionScheme {
     debug(s"Logical complexity of the minimization formula: ${lcomp(simplifyPropositional(toNNF(hard)))}")
     val soft = recSchem.rules.map { rule => Neg(formula.ruleIncluded(rule)) -> weight(rule) }
     val interp = time("maxsat") { solver.solve(hard, soft).get }
-    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula.`ruleIncluded`(rule)) })
+    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula.ruleIncluded(rule)) })
   }
 
   def viaInst(recSchem: RecursionScheme, targets: Iterable[(Expr, Expr)], targetFilter: TargetFilter.Type = TargetFilter.default, solver: MaxSATSolver = bestAvailableMaxSatSolver, weight: Rule => Int = _ => 1) = {
     val fvs = freeVariables(targets.map(_._1)).union(freeVariables(targets.map(_._2)))
     val nameGen = rename.awayFrom(constants.nonLogical(targets.map(_._1)).union(constants.nonLogical(targets.map(_._2))))
-    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen.`fresh`(name), ty))
+    val grounding = Substitution(for (v @ Var(name, ty) <- fvs) yield v -> Const(nameGen.fresh(name), ty))
     val targets_ = grounding(targets.toSet)
 
     val instTerms = targets_.map { _._1 }.flatMap { case Apps(_, as) => as }.flatMap { flatSubterms(_) }
@@ -293,7 +293,7 @@ object minimizeRecursionScheme {
     debug(s"Logical complexity of the minimization formula: ${lcomp(simplifyPropositional(toNNF(hard)))}")
     val soft = recSchem.rules.map { rule => Neg(formula.ruleIncluded(rule)) -> weight(rule) }
     val interp = solver.solve(hard, soft).get
-    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula.`ruleIncluded`(rule)) })
+    RecursionScheme(recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp(formula.ruleIncluded(rule)) })
   }
 }
 
@@ -508,7 +508,7 @@ object RecSchemTemplate {
 object recSchemToVTRATG {
   def orderedNonTerminals(rs: RecursionScheme): Seq[Const] = {
     val ntDeps = rs.nonTerminals.map { nt =>
-      nt -> ((rs.`rulesFrom`(nt)).map { _.rhs }.flatMap { constants.nonLogical(_) }.intersect(rs.nonTerminals))
+      nt -> ((rs.rulesFrom(nt)).map { _.rhs }.flatMap { constants.nonLogical(_) }.intersect(rs.nonTerminals))
     } toMap
 
     var nts = Seq[Const]()
@@ -556,7 +556,7 @@ object simplePi1RecSchemTempl {
     val startSymbolArgs2 = for ((t, i) <- startSymbolArgTys.zipWithIndex) yield Var(s"x_$i", t)
 
     val indLemmaNT = Const(
-      nameGen.`fresh`("B"),
+      nameGen.fresh("B"),
       FunctionType(instTT, startSymbolArgTys ++ startSymbolArgTys ++ pi1QTys)
     )
 

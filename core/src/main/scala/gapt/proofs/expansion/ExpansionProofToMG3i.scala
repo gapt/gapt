@@ -83,7 +83,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
       .orElse(tryCut(theory, expSeq))
       .orElse(tryTheory(expSeq))
       .getOrElse(Left(theory -> expSeq)).map {
-        ContractionMacroRule(_).ensuring { _.conclusion.`isSubsetOf`(expSeq.shallow) }
+        ContractionMacroRule(_).ensuring { _.conclusion.isSubsetOf(expSeq.shallow) }
       }
   }
 
@@ -122,9 +122,9 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
 
   private def tryWeakening(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements.collectFirst {
-      case (ETWeakening(_, _), i) => solve(theory, expSeq.`delete`(i))
-      case (ETTop(_), i: Ant)     => solve(theory, expSeq.`delete`(i))
-      case (ETBottom(_), i: Suc)  => solve(theory, expSeq.`delete`(i))
+      case (ETWeakening(_, _), i) => solve(theory, expSeq.delete(i))
+      case (ETTop(_), i: Ant)     => solve(theory, expSeq.delete(i))
+      case (ETBottom(_), i: Suc)  => solve(theory, expSeq.delete(i))
     }
 
   private def tryInvUnary(theory: Theory, expSeq: ExpansionSequent): Option[UnprovableOrLKProof] =
@@ -296,7 +296,7 @@ class ExpansionProofToMG3i(theorySolver: HOLClause => Option[LKProof])(implicit 
         }
       case (ETImp(ETImp(f, g), h), i: Ant) if isCopy(g) =>
         solve(theory, f +: ETImp(g, h) +: expSeq.delete(i).antecedent ++: Sequent() :+ g) match {
-          case Right(p1) if p1.endSequent.`isSubsetOf`(expSeq.shallow) => Some(Right(p1))
+          case Right(p1) if p1.endSequent.isSubsetOf(expSeq.shallow) => Some(Right(p1))
           case Right(p1) =>
             Some(mapIf(solve(theory, h +: expSeq.delete(i)), h.shallow, h.polarity) { p2 =>
               ProofBuilder.c(LogicalAxiom(g.shallow)).u(WeakeningLeftRule(_, f.shallow)).u(ImpRightRule(_, f.shallow --> g.shallow)).c(LogicalAxiom(h.shallow)).b(ImpLeftRule(_, _, (f.shallow --> g.shallow) --> h.shallow)).u(ImpRightRule(_, g.shallow --> h.shallow)).c(p1).u(WeakeningMacroRule(_, f.shallow +: (g.shallow --> h.shallow) +: Sequent() :+ g.shallow, strict = false)).b(CutRule(_, _, g.shallow --> h.shallow)).u(ImpRightRule(_, f.shallow --> g.shallow)).c(p2).b(ImpLeftRule(_, _, (f.shallow --> g.shallow) --> h.shallow)).qed

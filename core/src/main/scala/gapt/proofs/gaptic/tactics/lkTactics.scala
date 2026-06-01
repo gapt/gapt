@@ -147,7 +147,7 @@ case class WeakeningLeftTactic(applyToLabel: String) extends Tactical1[Unit] {
   def apply(goal: OpenAssumption) =
     for {
       case (_, _, i: Ant) <- findFormula(goal, OnLabel(applyToLabel))
-      _ <- replace(OpenAssumption(goal.labelledSequent.`delete`(i)))
+      _ <- replace(OpenAssumption(goal.labelledSequent.delete(i)))
     } yield ()
 }
 
@@ -160,7 +160,7 @@ case class WeakeningRightTactic(applyToLabel: String) extends Tactical1[Unit] {
   def apply(goal: OpenAssumption) =
     for {
       case (_, _, i: Suc) <- findFormula(goal, OnLabel(applyToLabel))
-      _ <- replace(OpenAssumption(goal.labelledSequent.`delete`(i)))
+      _ <- replace(OpenAssumption(goal.labelledSequent.delete(i)))
     } yield ()
 }
 

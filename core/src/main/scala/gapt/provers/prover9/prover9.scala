@@ -100,11 +100,11 @@ object Prover9Importer extends ExternalProgram {
       loadExpansionProof.extractFromTSTPCommentsIfNecessary(p9Output).read
     )
 
-    Prover9.`parseProof`(fixedP9Output)
+    Prover9.parseProof(fixedP9Output)
   }
 
   private def reconstructEndSequent(p9Output: String): HOLSequent = {
-    val lines = p9Output.`split`("\n") toSeq
+    val lines = p9Output.split("\n") toSeq
 
     val parser = if (lines contains "set(prolog_style_variables).")
       Prover9TermParser
@@ -122,11 +122,11 @@ object Prover9Importer extends ExternalProgram {
     }
     val assumption = """(\d+) ([^#.]+).*\[assumption\]\.""".r
     val assumptions = linesInProof.collect {
-      case assumption(id, formula) => parser.`parseFormula`(formula)
+      case assumption(id, formula) => parser.parseFormula(formula)
     }
     val goal = """(\d+) ([^#.]+).*\[goal\]\.""".r
     val goals = linesInProof.collect {
-      case goal(id, formula) => parser.`parseFormula`(formula)
+      case goal(id, formula) => parser.parseFormula(formula)
     }
 
     assumptions ++: Sequent() :++ goals distinct

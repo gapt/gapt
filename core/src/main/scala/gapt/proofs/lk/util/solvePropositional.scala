@@ -70,7 +70,7 @@ class solvePropositional(
   private def solve(seq0: HOLSequent): UnprovableOrLKProof = {
     val seq = seq0.distinct
     None.orElse(tryAxiom(seq)).orElse(tryWeakening(seq)).orElse(tryNullary(seq)).orElse(tryUnary(seq)).orElse(tryBinary(seq)).orElse(tryTheory(seq)).getOrElse(Left(seq)).map {
-      ContractionMacroRule(_).ensuring { _.conclusion.`isSubsetOf`(seq) }
+      ContractionMacroRule(_).ensuring { _.conclusion.isSubsetOf(seq) }
     }
   }
 
@@ -88,8 +88,8 @@ class solvePropositional(
 
   private def tryWeakening(seq: HOLSequent): Option[UnprovableOrLKProof] =
     seq.zipWithIndex.elements.collectFirst {
-      case (Top(), i: Ant)    => solve(seq.`delete`(i))
-      case (Bottom(), i: Suc) => solve(seq.`delete`(i))
+      case (Top(), i: Ant)    => solve(seq.delete(i))
+      case (Bottom(), i: Suc) => solve(seq.delete(i))
     }
 
   private def tryUnary(seq: HOLSequent): Option[UnprovableOrLKProof] =

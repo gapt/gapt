@@ -206,7 +206,7 @@ case class Defn(defConst: HOLAtomConst, definition: Expr) extends InitialClause 
  * }}}
  */
 case class Factor(subProof: ResolutionProof, idx1: SequentIndex, idx2: SequentIndex) extends LocalResolutionRule {
-  require(idx1.`sameSideAs`(idx2))
+  require(idx1.sameSideAs(idx2))
   require(idx1 < idx2)
   requireEq(subProof.conclusion(idx1), subProof.conclusion(idx2))
   override def mainFormulaSequent =
@@ -220,16 +220,16 @@ object Factor {
     apply(p, p.conclusion.distinct)
   def apply(p: ResolutionProof, newConclusion: HOLSequent): ResolutionProof = {
     require(
-      newConclusion.`setEquals`(p.conclusion),
+      newConclusion.setEquals(p.conclusion),
       s"Proposed conclusion $newConclusion has fewer formulas than ${p.conclusion}"
     )
     require(
-      newConclusion.`isSubMultisetOf`(p.conclusion),
+      newConclusion.isSubMultisetOf(p.conclusion),
       s"Proposed conclusion $newConclusion is not a submultiset of ${p.conclusion}"
     )
     var p_ = p
     for ((a, i) <- p.conclusion.diff(newConclusion).zipWithIndex) {
-      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2.`sameSideAs`(i)).filter(_._1 == a).map(_._2): @unchecked
+      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2.sameSideAs(i)).filter(_._1 == a).map(_._2): @unchecked
       p_ = Factor(p_, j1, j2)
     }
     p_
@@ -238,7 +238,7 @@ object Factor {
     var p_ = p
     var conn = SequentConnector(p_.conclusion)
     for ((a, i) <- p.conclusion.diff(p.conclusion.distinct).zipWithIndex) {
-      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2.`sameSideAs`(i)).filter(_._1 == a).map(_._2): @unchecked
+      val Seq(j1, j2, _*) = p_.conclusion.zipWithIndex.elements.filter(_._2.sameSideAs(i)).filter(_._1 == a).map(_._2): @unchecked
       p_ = Factor(p_, j1, j2)
       conn = p_.occConnectors.head * conn
     }
@@ -280,7 +280,7 @@ object Subst {
   def ifNecessary(subProof: ResolutionProof, substitution: Substitution): ResolutionProof =
     subProof match {
       case Subst(subProof2, substitution2) =>
-        Subst.ifNecessary(subProof2, substitution.`compose`(substitution2))
+        Subst.ifNecessary(subProof2, substitution.compose(substitution2))
       case _ if substitution(subProof.conclusion) == subProof.conclusion => subProof
       case _                                                             => Subst(subProof, substitution)
     }
@@ -321,7 +321,7 @@ object MguResolution {
   def apply(subProof1: ResolutionProof, idx1: SequentIndex, subProof2: ResolutionProof, idx2: SequentIndex): ResolutionProof = {
     val renaming = Substitution(rename(freeVariables(subProof1.conclusion), freeVariables(subProof2.conclusion)))
     val Some(mgu) = syntacticMGU(renaming(subProof1.conclusion(idx1)), subProof2.conclusion(idx2)): @unchecked
-    Resolution(Subst(subProof1, mgu.`compose`(renaming)), idx1, Subst(subProof2, mgu), idx2)
+    Resolution(Subst(subProof1, mgu.compose(renaming)), idx1, Subst(subProof2, mgu), idx2)
   }
 }
 
@@ -364,8 +364,8 @@ object Paramod {
   def withMain(subProof1: ResolutionProof, eqIdx: SequentIndex, subProof2: ResolutionProof, auxIdx: SequentIndex, main: Formula): ResolutionProof = {
     val Eq(t, s) = subProof1.conclusion(eqIdx): @unchecked
 
-    val ctxLTR = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(t).filter(main `get` _ contains s))
-    val ctxRTL = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(s).filter(main `get` _ contains t))
+    val ctxLTR = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(t).filter(main get _ contains s))
+    val ctxRTL = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(s).filter(main get _ contains t))
 
     if (
       BetaReduction.betaNormalize(ctxLTR(t)) == subProof2.conclusion(auxIdx)

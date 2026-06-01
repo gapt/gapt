@@ -14,7 +14,7 @@ object simplifyResolutionProof {
         case _: InitialClause => Factor(p)
         case Subst(p1, subst1) => simplified(p1) match {
             case q1 if freeVariables(q1.conclusion).intersect(subst1.domain) isEmpty => q1
-            case Subst(q2, subst2)                                                   => Factor(Subst(q2, subst1.`compose`(subst2)))
+            case Subst(q2, subst2)                                                   => Factor(Subst(q2, subst1.compose(subst2)))
             case Taut(atom)                                                          => Taut(subst1(atom))
             case Refl(term)                                                          => Refl(subst1(term))
             case q1                                                                  => Factor(Subst(q1, subst1))
@@ -24,23 +24,23 @@ object simplifyResolutionProof {
             case (Taut(atom), q4) => q4
             case (q3, Taut(atom)) => q3
             case (q3, q4) =>
-              q3.conclusion.indicesWhere(_ == p1.conclusion(i1)).find(_.`sameSideAs`(i1)).map { i3 =>
-                q4.conclusion.indicesWhere(_ == p2.conclusion(i2)).find(_.`sameSideAs`(i2)).map { i4 =>
+              q3.conclusion.indicesWhere(_ == p1.conclusion(i1)).find(_.sameSideAs(i1)).map { i3 =>
+                q4.conclusion.indicesWhere(_ == p2.conclusion(i2)).find(_.sameSideAs(i2)).map { i4 =>
                   Factor(Resolution(q3, i3, q4, i4))
                 }.getOrElse(q4)
               }.getOrElse(q3)
           }
         case Paramod(p1, i1, dir, p2, i2, pos) => (simplified(p1), simplified(p2)) match {
             case (q3, q4) =>
-              q3.conclusion.indicesWhere(_ == p1.conclusion(i1)).find(_.`sameSideAs`(i1)).map { i3 =>
-                q4.conclusion.indicesWhere(_ == p2.conclusion(i2)).find(_.`sameSideAs`(i2)).map { i4 =>
+              q3.conclusion.indicesWhere(_ == p1.conclusion(i1)).find(_.sameSideAs(i1)).map { i3 =>
+                q4.conclusion.indicesWhere(_ == p2.conclusion(i2)).find(_.sameSideAs(i2)).map { i4 =>
                   Factor(Paramod(q3, i3, dir, q4, i4, pos))
                 }.getOrElse(q4)
               }.getOrElse(q3)
           }
         case Flip(p1, i1) => simplified(p1) match {
             case q2 =>
-              q2.conclusion.indicesWhere(_ == p1.conclusion(i1)).find(_.`sameSideAs`(i1)).map { i2 =>
+              q2.conclusion.indicesWhere(_ == p1.conclusion(i1)).find(_.sameSideAs(i1)).map { i2 =>
                 Factor(Flip(q2, i2))
               }.getOrElse(q2)
           }

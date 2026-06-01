@@ -398,7 +398,7 @@ object RegressionTests {
     var started = 0
     val out = new PrintWriter(new FileWriter(pwd / "target" / "regression-test-results.xml" toIO), true)
     try {
-      out.`write`("<testsuite>\n")
+      out.write("<testsuite>\n")
       testCases.par.foreach { tc =>
         started += 1
         println(s"[${(100 * started) / total}%] $tc")
@@ -411,7 +411,7 @@ object RegressionTests {
             t.printStackTrace()
         }
       }
-      out.`write`("</testsuite>\n")
+      out.write("</testsuite>\n")
     } finally out.close()
   }
 }

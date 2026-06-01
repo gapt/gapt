@@ -49,5 +49,5 @@ object prop_44 extends TacticsProof {
     Escargot,
     IndependentInductionAxioms().forVariables(List(hov"ys:list2")).forLabel("goal")
   )
-  val proof1 = (new AnalyticInductionProver(aipOptions)).`lkProof`(sequent) get
+  val proof1 = (new AnalyticInductionProver(aipOptions)).lkProof(sequent) get
 }

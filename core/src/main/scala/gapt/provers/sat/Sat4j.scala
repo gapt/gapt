@@ -11,7 +11,7 @@ class Sat4j extends DrupSolver {
 
   override def solve(cnf: DIMACS.CNF): Option[DIMACS.Model] = {
     val solver = SolverFactory.newDefault()
-    solver.newVar(DIMACS.`maxAtom`(cnf))
+    solver.newVar(DIMACS.maxAtom(cnf))
 
     try {
       solver.addAllClauses(cnf)
@@ -43,7 +43,7 @@ class Sat4j extends DrupSolver {
     val listener = new RupListener
     listener.drup ++= cnf.view.map(RupProof.Input(_))
     solver.setSearchListener(listener)
-    solver.newVar(DIMACS.`maxAtom`(cnf))
+    solver.newVar(DIMACS.maxAtom(cnf))
 
     try {
       solver.addAllClauses(cnf)
@@ -69,5 +69,5 @@ object Sat4j extends Sat4j {
     new Vec(cnf.map { implicitly[IVecInt](using _) }.toArray)
 
   implicit def sat4j2clause(constr: IConstr): DIMACS.Clause =
-    for (i <- 0 until constr.size()) yield LiteralsUtils.toDimacs(constr.`get`(i))
+    for (i <- 0 until constr.size()) yield LiteralsUtils.toDimacs(constr.get(i))
 }

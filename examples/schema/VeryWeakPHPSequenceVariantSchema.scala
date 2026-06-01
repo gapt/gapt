@@ -201,16 +201,16 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     )
   val omegaBc = Lemma(esOmegaBc) {
     cut("cut", hof"CutDistinct(0,0)")
-    unfold("CutDistinct").`atMost`(1).`in`("cut")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("cut")
+    unfold("PAND").atMost(1).in("Ant_0")
     orR
     exR("cut_0", hoc"z")
     andR
     allL("Ant_0", hoc"z")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     trivial
     allL("Ant_0", le"(suc z)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     trivial
     ref("phi")
   }
@@ -227,8 +227,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     )
   val omegaBc2 = Lemma(esOmegaBc2) {
     cut("cut", hof"CutDistinct(s(m),0)")
-    unfold("CutDistinct").`atMost`(1).`in`("cut")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("cut")
+    unfold("PAND").atMost(1).in("Ant_0")
     andL
     andR
     ref("gamma")
@@ -237,10 +237,10 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR("cut_0", fov"a")
     andR
     allL("Ant_0_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0_0")
     trivial
     allL("Ant_0_0", le"(suc a)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0_0")
     trivial
     ref("phi")
 
@@ -257,16 +257,16 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     )
   val omegaBc3 = Lemma(esOmegaBc3) {
     cut("cut", hof"CutDistinct(0,s(n))")
-    unfold("CutDistinct").`atMost`(1).`in`("cut")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("cut")
+    unfold("PAND").atMost(1).in("Ant_0")
     orR
     allR("cut_1", fov"a")
     exR("cut_0", fov"a")
     allL("Ant_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     orL
     allL("Ant_0", le"(suc a)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_1")
+    unfold("POR").atMost(1).in("Ant_0_1")
     orL
     andR
     trivial
@@ -288,8 +288,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     )
   val OmegaSc = Lemma(esOmegaSc) {
     cut("cut", hof"CutDistinct(s(m),s(n))")
-    unfold("CutDistinct").`atMost`(1).`in`("cut")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("cut")
+    unfold("PAND").atMost(1).in("Ant_0")
     andL
     andR
     ref("gamma")
@@ -298,12 +298,12 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR("cut_0", fov"a")
     andR
     allL("Ant_0_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0_0")
     orL("Ant_0_0_0")
     trivial
     ref("LEDefinition")
     allL("Ant_0_0", le"(suc a)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0_0")
     orL("Ant_0_0_0")
     trivial
     ref("LEDefinition2")
@@ -317,12 +317,12 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof" CutDistinct(0,0)")
     )
   val gammaBc = Lemma(esGammaBc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_0")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Suc_0")
+    unfold("PAND").atMost(1).in("Ant_0")
     orR
     allR("Suc_0_1", fov"a")
     exR("Suc_0_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0")
+    unfold("POR").atMost(1).in("Ant_0")
     allL(fov"a")
     allL(le"(suc a)")
     andR
@@ -336,15 +336,15 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(s(m),0)")
     )
   val gammaBc2 = Lemma(esGammaBc2) {
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_0")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Suc_0")
+    unfold("PAND").atMost(1).in("Ant_0")
     andL
     andR
     ref("gamma")
     orR
     allR("Suc_0_1", fov"a")
     exR("Suc_0_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     allL(fov"a")
     allL(le"(suc a)")
     andR
@@ -359,12 +359,12 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof" CutDistinct(0,s(n))")
     )
   val gammaBc3 = Lemma(esGammaBc3) {
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_0")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Suc_0")
+    unfold("PAND").atMost(1).in("Ant_0")
     orR
     allR("Suc_0_1", fov"a")
     exR("Suc_0_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0")
+    unfold("POR").atMost(1).in("Ant_0")
     allL(fov"a")
     orL
     allL(le"(suc a)")
@@ -388,15 +388,15 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(s(m),s(n))")
     )
   val gammaSc = Lemma(esGammaSc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_0")
-    unfold("PAND").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Suc_0")
+    unfold("PAND").atMost(1).in("Ant_0")
     andL
     andR
     ref("gamma")
     orR
     allR("Suc_0_1", fov"a")
     exR(fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     allL(fov"a")
     orL
     allL(le"(suc a)")
@@ -423,17 +423,17 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (E(f(s(0),x), f(s(0),suc(x))) )")
     )
   val phiBc = Lemma(esPhiBc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Ant_0")
     orL
     exL(fov"a")
     andL
     exR(fov"a")
     allL(fov"a")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_0")
     cut("cut1", hof"E(0, f(s(0), a))")
     ref("TransitivityE")
     allL(le"(suc a)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     cut("cut1", hof"E(0, f(s(0), suc(a)))")
     ref("TransitivityE")
     ref("NumericTransitivity")
@@ -452,8 +452,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     )
   val phiBc2 = Lemma(esPhiBc2) {
     cut("cut", hof"CutDistinct(0,n)")
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
-    unfold("CutDistinct").`atMost`(1).`in`("cut")
+    unfold("CutDistinct").atMost(1).in("Ant_0")
+    unfold("CutDistinct").atMost(1).in("cut")
     orR
     focus(1)
     ref("phi")
@@ -470,11 +470,11 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR("Suc_0", fov"b")
     andL
     allL(fov"b")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_0")
     cut("cut1", hof"E(s(n), f(s(0), b))")
     ref("TransitivityE")
     allL(le"(suc b)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     cut("cut1", hof"E(s(n), f(s(0), suc(b)))")
     ref("TransitivityE")
     ref("NumericTransitivity")
@@ -490,16 +490,16 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"?x (E(f(s(s(m)),x), f(s(s(m)),suc(x))) )")
     )
   val phiBc3 = Lemma(esPhiBc3) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Ant_0")
     andL
     orL
     exL(fov"a")
     andL
     allL(fov"a")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_0")
     orL
     allL(le"(suc a)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     orL
     cut("cut2", hof"E(0, f((s (s m)),a))")
     ref("TransitivityE")
@@ -512,7 +512,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR(fov"a")
     ref("epsilon2")
     allL(le"(suc a)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     orL
     cut("cut1", hof"E(0, f((s (s m)),(suc a)))")
     ref("TransitivityE")
@@ -552,8 +552,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val muBc = Lemma(esMuBc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
+    unfold("CutDistinct").atMost(1).in("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
     orR
     allR(fov"a")
     orL
@@ -567,11 +567,11 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exL(fov"b")
     andL
     allL(fov"b")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_0")
     cut("cut2", hof"E(s(n), f(k,b))")
     ref("TransitivityE")
     allL(le"(suc b)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     cut("cut1", hof"E(s(n), f(k,(suc b)))")
     ref("TransitivityE")
     exR("Suc_0", fov"b")
@@ -591,8 +591,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val muSc = Lemma(esMuSc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_0")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
+    unfold("CutDistinct").atMost(1).in("Ant_0")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
     andL
     andR
     focus(1)
@@ -609,12 +609,12 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exL(fov"b")
     andL
     allL(fov"b")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_0")
     orL
     cut("cut2", hof"E(s(n), f(k,b))")
     ref("TransitivityE")
     allL(le"(suc b)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     orL
     cut("cut1", hof"E(s(n), f(k,(suc b)))")
     ref("TransitivityE")
@@ -624,7 +624,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR("Suc_1_0", fov"a")
     ref("theta")
     allL(le"(suc b)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     orL
     cut("cut1", hof"E(s(n), f(k,(suc b)))")
     ref("TransitivityE")
@@ -638,12 +638,12 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exL(fov"a")
     andL
     allL("Ant_1", fov"a")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_0")
     orL
     cut("cut2", hof"E(s(n), f(k,a))")
     ref("TransitivityE")
     allL("Ant_1", le"(suc a)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     orL
     cut("cut1", hof"E(s(n), f(k,suc(a)))")
     ref("TransitivityE")
@@ -652,7 +652,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
     exR("Suc_0", fov"a")
     ref("epsilon4")
     allL("Ant_1", le"(suc a)")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1_1")
     orL
     cut("cut1", hof"E(s(n), f(k,suc(a)))")
     ref("TransitivityE")
@@ -689,8 +689,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, suc(x)))")
     )
   val EpsilonBc = Lemma(esEpsilonBc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orL
     exL(fov"b")
     andL
@@ -713,8 +713,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, suc(x)))")
     )
   val EpsilonSc = Lemma(esEpsilonSc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andL
     orL("Ant_1")
     orL("Ant_3_1")
@@ -739,8 +739,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, suc(x)))")
     )
   val Epsilon2Bc = Lemma(esEpsilon2Bc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orL
     exL(fov"b")
     andL
@@ -763,8 +763,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, suc(x)))")
     )
   val Epsilon2Sc = Lemma(esEpsilon2Sc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andL
     orL("Ant_1")
     orL("Ant_3_1")
@@ -789,9 +789,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, suc(x)))")
     )
   val Epsilon3Bc = Lemma(esEpsilon3Bc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_0")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orL
     exL(fov"b")
     andL
@@ -816,9 +816,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_2" -> hof"E(f(k, x), f(k, suc(x)))")
     )
   val Epsilon3Sc = Lemma(esEpsilon3Sc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_0")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andL
     orL("Ant_3_1")
     exL(fov"b")
@@ -856,9 +856,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Epsilon4Bc = Lemma(esEpsilon4Bc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orR
     orL
     exL(fov"b")
@@ -889,9 +889,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Epsilon4Sc = Lemma(esEpsilon4Sc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andR
     andL
     orL("Ant_3_1")
@@ -940,9 +940,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Epsilon5Bc = Lemma(esEpsilon5Bc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orR
     orL
     exL(fov"b")
@@ -973,9 +973,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Epsilon5Sc = Lemma(esEpsilon5Sc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andR
     andL
     orL("Ant_3_1")
@@ -1024,10 +1024,10 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Epsilon6Bc = Lemma(esEpsilon6Bc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_0")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
 
     orR
     orL
@@ -1061,10 +1061,10 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Epsilon6Sc = Lemma(esEpsilon6Sc) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_1")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_0")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("CutDistinct").atMost(1).in("Suc_1")
+    unfold("TopFuncDef").atMost(1).in("Ant_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andR
     andL
     orL("Ant_3_1")
@@ -1135,8 +1135,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val ThetaBC = Lemma(esThetaBC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orL
     exL(fov"b")
     andL
@@ -1165,8 +1165,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val ThetaSC = Lemma(esThetaSC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andL
     orL("Ant_3_1")
     exL(fov"b")
@@ -1198,8 +1198,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Theta2BC = Lemma(esTheta2BC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orL
     exL(fov"b")
     andL
@@ -1228,8 +1228,8 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Theta2SC = Lemma(esTheta2SC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andL
     orL("Ant_3_1")
     exL(fov"b")
@@ -1261,9 +1261,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Theta3BC = Lemma(esTheta3BC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_0")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     orL
     exL(fov"b")
     andL
@@ -1294,9 +1294,9 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       )
     )
   val Theta3SC = Lemma(esTheta3SC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Ant_3")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_0")
-    unfold("TopFuncDef").`atMost`(1).`in`("Ant_1")
+    unfold("CutDistinct").atMost(1).in("Ant_3")
+    unfold("TopFuncDef").atMost(1).in("Ant_0")
+    unfold("TopFuncDef").atMost(1).in("Ant_1")
     andL
     orL("Ant_3_1")
     exL(fov"b")
@@ -1328,7 +1328,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(0,n)")
     )
   val PiBC = Lemma(esPiBC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_0")
+    unfold("CutDistinct").atMost(1).in("Suc_0")
     orR
     allR(fov"a")
     exR(fov"a")
@@ -1346,7 +1346,7 @@ object VeryWeakPHPSequenceVariantSchema extends TacticsProof {
       Seq("Suc_0" -> hof"CutDistinct(s(m),n)")
     )
   val PiSC = Lemma(esPiSC) {
-    unfold("CutDistinct").`atMost`(1).`in`("Suc_0")
+    unfold("CutDistinct").atMost(1).in("Suc_0")
     andR
     ref("pi")
     orR

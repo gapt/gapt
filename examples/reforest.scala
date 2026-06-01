@@ -12,7 +12,7 @@ import sequence.SumExampleProof
     LinearExampleProof(32)
   )
 
-  val grammar = Reforest.`full`(Reforest.start(lang))
+  val grammar = Reforest.full(Reforest.start(lang))
   println(grammar.toRecursionScheme)
   //  println( grammar.toVTRATG )
 

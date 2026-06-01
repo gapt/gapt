@@ -354,12 +354,12 @@ object Session {
 
       protected def tell(input: SExpression) = {
         if (debug) println(input)
-        in.`println`(input.toDoc.render(Int.MaxValue))
+        in.println(input.toDoc.render(Int.MaxValue))
       }
 
       protected def ask(input: SExpression) = {
         if (debug) println(input)
-        in.`println`(input.toDoc.render(Int.MaxValue))
+        in.println(input.toDoc.render(Int.MaxValue))
         in.flush()
         val res = out.readLine()
         if (debug) println(s"-> $res")

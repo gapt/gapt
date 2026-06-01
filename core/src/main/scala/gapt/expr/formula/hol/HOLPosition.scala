@@ -280,7 +280,7 @@ case class HOLPosition(list: List[Int]) {
     case Nil => true
     case x :: xs => that.list match {
         case Nil     => false
-        case y :: ys => (x == y) && (HOLPosition(xs).`isPrefixOf`(HOLPosition(ys)))
+        case y :: ys => (x == y) && (HOLPosition(xs).isPrefixOf(HOLPosition(ys)))
       }
   }
 }

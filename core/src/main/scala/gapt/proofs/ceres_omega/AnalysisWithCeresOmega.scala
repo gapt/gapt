@@ -231,7 +231,7 @@ abstract class AnalysisWithCeresOmega {
    * The proof of the deep formula of the [[expansion_proof]].
    */
   lazy val reproved_deep = renameConstantsToFi.wrap(expansion_proof_fol_deep) { (_, mangled: Formula) =>
-    EProver.`getResolutionProof`(mangled) match {
+    EProver.getResolutionProof(mangled) match {
       case None    => throw new Exception("Could not reprove deep formula!")
       case Some(p) => p
     }

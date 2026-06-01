@@ -62,7 +62,7 @@ object ringinv extends TacticsProof {
       +: Sequent()
 
   val subReflexivity = Lemma(Sequent() :+ ("ref" -> hof"∀A A ⊆ A")) {
-    unfold("⊆").`in`("ref")
+    unfold("⊆").in("ref")
     decompose
     trivial
   }
@@ -81,8 +81,8 @@ object ringinv extends TacticsProof {
     chain("extens_1")
     forget("extens_0", "extens_1")
     decompose
-    unfold("⊆").`in`("antisym_0_0", "antisym_0_1")
-    andR.`left`(by {
+    unfold("⊆").in("antisym_0_0", "antisym_0_1")
+    andR.left(by {
       forget("antisym_0_1")
       allL("antisym_0_0", hov"z:i").forget
       trivial
@@ -98,12 +98,12 @@ object ringinv extends TacticsProof {
     allR
     allR
     allR
-    unfold("⊆").`in`("trans")
+    unfold("⊆").in("trans")
     decompose
     allL("trans_0_0", hov"x:i").forget
     allL("trans_0_1", hov"x:i").forget
-    impL("trans_0_0").`left`(by { trivial })
-    impL("trans_0_1").`left`(by { trivial })
+    impL("trans_0_0").left(by { trivial })
+    impL("trans_0_1").left(by { trivial })
     trivial
   }
 
@@ -111,14 +111,14 @@ object ringinv extends TacticsProof {
     Sequent() :+ ("compplus" -> hof"∀A∀B∀C (A ⊆ B -> (C ⊕ A) ⊆ (C ⊕ B))")
   ) {
     decompose
-    unfold("⊕").`in`("compplus_1")
-    unfold("⊆").`in`("compplus_0", "compplus_1")
+    unfold("⊕").in("compplus_1")
+    unfold("⊆").in("compplus_0", "compplus_1")
     decompose
     allL("compplus_0", hov"b:i").forget
-    impL("compplus_0").`left`(by { trivial })
+    impL("compplus_0").left(by { trivial })
     exR(hov"a:i", hov"b:i").forget
-    andR.`right`(by { trivial })
-    andR.`left`(by { trivial })
+    andR.right(by { trivial })
+    andR.left(by { trivial })
     trivial
   }
 
@@ -126,13 +126,13 @@ object ringinv extends TacticsProof {
     Sequent() :+ ("compmult" -> hof"∀A∀B (A ⊆ B -> ∀x ( x ** A ⊆ x ** B))")
   ) {
     decompose
-    unfold("**").`in`("compmult_1")
-    unfold("⊆").`in`("compmult_0", "compmult_1")
+    unfold("**").in("compmult_1")
+    unfold("⊆").in("compmult_0", "compmult_1")
     decompose
     allL("compmult_0", hov"a:i").forget
     exR(hov"a:i").forget
-    andR.`right`(by { trivial })
-    impL("compmult_0").`left`(by { trivial })
+    andR.right(by { trivial })
+    impL("compmult_0").left(by { trivial })
     trivial
   }
 
@@ -143,11 +143,11 @@ object ringinv extends TacticsProof {
     )
   ) {
     decompose
-    unfold("**", "⊆").`in`("setmultclosed_1")
+    unfold("**", "⊆").in("setmultclosed_1")
     decompose
     allL("multclosed", hov"x:i", hov"a:i").forget
-    impL.`left`(by {
-      andR.`left`(by { trivial })
+    impL.left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("setmultclosed_1_0_1", "multclosed")
@@ -164,27 +164,27 @@ object ringinv extends TacticsProof {
       Seq("Rmultclosed_inv" -> hof"∀x (∃y (R x ∧ R y ∧ x * y = 1) → R ⊆ x ** R)")
     )
   ) {
-    unfold("**", "⊆").`in`("Rmultclosed_inv")
+    unfold("**", "⊆").in("Rmultclosed_inv")
     decompose
     exR("Rmultclosed_inv_1_1", le"y*x_0").forget
     allL("multclosed", hov"y:i", hov"x_0:i").forget
-    andR.`left`(by {
-      impL("multclosed").`left`(by {
-        andR.`left`(by { trivial })
+    andR.left(by {
+      impL("multclosed").left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     allL("multassoc", hov"x:i", hov"y:i", hov"x_0:i").forget
-    impL("multassoc").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("multassoc").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     allL("multleftneutral", hov"x_0:i").forget
-    impL("multleftneutral").`left`(by { trivial })
+    impL("multleftneutral").left(by { trivial })
     eql("multassoc", "Rmultclosed_inv_1_1")
     eql("Rmultclosed_inv_0_1", "Rmultclosed_inv_1_1")
     trivial
@@ -197,11 +197,11 @@ object ringinv extends TacticsProof {
     )
   ) {
     decompose
-    unfold("++", "⊆").`in`("Rplusclosed_1")
+    unfold("++", "⊆").in("Rplusclosed_1")
     decompose
     allL("plusclosed", hov"x:i", hov"a:i").forget
-    impL.`left`(by {
-      andR.`left`(by { trivial })
+    impL.left(by {
+      andR.left(by { trivial })
       trivial
     })
     forget("Rplusclosed_1_0_0", "Rplusclosed_0")
@@ -216,11 +216,11 @@ object ringinv extends TacticsProof {
     )
   ) {
     decompose
-    unfold("⊕", "⊆").`in`("setplusclosed")
+    unfold("⊕", "⊆").in("setplusclosed")
     decompose
     allL("plusclosed", hov"a:i", hov"b:i").forget
-    impL.`left`(by {
-      andR.`left`(by { trivial })
+    impL.left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("setplusclosed_0_1", "plusclosed")
@@ -237,21 +237,21 @@ object ringinv extends TacticsProof {
     )
   ) {
     decompose
-    unfold("⊕", "⊆").`in`("setplussubset_1_0", "setplussubset_1_1")
+    unfold("⊕", "⊆").in("setplussubset_1_0", "setplussubset_1_1")
     decompose
     allL("setplussubset_1_0", hov"b:i").forget
-    impL("setplussubset_1_0").`left`(by { trivial })
+    impL("setplussubset_1_0").left(by { trivial })
     forget("setplussubset_1_1_0_0_1")
-    unfold("**").`in`("setplussubset_1_1_0_0_0", "setplussubset_1_0", "setplussubset_1_1_1")
+    unfold("**").in("setplussubset_1_1_0_0_0", "setplussubset_1_0", "setplussubset_1_1_1")
     decompose
     eql("setplussubset_1_0_1", "setplussubset_1_1_0_1")
     forget("setplussubset_1_0_1")
     eql("setplussubset_1_1_0_0_0_1", "setplussubset_1_1_0_1")
     forget("setplussubset_1_1_0_0_0_1")
     allL("leftdist", hov"y:i", hov"a_0:i", hov"a_1:i").forget
-    impL("leftdist").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("leftdist").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -260,13 +260,13 @@ object ringinv extends TacticsProof {
     eql("leftdist", "setplussubset_1_1_0_1")
     forget("leftdist")
     allL("plusclosed", hov"a_0:i", hov"a_1:i").forget
-    impL("plusclosed").`left`(by {
-      andR("plusclosed").`left`(by { trivial })
+    impL("plusclosed").left(by {
+      andR("plusclosed").left(by { trivial })
       trivial
     })
     forget("setplussubset_1_0_0", "setplussubset_1_1_0_0_0_0")
     exR("setplussubset_1_1_1", le"a_0 + a_1")
-    andR.`left`(by { trivial })
+    andR.left(by { trivial })
     trivial
   }
 
@@ -277,19 +277,19 @@ object ringinv extends TacticsProof {
     )
   ) {
     decompose
-    unfold("⊆", "**", "⊕").`in`("multleftdist_1")
+    unfold("⊆", "**", "⊕").in("multleftdist_1")
     decompose
     allL("rightdist", hov"a:i", hov"b:i", hov"a_0:i").forget
-    impL("rightdist").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("rightdist").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     exR(le"a*a_0", le"b*a_0").forget
-    andR.`left`(by {
-      andR.`left`(by {
+    andR.left(by {
+      andR.left(by {
         exR(hov"a_0:i").forget
         andR
         trivial
@@ -316,17 +316,17 @@ object ringinv extends TacticsProof {
     chain("extens_1")
     decompose
     forget("extens_0", "extens_1")
-    andR.`left`(by {
+    andR.left(by {
       impR
-      unfold("**").`in`("multsetassoc_1_0", "multsetassoc_1_1")
+      unfold("**").in("multsetassoc_1_0", "multsetassoc_1_1")
       decompose
       eql("multsetassoc_1_0_0_1", "multsetassoc_1_0_1")
       exR(hov"a_0:i").forget
-      andR.`left`(by { trivial })
+      andR.left(by { trivial })
       allL("multassoc", hov"x:i", hov"y:i", hov"a_0:i").forget
-      impL("multassoc").`left`(by {
-        andR.`left`(by {
-          andR.`left`(by { trivial })
+      impL("multassoc").left(by {
+        andR.left(by {
+          andR.left(by { trivial })
           trivial
         })
         trivial
@@ -334,19 +334,19 @@ object ringinv extends TacticsProof {
       eql("multassoc", "multsetassoc_1_0_1")
       trivial
     })
-    unfold("**").`in`("multsetassoc_1")
+    unfold("**").in("multsetassoc_1")
     decompose
     exR("multsetassoc_1_1", le"y * a").forget
     andR
     exR(hov"a:i").forget
-    andR.`left`(by {
+    andR.left(by {
       trivial
     })
     trivial
     allL("multassoc", hov"x:i", hov"y:i", hov"a:i").forget
-    impL("multassoc").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("multassoc").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -362,12 +362,12 @@ object ringinv extends TacticsProof {
     )
   ) {
     decompose
-    unfold("**", "⊆").`in`("multleftsubset_0", "multleftsubset_1")
+    unfold("**", "⊆").in("multleftsubset_0", "multleftsubset_1")
     decompose
     allL("multleftsubset_0", hov"a:i").forget
     exR("multleftsubset_1_1", hov"a:i").forget
-    impL("multleftsubset_0").`left`(by { trivial })
-    andR.`left`(by { trivial })
+    impL("multleftsubset_0").left(by { trivial })
+    andR.left(by { trivial })
     trivial
   }
 
@@ -385,45 +385,45 @@ object ringinv extends TacticsProof {
   ) {
     decompose
     allL("plusneutral", hov"y:i")
-    impL("plusneutral_0").`left`(by { trivial })
+    impL("plusneutral_0").left(by { trivial })
     allL("plusneutral", hov"z:i")
-    impL("plusneutral_1").`left`(by { trivial })
+    impL("plusneutral_1").left(by { trivial })
     allL("pluscomm", hov"y:i", fot"0")
-    impL("pluscomm_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("pluscomm_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("pluscomm_0", "plusneutral_0")
     allL("pluscomm", hov"z:i", fot"0")
-    impL("pluscomm_1").`left`(by {
-      andR.`left`(by { trivial })
+    impL("pluscomm_1").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("pluscomm_1", "plusneutral_1")
     eql("plusneutral_0", "cancellation_1")
     eql("plusneutral_1", "cancellation_1")
     allL("plusinverse", hov"x:i").forget
-    impL("plusinverse").`left`(by { trivial })
+    impL("plusinverse").left(by { trivial })
     andL
     allL("pluscomm", hov"x:i", le"-x")
-    impL("pluscomm_2").`left`(by {
-      andR.`left`(by { trivial })
+    impL("pluscomm_2").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("pluscomm_2", "plusinverse_0")
     eql("plusinverse_0", "cancellation_1")
     allL("plusassoc", le"-x", hov"x:i", hov"y:i")
-    impL("plusassoc_0").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("plusassoc_0").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     allL("plusassoc", le"-x", hov"x:i", hov"z:i")
-    impL("plusassoc_1").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("plusassoc_1").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -451,11 +451,11 @@ object ringinv extends TacticsProof {
   ) {
     decompose
     allL("plusneutral", fot"0")
-    impL("plusneutral_0").`left`(by { trivial })
+    impL("plusneutral_0").left(by { trivial })
     allL("leftdist", hov"x:i", fot"0", fot"0").forget
-    impL("leftdist").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("leftdist").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -463,17 +463,17 @@ object ringinv extends TacticsProof {
     eql("plusneutral_0", "leftdist").fromLeftToRight
     allL("cancellation", le"x*0", fot"0", le"x*0").forget
     allL("multclosed", hov"x:i", fot"0").forget
-    impL("multclosed").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed").left(by {
+      andR.left(by { trivial })
       trivial
     })
     allL("plusneutral", le"x*0").forget
-    impL("plusneutral").`left`(by { trivial })
+    impL("plusneutral").left(by { trivial })
     eql("plusneutral", "leftdist").yielding(hof"x*0+0=x*0+x*0")
-    impL("cancellation").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by {
-          andR.`left`(by { trivial })
+    impL("cancellation").left(by {
+      andR.left(by {
+        andR.left(by {
+          andR.left(by { trivial })
           trivial
         })
         trivial
@@ -502,11 +502,11 @@ object ringinv extends TacticsProof {
   ) {
     decompose
     allL("plusneutral", fot"0")
-    impL("plusneutral_0").`left`(by { trivial })
+    impL("plusneutral_0").left(by { trivial })
     allL("rightdist", fot"0", fot"0", hov"x:i").forget
-    impL("rightdist").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("rightdist").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -514,17 +514,17 @@ object ringinv extends TacticsProof {
     eql("plusneutral_0", "rightdist").fromLeftToRight
     allL("cancellation", le"0*x", fot"0", le"0*x").forget
     allL("multclosed", fot"0", hov"x:i").forget
-    impL("multclosed").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed").left(by {
+      andR.left(by { trivial })
       trivial
     })
     allL("plusneutral", le"0*x").forget
-    impL("plusneutral").`left`(by { trivial })
+    impL("plusneutral").left(by { trivial })
     eql("plusneutral", "rightdist").yielding(hof"0*x+0=0*x+0*x")
-    impL("cancellation").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by {
-          andR.`left`(by { trivial })
+    impL("cancellation").left(by {
+      andR.left(by {
+        andR.left(by {
+          andR.left(by { trivial })
           trivial
         })
         trivial
@@ -550,38 +550,38 @@ object ringinv extends TacticsProof {
     decompose
     allL("plusinverse", le"x*y")
     allL("multclosed", hov"x:i", hov"y:i")
-    impL("multclosed_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    impL("plusinverse_0").`left`(by { trivial })
+    impL("plusinverse_0").left(by { trivial })
     andL
     allL("leftdist", hov"x:i", hov"y:i", le"-y").forget
     allL("plusinverse", hov"y:i")
-    impL("plusinverse_1").`left`(by { trivial })
+    impL("plusinverse_1").left(by { trivial })
     andL
-    impL("leftdist").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("leftdist").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     eql("plusinverse_1_0", "leftdist")
     allL("absorption0left", hov"x:i").forget
-    impL("absorption0left").`left`(by { trivial })
+    impL("absorption0left").left(by { trivial })
     eql("absorption0left", "leftdist").fromLeftToRight
     eql("plusinverse_0_0", "leftdist").fromRightToLeft
     allL("cancellation", le"x*y", le"x*(-y)", le"-(x*y)").forget
     allL("multclosed", hov"x:i", le"-y")
-    impL("multclosed_1").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed_1").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    impL("cancellation").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by {
-          andR.`left`(by {
+    impL("cancellation").left(by {
+      andR.left(by {
+        andR.left(by {
+          andR.left(by {
             trivial
           })
           trivial
@@ -609,38 +609,38 @@ object ringinv extends TacticsProof {
     decompose
     allL("plusinverse", le"x*y")
     allL("multclosed", hov"x:i", hov"y:i")
-    impL("multclosed_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    impL("plusinverse_0").`left`(by { trivial })
+    impL("plusinverse_0").left(by { trivial })
     andL
     allL("rightdist", hov"x:i", le"-x", hov"y:i").forget
     allL("plusinverse", hov"x:i")
-    impL("plusinverse_1").`left`(by { trivial })
+    impL("plusinverse_1").left(by { trivial })
     andL
-    impL("rightdist").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("rightdist").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     eql("plusinverse_1_0", "rightdist")
     allL("absorption0right", hov"y:i").forget
-    impL("absorption0right").`left`(by { trivial })
+    impL("absorption0right").left(by { trivial })
     eql("absorption0right", "rightdist").fromLeftToRight
     eql("plusinverse_0_0", "rightdist").fromRightToLeft
     allL("cancellation", le"x*y", le"-(x*y)", le"(-x)*y").forget
     allL("multclosed", le"-x", hov"y:i")
-    impL("multclosed_1").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed_1").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    impL("cancellation").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by {
-          andR.`left`(by {
+    impL("cancellation").left(by {
+      andR.left(by {
+        andR.left(by {
+          andR.left(by {
             trivial
           })
           trivial
@@ -663,24 +663,24 @@ object ringinv extends TacticsProof {
     decompose
     allL("extens", hov"R:i>o", le"1**R").forget
     andL
-    impL("extens_1").`left`(by {
+    impL("extens_1").left(by {
       forget("setmult1equ", "extens_0")
       decompose
-      andR.`left`(by {
+      andR.left(by {
         impR
         allL("multleftneutral", hov"z:i").forget
-        impL("multleftneutral").`left`(by { trivial })
+        impL("multleftneutral").left(by { trivial })
         eql("multleftneutral", "extens_1_1")
-        unfold("**").`in`("extens_1_1")
+        unfold("**").in("extens_1_1")
         exR(hov"z:i").forget
-        andR.`left`(by { trivial })
+        andR.left(by { trivial })
         trivial
       })
       impR
-      unfold("**").`in`("extens_1_0")
+      unfold("**").in("extens_1_0")
       decompose
       allL("multleftneutral", hov"a:i").forget
-      impL("multleftneutral").`left`(by { trivial })
+      impL("multleftneutral").left(by { trivial })
       eql("multleftneutral", "extens_1_0_1").fromRightToLeft
       eql("extens_1_0_1", "extens_1_0_0")
       trivial
@@ -709,71 +709,71 @@ object ringinv extends TacticsProof {
       Seq("inverse" -> hof"∀(a:i)∀(b:i) (R a ∧ R b -> (∃(x:i) (R x ∧ (1 + (- a*b)) * x = 1 ) -> ∃(y:i) ( R y ∧ (1 + (- b*a)) * y = 1 )))")
     )
   ) {
-    cut("cancellation", hof"∀x∀y∀z ((R x ∧ R y ∧ R z ∧ x + y = x + z) → y = z)").`left`(insert(cancellationPlus))
-    cut("absorption0right", hof"∀x (R x → 0 * x = 0)").`left`(insert(absorption0Right))
-    cut("absorption0left", hof"∀x (R x → x * 0 = 0)").`left`(insert(absorption0Left))
+    cut("cancellation", hof"∀x∀y∀z ((R x ∧ R y ∧ R z ∧ x + y = x + z) → y = z)").left(insert(cancellationPlus))
+    cut("absorption0right", hof"∀x (R x → 0 * x = 0)").left(insert(absorption0Right))
+    cut("absorption0left", hof"∀x (R x → x * 0 = 0)").left(insert(absorption0Left))
     decompose
     allL("multclosed", hov"a:i", hov"b:i")
     allL("plusinverse", le"a*b")
     allL("plusclosed", fot"1", le"-(a*b)")
     decompose
-    impL("multclosed_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    impL("plusinverse_0").`left`(by { trivial })
+    impL("plusinverse_0").left(by { trivial })
     andL("plusinverse_0")
     forget("plusinverse_0_0")
-    impL("plusclosed_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("plusclosed_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    cut("multclosed_inv", hof"∀x (∃y (R x ∧ R y ∧ x * y = 1) → R ⊆ x ** R)").`left`(insert(multClosed_Inv))
+    cut("multclosed_inv", hof"∀x (∃y (R x ∧ R y ∧ x * y = 1) → R ⊆ x ** R)").left(insert(multClosed_Inv))
     allL("multclosed_inv", le"1+(-(a*b))").forget
-    impL("multclosed_inv").`left`(by {
+    impL("multclosed_inv").left(by {
       exR("multclosed_inv", hov"x:i").forget
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     forget("inverse_1_0_1")
-    cut("multleftsubset", hof"∀x∀A∀B (A ⊆ B → x ** A ⊆ x ** B)").`left`(insert(multleftSubset))
+    cut("multleftsubset", hof"∀x∀A∀B (A ⊆ B → x ** A ⊆ x ** B)").left(insert(multleftSubset))
     allL("multleftsubset", hov"b:i", hov"R:i>o", le"(1+(-(a*b)))**R")
-    impL("multleftsubset_0").`left`(by { trivial })
-    cut("multsetassoc", hof"∀x∀y ((R x ∧ R y) → x ** (y ** R) = (x * y) ** R)").`left`(insert(multsetAssoc))
+    impL("multleftsubset_0").left(by { trivial })
+    cut("multsetassoc", hof"∀x∀y ((R x ∧ R y) → x ** (y ** R) = (x * y) ** R)").left(insert(multsetAssoc))
     allL("multsetassoc", hov"b:i", le"(1+(-(a*b)))")
-    impL("multsetassoc_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multsetassoc_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("multsetassoc_0", "multleftsubset_0")
     forget("multsetassoc_0", "multclosed_inv", "inverse_1_0_0")
     allL("leftdist", hov"b:i", fot"1", le"-(a*b)")
-    impL("leftdist_0").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("leftdist_0").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     allL("multrightneutral", hov"b:i").forget
-    impL("multrightneutral").`left`(by { trivial })
+    impL("multrightneutral").left(by { trivial })
     eql("multrightneutral", "leftdist_0").fromLeftToRight
     forget("multrightneutral")
-    cut("multminusright", hof"∀x∀y ((R x ∧ R y) → x * (-y) = -(x*y) )").`left`(insert(multMinusRight))
+    cut("multminusright", hof"∀x∀y ((R x ∧ R y) → x * (-y) = -(x*y) )").left(insert(multMinusRight))
     allL("multminusright", hov"b:i", le"a*b").forget
-    impL("multminusright").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multminusright").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("multminusright", "leftdist_0")
     forget("multminusright")
     allL("multassoc", hov"b:i", hov"a:i", hov"b:i").forget
-    impL("multassoc").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("multassoc").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -781,28 +781,28 @@ object ringinv extends TacticsProof {
     eql("multassoc", "leftdist_0")
     allL("rightdist", fot"1", le"-(b*a)", hov"b:i")
     allL("multclosed", hov"b:i", hov"a:i")
-    impL("multclosed_1").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multclosed_1").left(by {
+      andR.left(by { trivial })
       trivial
     })
     allL("plusinverse", le"b*a")
-    impL("plusinverse_1").`left`(by { trivial })
+    impL("plusinverse_1").left(by { trivial })
     andL("plusinverse_1")
-    impL("rightdist_0").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("rightdist_0").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
     })
     allL("multleftneutral", hov"b:i")
-    impL("multleftneutral_0").`left`(by { trivial })
+    impL("multleftneutral_0").left(by { trivial })
     eql("multleftneutral_0", "leftdist_0").yielding(hof"b*(1+(-(a*b)))=1*b+(-(b*a*b))")
-    cut("multminusleft", hof"∀x∀y ((R x ∧ R y) → (-x) * y = -(x * y) )").`left`(insert(multMinusLeft))
+    cut("multminusleft", hof"∀x∀y ((R x ∧ R y) → (-x) * y = -(x * y) )").left(insert(multMinusLeft))
     forget("plusinverse", "multassoc", "multleftneutral_0")
     allL("multminusleft", le"b*a", hov"b:i").forget
-    impL("multminusleft").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multminusleft").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("multminusleft", "rightdist_0")
@@ -813,67 +813,67 @@ object ringinv extends TacticsProof {
     forget("leftdist_0")
     allL("multsetassoc", le"1+(-(b*a))", hov"b:i")
     allL("plusclosed", fot"1", le"-(b*a)")
-    impL("plusclosed_1").`left`(by {
-      andR.`left`(by { trivial })
+    impL("plusclosed_1").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    impL("multsetassoc_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multsetassoc_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    cut("setmultclosed", hof"∀x (R x → x ** R ⊆ R)").`left`(insert(setMultClosed))
+    cut("setmultclosed", hof"∀x (R x → x ** R ⊆ R)").left(insert(setMultClosed))
     forget("multclosed")
     allL("setmultclosed", hov"b:i")
-    impL("setmultclosed_0").`left`(by { trivial })
+    impL("setmultclosed_0").left(by { trivial })
     allL("multleftsubset", le"1+(-(b*a))", le"b**R", hov"R:i>o")
-    impL("multleftsubset_1").`left`(by { trivial })
+    impL("multleftsubset_1").left(by { trivial })
     eql("multsetassoc_0", "multleftsubset_1")
     allL("setmultclosed", hov"a:i")
-    impL("setmultclosed_1").`left`(by { trivial })
+    impL("setmultclosed_1").left(by { trivial })
     allL("multleftsubset", hov"b:i", le"a**R", hov"R:i>o").forget
-    impL("multleftsubset").`left`(by { trivial })
+    impL("multleftsubset").left(by { trivial })
     allL("multsetassoc", hov"b:i", hov"a:i").forget
-    impL("multsetassoc").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multsetassoc").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    cut("subtrans", hof"∀A∀B∀C ( ( A ⊆ B ∧ B ⊆ C ) -> ( A ⊆ C ) )").`left`(insert(subTransitivity))
+    cut("subtrans", hof"∀A∀B∀C ( ( A ⊆ B ∧ B ⊆ C ) -> ( A ⊆ C ) )").left(insert(subTransitivity))
     allL("subtrans", le"b**R", le"((1+(-(b*a)))*b)**R", le"(1+(-(b*a)))**R")
-    impL("subtrans_0").`left`(by {
-      andR.`left`(by { trivial })
+    impL("subtrans_0").left(by {
+      andR.left(by { trivial })
       trivial
     })
     allL("subtrans", le"b**(a**R)", le"b**R", le"(1+(-(b*a)))**R")
-    impL("subtrans_1").`left`(by {
-      andR.`left`(by { trivial })
+    impL("subtrans_1").left(by {
+      andR.left(by { trivial })
       trivial
     })
     forget("subtrans_0", "setmultclosed_0", "setmultclosed_1", "multsetassoc_0", "multleftsubset_0", "multleftsubset_1", "multleftsubset")
     eql("multsetassoc", "subtrans_1")
     forget("multsetassoc")
-    cut("multsetdist", hof"∀a∀b ((R a ∧ R b) → (a + b) ** R ⊆ a ** R ⊕ b ** R)").`left`(insert(multleftDistributive))
+    cut("multsetdist", hof"∀a∀b ((R a ∧ R b) → (a + b) ** R ⊆ a ** R ⊕ b ** R)").left(insert(multleftDistributive))
     allL("multsetdist", le"1+(-(b*a))", le"b*a").forget
-    impL("multsetdist").`left`(by {
-      andR.`left`(by { trivial })
+    impL("multsetdist").left(by {
+      andR.left(by { trivial })
       trivial
     })
-    cut("setmult1equ", hof"R = 1**R").`left`(insert(setMult1_Equal))
+    cut("setmult1equ", hof"R = 1**R").left(insert(setMult1_Equal))
     forget("extens", "multleftneutral")
     allL("plusneutral", fot"1").forget
-    impL("plusneutral").`left`(by { trivial })
+    impL("plusneutral").left(by { trivial })
     eql("plusneutral", "setmult1equ")
     forget("plusneutral")
     allL("pluscomm", le"b*a", le"-(b*a)").forget
-    impL("pluscomm").`left`(by {
-      andR.`left`(by { trivial })
+    impL("pluscomm").left(by {
+      andR.left(by { trivial })
       trivial
     })
     eql("plusinverse_1_0", "pluscomm")
     eql("pluscomm", "setmult1equ")
     allL("plusassoc", fot"1", le"-(b*a)", le"b*a").forget
-    impL("plusassoc").`left`(by {
-      andR.`left`(by {
-        andR.`left`(by { trivial })
+    impL("plusassoc").left(by {
+      andR.left(by {
+        andR.left(by { trivial })
         trivial
       })
       trivial
@@ -882,25 +882,25 @@ object ringinv extends TacticsProof {
     forget("pluscomm", "plusassoc", "plusinverse_1_0", "rightdist")
     eql("setmult1equ", "multsetdist").fromRightToLeft
     forget("setmult1equ")
-    cut("setplussubset", hof"∀x∀y (R y → x**R ⊆ y**R → y**R ⊕ x**R ⊆ y**R)").`left`(insert(setPlusSubset))
+    cut("setplussubset", hof"∀x∀y (R y → x**R ⊆ y**R → y**R ⊕ x**R ⊆ y**R)").left(insert(setPlusSubset))
     forget("plusclosed")
     allL("setplussubset", le"b*a", le"1+(-)(b*a)").forget
-    impL("setplussubset").`left`(by { trivial })
-    impL("setplussubset").`left`(by { trivial })
+    impL("setplussubset").left(by { trivial })
+    impL("setplussubset").left(by { trivial })
     allL("subtrans", hov"R:i>o", le"(1 + (-)(b * a)) ** R ⊕ b * a ** R", le"(1 + (-)(b * a)) ** R").forget
-    impL("subtrans").`left`(by {
-      andR.`left`(by { trivial })
+    impL("subtrans").left(by {
+      andR.left(by { trivial })
       trivial
     })
     forget("setplussubset", "multsetdist", "subtrans_1", "setmultclosed")
-    unfold("⊆").`in`("subtrans")
+    unfold("⊆").in("subtrans")
     allL("subtrans", fot"1").forget
-    impL("subtrans").`left`(by { trivial })
-    unfold("**").`in`("subtrans")
+    impL("subtrans").left(by { trivial })
+    unfold("**").in("subtrans")
     exL("subtrans", hov"y:i")
     decompose
     exR(hov"y:i").forget
-    andR.`left`(by { trivial })
+    andR.left(by { trivial })
     eql("subtrans_1", "inverse_1_1").fromRightToLeft
     trivial
   }

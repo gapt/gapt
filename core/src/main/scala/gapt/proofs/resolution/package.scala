@@ -34,9 +34,9 @@ package object resolution {
       def f(p: ResolutionProof): ResolutionProof = memo.getOrElseUpdate(
         p,
         p match {
-          case Input(sequent)             => Input(TermReplacement(sequent, repl).`map`(BetaReduction.betaNormalize))
-          case Refl(term)                 => Refl(BetaReduction.`betaNormalize`(TermReplacement(term, repl)))
-          case Taut(formula)              => Taut(BetaReduction.`betaNormalize`(TermReplacement(formula, repl)))
+          case Input(sequent)             => Input(TermReplacement(sequent, repl).map(BetaReduction.betaNormalize))
+          case Refl(term)                 => Refl(BetaReduction.betaNormalize(TermReplacement(term, repl)))
+          case Taut(formula)              => Taut(BetaReduction.betaNormalize(TermReplacement(formula, repl)))
           case Defn(defConst, definition) => Defn(TermReplacement(defConst, repl).asInstanceOf[HOLAtomConst], TermReplacement(definition, repl))
           case Factor(q, i1, i2)          => Factor(f(q), i1, i2)
           case Subst(q, subst)            => Subst(f(q), TermReplacement(subst, repl))
@@ -47,7 +47,7 @@ package object resolution {
             val (equation, auxFormula) = (q1New.conclusion(l1), q2New.conclusion(l2))
             val Abs(v, subContext) = con: @unchecked
             val v_ = rename(v, freeVariables(equation) ++ freeVariables(auxFormula))
-            val contextNew = BetaReduction.`betaNormalize`(TermReplacement(Abs(v_, Substitution(v, v_)(subContext)), repl))
+            val contextNew = BetaReduction.betaNormalize(TermReplacement(Abs(v_, Substitution(v, v_)(subContext)), repl))
             Paramod(q1New, l1, dir, q2New, l2, contextNew)
           case AvatarSplit(q, indices, component) =>
             AvatarSplit(f(q), indices, TermReplacement(component, repl))

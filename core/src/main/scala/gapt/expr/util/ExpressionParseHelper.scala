@@ -51,7 +51,7 @@ class ExpressionParseHelper(sc: StringContext, file: sourcecode.File, line: sour
     def repl(expr: preExpr.Expr): preExpr.Expr = expr match {
       case preExpr.LocAnnotation(e, loc)                               => preExpr.LocAnnotation(repl(e), loc)
       case preExpr.TypeAnnotation(e, ty)                               => preExpr.TypeAnnotation(repl(e), ty)
-      case preExpr.Ident(name, _, _) if name.`startsWith`(placeholder) => repls(name)
+      case preExpr.Ident(name, _, _) if name.startsWith(placeholder) => repls(name)
       case expr: preExpr.Ident                                         => expr
       case preExpr.Abs(v, sub) =>
         repl(v) match {

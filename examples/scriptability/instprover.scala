@@ -25,7 +25,7 @@ import scala.collection.mutable
 
   val done = mutable.Set[FOLClause]()
   val todo = mutable.Queue[FOLClause](cnf.toSeq*)
-  while (Sat4j.`solve`(done ++ todo) isDefined) {
+  while (Sat4j.solve(done ++ todo) isDefined) {
     val next = todo.dequeue()
     if (!done.contains(next)) for {
       clause2 <- done

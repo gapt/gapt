@@ -18,7 +18,7 @@ import gapt.proofs.lk.rules.WeakeningLeftRule
 object ExchangeLeftMacroRule {
   def apply(subProof: LKProof, aux: SequentIndex): ContractionLeftRule = {
     require(aux isAnt)
-    require(subProof.endSequent.`isDefinedAt`(aux))
+    require(subProof.endSequent.isDefinedAt(aux))
     ContractionLeftRule(WeakeningLeftRule(subProof, subProof.endSequent(aux)), Ant(0), aux + 1)
   }
 }

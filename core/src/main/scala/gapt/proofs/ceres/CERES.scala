@@ -172,7 +172,7 @@ class CERES {
     val axfs = input_clause.conclusion
     for {
       proj <- projections
-      sub <- clauseSubsumption(proj.endSequent.`diff`(endsequent), axfs)
+      sub <- clauseSubsumption(proj.endSequent.diff(endsequent), axfs)
     } scala.util.boundary.break(WeakeningContractionMacroRule(sub(proj), endsequent ++ axfs))
 
     throw new Exception("Could not find a projection to " + axfs + " in " +

@@ -147,7 +147,7 @@ object set extends Theory(logic) {
 
   val univUnion2 = lemma(hof" univ ∪ X = univ", "simp") {
     include("unionComm")
-    rewrite.`ltr`("unionComm").`in`("g")
+    rewrite.ltr("unionComm").in("g")
     simp
   }
 
@@ -157,13 +157,13 @@ object set extends Theory(logic) {
 
   val univIntersect2 = lemma(hof" univ ∩ X = X", "simp") {
     include("intersectComm")
-    rewrite.`ltr`("intersectComm").`in`("g")
+    rewrite.ltr("intersectComm").in("g")
     simp
   }
 
   val emptyUnion1 = lemma(hof" X ∪ empty = X", "simp") {
     include("unionComm")
-    rewrite.`ltr`("unionComm").`in`("g")
+    rewrite.ltr("unionComm").in("g")
     simp.w("subsetUnion")
   }
 
@@ -173,7 +173,7 @@ object set extends Theory(logic) {
 
   val emptyIntersect1 = lemma(hof" X ∩ empty = empty", "simp") {
     include("intersectComm")
-    rewrite.`ltr`("intersectComm").`in`("g")
+    rewrite.ltr("intersectComm").in("g")
     simp.w("subsetIntersect")
   }
 

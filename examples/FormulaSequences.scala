@@ -123,6 +123,6 @@ object PigeonHolePrinciple {
 object CountingEquivalence {
   def apply(n: Int): FOLFormula = {
     val as = (0 to n).map { i => hof"!x?y ${s"a$i"} x y z" }
-    hof"!z ${thresholds.exactly.`oneOf`(as)} <-> !z ${naive.exactly.`oneOf`(as)}".asInstanceOf[FOLFormula]
+    hof"!z ${thresholds.exactly.oneOf(as)} <-> !z ${naive.exactly.oneOf(as)}".asInstanceOf[FOLFormula]
   }
 }

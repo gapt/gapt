@@ -66,10 +66,10 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     exR("cut_0", hoc"z")
     andR
     allL("Ant_0", hoc"z")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     trivial
     allL("Ant_0", le"(suc z)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     trivial
     ref("phi")
   }
@@ -87,12 +87,12 @@ object ThreeStrictMonotoneSchema extends TacticsProof {
     exR("cut_0", fov"a")
     andR
     allL("Ant_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     orL
     trivial
     ref("LEDefinition")
     allL("Ant_0", le"(suc a)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     orL
     trivial
     ref("LEDefinition2")

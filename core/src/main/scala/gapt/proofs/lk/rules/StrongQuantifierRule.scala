@@ -16,7 +16,7 @@ abstract class StrongQuantifierRule extends UnaryLKProof with CommonRule with Ei
   if (!subProof.endSequent.isDefinedAt(aux))
     throw LKRuleCreationException(s"Sequent ${subProof.endSequent} is not defined at index ${aux}.")
 
-  val (auxFormula, context) = premise.`focus`(aux)
+  val (auxFormula, context) = premise.focus(aux)
 
   // eigenvariable condition
   if (freeVariables(context) contains eigenVariable)

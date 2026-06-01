@@ -113,9 +113,9 @@ object improveSolutionLK {
     def checkSolution(clause: FOLClause): Unit =
       if (!isSolution.contains(clause)) {
         val condition = context :+ clause.toDisjunction
-        if (prover.`isValid`(condition)) {
+        if (prover.isValid(condition)) {
           isSolution(clause) = true
-          for (a <- clause.indices) checkSolution(clause.`delete`(a))
+          for (a <- clause.indices) checkSolution(clause.delete(a))
         } else {
           isSolution(clause) = false
         }

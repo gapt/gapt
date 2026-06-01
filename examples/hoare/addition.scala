@@ -30,7 +30,7 @@ import gapt.provers.prover9.Prover9
 
   println(nLine + "Expansion sequent:")
   val expansionSequent = LKToExpansionProof(proof).expansionSequent
-  extractInstances(expansionSequent).`foreach`(println)
+  extractInstances(expansionSequent).foreach(println)
 
   println(nLine + "Deep sequent:")
   val deepSequent = expansionSequent.map {

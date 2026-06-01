@@ -43,55 +43,55 @@ object MonoidCancellation extends TacticsProof {
     val plus_cancel = mkAux(hof"a = c -> b = d -> a * b = c * d")
 
     Tactic {
-      include("plus_unit_p", plus_unit_p).`andThen`(
+      include("plus_unit_p", plus_unit_p).andThen(
         include("plus_assoc_p1", plus_assoc_p1)
-      ).`andThen`(
+      ).andThen(
         include("plus_assoc_p2", plus_assoc_p2)
-      ).`andThen`(
+      ).andThen(
         include("plus_comm_p", plus_comm_p)
-      ).`andThen`(
+      ).andThen(
         include("plus_unit_c", plus_unit_c)
-      ).`andThen`(
+      ).andThen(
         include("plus_assoc_c1", plus_assoc_c1)
-      ).`andThen`(
+      ).andThen(
         include("plus_assoc_c2", plus_assoc_c2)
-      ).`andThen`(
+      ).andThen(
         include("plus_comm_c", plus_comm_c)
-      ).`andThen`(
+      ).andThen(
         include("plus_cancel", plus_cancel)
-      ).`andThen`(
+      ).andThen(
         skip
       )
     }
   }
 
   lazy val iterRight: Tactic[Unit] = Tactic {
-    chain("plus_unit_c").`orElse`(
+    chain("plus_unit_c").orElse(
       chain("plus_assoc_c1").andThen(iterRight)
-    ).`orElse`(
+    ).orElse(
       chain("plus_assoc_c2").andThen(iterRight)
-    ).`orElse`(
+    ).orElse(
       chain("plus_cancel").andThen(refl)
     )
   }
 
   lazy val iterLeft: Tactic[Unit] = Tactic {
-    chain("plus_unit_p").`orElse`(
+    chain("plus_unit_p").orElse(
       chain("plus_assoc_p1").andThen(iterRight)
-    ).`orElse`(
+    ).orElse(
       chain("plus_assoc_p2").andThen(iterRight)
-    ).`orElse`(
+    ).orElse(
       iterRight
-    ).`orElse`(chain("plus_comm_p").andThen(iterRight))
+    ).orElse(chain("plus_comm_p").andThen(iterRight))
   }
 
   lazy val cancel: Tactic[Unit] = Tactic {
-    iterLeft.`orElse`(chain("plus_comm_c").andThen(iterLeft))
+    iterLeft.orElse(chain("plus_comm_c").andThen(iterLeft))
   }
 
   val solve: Tactic[Unit] = Tactic {
-    setup.`andThen`(
-      repeat(refl.`orElse`(cancel))
+    setup.andThen(
+      repeat(refl.orElse(cancel))
     )
   }
 

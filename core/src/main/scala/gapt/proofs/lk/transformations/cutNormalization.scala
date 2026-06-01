@@ -18,108 +18,108 @@ object cutNormal {
     (new ReductiveCutNormalization(cleanStructuralRules, unfoldInductions)).apply(proof)
 
   val nonCommutingRightRankReduction =
-    RightRankWeakeningLeftReduction.`orElse`(
+    RightRankWeakeningLeftReduction.orElse(
       RightRankWeakeningRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankContractionLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankContractionRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankDefinitionLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankDefinitionRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankAndLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankAndRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankOrLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankOrRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankImpLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankImpRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankNegLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankNegRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankForallLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankForallRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankForallSkRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankExistsLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankExistsSkLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankExistsRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankEqualityLeftReduction
-    ).`orElse`(
+    ).orElse(
       RightRankEqualityRightReduction
-    ).`orElse`(
+    ).orElse(
       RightRankInductionReduction
     )
 
   val nonCommutingLeftRankReduction =
-    LeftRankWeakeningLeftReduction.`orElse`(
+    LeftRankWeakeningLeftReduction.orElse(
       LeftRankWeakeningRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankContractionLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankContractionRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankDefinitionLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankDefinitionRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankAndLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankAndRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankOrLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankOrRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankImpLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankImpRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankNegLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankNegRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankForallLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankForallRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankForallSkRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankExistsLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankExistsSkLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankExistsRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankEqualityLeftReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankEqualityRightReduction
-    ).`orElse`(
+    ).orElse(
       LeftRankInductionReduction
     )
 
   val nonCommutingCutReduction =
-    gradeReduction.`orElse`(
+    gradeReduction.orElse(
       nonCommutingLeftRankReduction
-    ).`orElse`(
+    ).orElse(
       nonCommutingRightRankReduction
     )
 
   val commutingCutReduction =
-    StuckCutReduction.Right.`orElse`(
+    StuckCutReduction.Right.orElse(
       StuckCutReduction.Left
     )
 }
@@ -134,9 +134,9 @@ class ReductiveCutNormalization(
 )(implicit val ctx: Context) {
 
   val cutReduction =
-    cutNormal.nonCommutingCutReduction.`orElse`(
+    cutNormal.nonCommutingCutReduction.orElse(
       cutNormal.commutingCutReduction
-    ).`orElse`(
+    ).orElse(
       if (unfoldInduction)
         new LeftRankInductionUnfoldingReduction
       else
@@ -155,9 +155,9 @@ class ReductiveCutNormalization(
    */
   def apply(proof: LKProof): LKProof = {
     if (cleanStructuralRules)
-      (new IterativeParallelCsrStrategy(cutReduction)).`run`(proof)
+      (new IterativeParallelCsrStrategy(cutReduction)).run(proof)
     else
-      (new UppermostFirstStrategy(cutReduction)).`run`(proof)
+      (new UppermostFirstStrategy(cutReduction)).run(proof)
   }
 
   /**
@@ -265,7 +265,7 @@ class LeftRankInductionUnfoldingReduction(implicit ctx: Context) extends CutRedu
   override def reduce(cut: CutRule): Option[LKProof] = {
     cut.leftSubProof match {
       case ind @ InductionRule(_, _, _) if isConstructorForm(ind.term) =>
-        Some((new ParallelAtDepthStrategy(new InductionUnfoldingReduction(), 1)).`run`(cut))
+        Some((new ParallelAtDepthStrategy(new InductionUnfoldingReduction(), 1)).run(cut))
       case _ => None
     }
   }

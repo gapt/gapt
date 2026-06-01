@@ -51,13 +51,13 @@ object prop_12 extends TacticsProof {
     allR
     induction(hov"xs:list")
     /// Base case
-    rewrite.many.`ltr`("def_map2_1")
-    rewrite.many.`ltr`("def_drop_2")
-    rewrite.many.`ltr`("def_map2_1")
+    rewrite.many.ltr("def_map2_1")
+    rewrite.many.ltr("def_drop_2")
+    rewrite.many.ltr("def_map2_1")
     refl
     /// Step case
-    rewrite.many.`ltr`("def_map2_2")
-    rewrite.many.`ltr`("def_drop_3")
+    rewrite.many.ltr("def_map2_2")
+    rewrite.many.ltr("def_drop_3")
     chain("IHn_0")
   }
 }

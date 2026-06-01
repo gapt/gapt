@@ -138,10 +138,10 @@ class VtratgTermGenerationFormula(g: VTRATG, t: Expr) {
     }
 
     for ((x, ts) <- possibleValues)
-      cs += atMost.`oneOf`((ts + notASubTerm).toSeq.map { valueOfNonTerminal(x, _) })
+      cs += atMost.oneOf((ts + notASubTerm).toSeq.map { valueOfNonTerminal(x, _) })
 
     for ((i, assignments) <- possibleAssignments.groupBy { _._1 })
-      cs += exactly.`oneOf`(assignments.toSeq.map { assignment => And(g.nonTerminals(i).lazyZip(assignment._2).map(valueOfNonTerminal)) })
+      cs += exactly.oneOf(assignments.toSeq.map { assignment => And(g.nonTerminals(i).lazyZip(assignment._2).map(valueOfNonTerminal)) })
 
     And(cs.result())
   }
@@ -207,7 +207,7 @@ object minimizeVTRATG {
     val atomsInHard = atoms(hard)
     val soft = for {
       p <- g.productions
-      atom = formula.`productionIsIncluded`(p)
+      atom = formula.productionIsIncluded(p)
       if atomsInHard contains atom
     } yield -atom -> weight(p)
     logger.time("maxsat") { maxSATSolver.solve(hard, soft) } match {

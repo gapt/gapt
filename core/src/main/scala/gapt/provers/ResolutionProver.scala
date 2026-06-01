@@ -87,25 +87,25 @@ trait ResolutionProver extends OneShotProver { self =>
     import gapt.proofs.reduction._
     override def isValid(sequent: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = {
       val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
-      val (folProblem, _) = reduction.`forward`(sequent)
+      val (folProblem, _) = reduction.forward(sequent)
       self.getResolutionProof(folProblem)(using ctx.map(_.newMutable)).isDefined
     }
 
     override def getExpansionProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = {
       val reduction = PredicateReductionET |> ErasureReductionET
-      val (folProblem, back) = reduction.`forward`(sequent)
+      val (folProblem, back) = reduction.forward(sequent)
       self.getExpansionProof(folProblem).map(back)
     }
 
     override def getLKProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = {
       val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
-      val (folProblem, back) = reduction.`forward`(sequent)
+      val (folProblem, back) = reduction.forward(sequent)
       self.getResolutionProof(folProblem).map(proof => back(eliminateSplitting(proof)))
     }
 
     override def getResolutionProof(seq: Iterable[HOLClause])(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof] = {
       val reduction = PredicateReductionCNF |> ErasureReductionCNF
-      val (folProblem, back) = reduction.`forward`(seq.toSet)
+      val (folProblem, back) = reduction.forward(seq.toSet)
       self.getResolutionProof(folProblem).map(eliminateSplitting(_)).map(back)
     }
 
@@ -116,25 +116,25 @@ trait ResolutionProver extends OneShotProver { self =>
     import gapt.proofs.reduction._
     override def isValid(sequent: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = {
       val reduction = CNFReductionLKRes |> ErasureReductionCNF
-      val (folProblem, _) = reduction.`forward`(sequent)
+      val (folProblem, _) = reduction.forward(sequent)
       self.getResolutionProof(folProblem)(using ctx.map(_.newMutable)).isDefined
     }
 
     override def getExpansionProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = {
       val reduction = ErasureReductionET
-      val (folProblem, back) = reduction.`forward`(sequent)
+      val (folProblem, back) = reduction.forward(sequent)
       self.getExpansionProof(folProblem).map(back)
     }
 
     override def getLKProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = {
       val reduction = CNFReductionLKRes |> ErasureReductionCNF
-      val (folProblem, back) = reduction.`forward`(sequent)
+      val (folProblem, back) = reduction.forward(sequent)
       self.getResolutionProof(folProblem).map(proof => back(eliminateSplitting(proof)))
     }
 
     override def getResolutionProof(seq: Iterable[HOLClause])(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof] = {
       val reduction = ErasureReductionCNF
-      val (folProblem, back) = reduction.`forward`(seq.toSet)
+      val (folProblem, back) = reduction.forward(seq.toSet)
       self.getResolutionProof(folProblem).map(eliminateSplitting(_)).map(back)
     }
 
@@ -145,25 +145,25 @@ trait ResolutionProver extends OneShotProver { self =>
     import gapt.proofs.reduction._
     override def isValid(sequent: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = {
       val reduction = CNFReductionLKRes |> TagReductionCNF
-      val (folProblem, _) = reduction.`forward`(sequent)
+      val (folProblem, _) = reduction.forward(sequent)
       self.getResolutionProof(folProblem)(using ctx.map(_.newMutable)).isDefined
     }
 
     override def getExpansionProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[ExpansionProof] = {
       val reduction = TagReductionET
-      val (folProblem, back) = reduction.`forward`(sequent)
+      val (folProblem, back) = reduction.forward(sequent)
       self.getExpansionProof(folProblem).map(back)
     }
 
     override def getLKProof(sequent: HOLSequent)(implicit ctx: Maybe[MutableContext]): Option[LKProof] = {
       val reduction = CNFReductionLKRes |> TagReductionCNF
-      val (folProblem, back) = reduction.`forward`(sequent)
+      val (folProblem, back) = reduction.forward(sequent)
       self.getResolutionProof(folProblem).map(proof => back(eliminateSplitting(proof)))
     }
 
     override def getResolutionProof(seq: Iterable[HOLClause])(implicit ctx: Maybe[MutableContext]): Option[ResolutionProof] = {
       val reduction = TagReductionCNF
-      val (folProblem, back) = reduction.`forward`(seq.toSet)
+      val (folProblem, back) = reduction.forward(seq.toSet)
       self.getResolutionProof(folProblem).map(eliminateSplitting(_)).map(back)
     }
 

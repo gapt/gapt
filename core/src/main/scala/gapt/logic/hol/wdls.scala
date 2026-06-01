@@ -118,7 +118,7 @@ private case class Disjunct(as: Seq[Formula], bs: Seq[Formula]) {
   private val sequent = HOLSequent(as, bs)
   def toFormula = And(as ++ bs)
   def variables = gapt.expr.util.variables(toFormula)
-  def multiSetEquals(other: Disjunct): Boolean = sequent.`multiSetEquals`(other.sequent)
+  def multiSetEquals(other: Disjunct): Boolean = sequent.multiSetEquals(other.sequent)
 }
 
 private object Disjunct {

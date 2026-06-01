@@ -66,7 +66,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
       encoding.decodeAtom,
       cls => {
         val clause = encoding.decodeClause(cls.toSeq)
-        cnf_.find(_.conclusion.`multiSetEquals`(clause)).get
+        cnf_.find(_.conclusion.multiSetEquals(clause)).get
       }
     ))
   }

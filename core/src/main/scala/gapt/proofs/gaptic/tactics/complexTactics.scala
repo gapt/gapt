@@ -94,7 +94,7 @@ case class ForwardChain(
   }
 
   private def applyInstantiatedLemma(instanceLabel: String): Tactic[Unit] =
-    ImpLeftTactic(OnLabel(instanceLabel)).`andThen`(LogicalAxiomTactic)
+    ImpLeftTactic(OnLabel(instanceLabel)).andThen(LogicalAxiomTactic)
 
   private def matchingLemma(lemma: Formula, formula: Formula): Option[Substitution] = {
     val fixedVariables = freeVariables(lemma).map { v => v -> v }
@@ -193,19 +193,19 @@ case class RewriteTactic(
       case ((`target`, tgt), tgtIdx) <- goal.labelledSequent.zipWithIndex.elements
       case (`eqLabel`, quantEq @ All.Block(vs, eq @ Eq(t, s))) <- goal.labelledSequent.antecedent
       (t_, s_) = if (leftToRight) (t, s) else (s, t)
-      pos <- HOLPosition.`getPositions`(tgt)
+      pos <- HOLPosition.getPositions(tgt)
       subst <- syntacticMatching(List(t_ -> tgt(pos)), PreSubstitution(fixedSubst ++ freeVariables(quantEq).map { v => v -> v }))
     } scala.util.boundary.break {
       val newTgt = tgt.replace(pos, subst(s_))
       val newGoal = OpenAssumption(goal.labelledSequent.updated(tgtIdx, target -> newTgt))
       for {
-        p1 <- if (once) Tactic.pure(newGoal) else apply(newGoal, target).`orElse`(Tactic.pure(newGoal))
+        p1 <- if (once) Tactic.pure(newGoal) else apply(newGoal, target).orElse(Tactic.pure(newGoal))
         p2 = WeakeningLeftRule(p1, subst(eq))
         p3 = if (tgtIdx isSuc) EqualityRightRule(p2, Ant(0), newTgt, tgt)
         else EqualityLeftRule(p2, Ant(0), newTgt, tgt)
         p4 = ForallLeftBlock(p3, quantEq, subst(vs))
         p5 = ContractionLeftRule(p4, quantEq)
-        _ = require(p5.conclusion.`multiSetEquals`(goal.conclusion))
+        _ = require(p5.conclusion.multiSetEquals(goal.conclusion))
       } yield p5
     }
     if (once) TacticFailure(this, "cannot rewrite at least once") else Tactic.pure(goal)
@@ -264,7 +264,7 @@ case class UnfoldTacticHelper(definitions: Seq[String], maxSteps: Option[Int] = 
   def atMost(steps: Int): UnfoldTacticHelper = copy(maxSteps = Some(steps))
 
   def in(labels: String*) = labels.foldLeft[Tactic[Unit]](skip) {
-    (acc, l) => acc.`andThen`(UnfoldTactic(l, definitions, maxSteps))
+    (acc, l) => acc.andThen(UnfoldTactic(l, definitions, maxSteps))
   }
 }
 
@@ -374,7 +374,7 @@ object AnalyticInductionTactic {
  */
 case class AnalyticInductionTactic(axioms: AxiomFactory, prover: ResolutionProver)(implicit ctx: MutableContext) extends Tactical1[Unit] {
   override def apply(goal: OpenAssumption) =
-    AnalyticInductionProver(axioms, prover).`inductiveLKProof`(goal.labelledSequent) match {
+    AnalyticInductionProver(axioms, prover).inductiveLKProof(goal.labelledSequent) match {
       case None     => TacticFailure(this, "analytic induction prover failed")
       case Some(lk) => replace(lk)
     }

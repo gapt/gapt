@@ -73,7 +73,7 @@ trait TacticCommands {
   /**
    * Attempts to apply the tactics `axiomTop`, `axiomBot`, `axiomRefl`, and `axiomLog`.
    */
-  def trivial: Tactic[Unit] = Tactic { axiomTop.`orElse`(axiomBot).`orElse`(axiomRefl).`orElse`(axiomLog) }.cut("Not a valid initial sequent")
+  def trivial: Tactic[Unit] = Tactic { axiomTop.orElse(axiomBot).orElse(axiomRefl).orElse(axiomLog) }.cut("Not a valid initial sequent")
 
   /**
    * Applies the `NegLeft` tactic to the current subgoal: The goal
@@ -512,7 +512,7 @@ trait TacticCommands {
   def include(label: String, proof: LKProof): Tactic[Unit] = Tactic {
     for {
       goal <- currentGoal
-      diff = proof.conclusion.`diff`(goal.conclusion)
+      diff = proof.conclusion.diff(goal.conclusion)
       cutFormula = diff.toDisjunction
       _ <- cut(label, cutFormula)
       _ <- insert(proof)
@@ -521,7 +521,7 @@ trait TacticCommands {
 
   def include(names: Expr*)(implicit ctx: Context): Tactic[Unit] = Tactic(
     Tactic.sequence(for (case l @ Apps(Const(n, _, _), _) <- names) yield include(n, ProofLink(l)))
-      .`andThen`(TacticMonad.pure(()))
+      .andThen(TacticMonad.pure(()))
   )
 
   def include(labels: String*)(implicit ctx: Context, dummyImplicit: DummyImplicit): Tactic[Unit] =
@@ -593,24 +593,24 @@ trait TacticCommands {
    */
   def decompose: Tactic[Unit] = Tactic {
     repeat {
-      NegLeftTactic(AnyFormula).`orElse`(NegRightTactic(AnyFormula)).`orElse`(
+      NegLeftTactic(AnyFormula).orElse(NegRightTactic(AnyFormula)).orElse(
         AndLeftTactic(AnyFormula)
-      ).`orElse`(OrRightTactic(AnyFormula)).`orElse`(ImpRightTactic(AnyFormula)).`orElse`(
+      ).orElse(OrRightTactic(AnyFormula)).orElse(ImpRightTactic(AnyFormula)).orElse(
         ForallRightTactic(AnyFormula)
-      ).`orElse`(ExistsLeftTactic(AnyFormula))
+      ).orElse(ExistsLeftTactic(AnyFormula))
     }
   }
 
   def destruct(label: String): Tactic[Any] = Tactic {
-    allR(label).`orElse`(exL(label)).`orElse`(
+    allR(label).orElse(exL(label)).orElse(
       andL(label)
-    ).`orElse`(andR(label)).`orElse`(
+    ).orElse(andR(label)).orElse(
       orL(label)
-    ).`orElse`(orR(label)).`orElse`(
+    ).orElse(orR(label)).orElse(
       impL(label)
-    ).`orElse`(impR(label)).`orElse`(
+    ).orElse(impR(label)).orElse(
       negL(label)
-    ).`orElse`(negR(label))
+    ).orElse(negR(label))
   }.cut(s"Cannot destruct $label")
 
   def chain(h: String) = ChainTactic(h)
@@ -765,11 +765,11 @@ trait TacticCommands {
 
   def anaInd(implicit ctx: Context): Tactic[Unit] = {
     implicit val mutCtx = ctx.newMutable
-    repeat(allR).`andThen`(AnalyticInductionTactic(StandardInductionAxioms(), Escargot.withDeskolemization))
+    repeat(allR).andThen(AnalyticInductionTactic(StandardInductionAxioms(), Escargot.withDeskolemization))
   }
   def anaIndG(implicit ctx: Context): Tactic[Unit] = {
     implicit val mutCtx = ctx.newMutable
-    repeat(allR).`andThen`(AnalyticInductionTactic(GeneralInductionAxioms(), Escargot.withDeskolemization))
+    repeat(allR).andThen(AnalyticInductionTactic(GeneralInductionAxioms(), Escargot.withDeskolemization))
   }
 
   def escrgt(implicit ctx: Context): Tactic[Unit] = {
@@ -830,16 +830,16 @@ trait TacticCommands {
   def subst1(hyp: String): SubstTactic = SubstTactic(OnLabel(hyp))
   def substAll: Tactic[Unit] = Tactic(repeat(SubstTactic(AnyFormula)))
   def subst(hyps: String*): Tactic[Unit] =
-    Tactic(Tactic.sequence(for (hyp <- hyps) yield subst1(hyp)).`andThen`(skip))
+    Tactic(Tactic.sequence(for (hyp <- hyps) yield subst1(hyp)).andThen(skip))
 
   def cases(lemma: String, terms: Expr*)(implicit ctx: Context): Tactic[Unit] = casesW(lemma, lemma, terms*)
   def casesW(label: String, lemma: String, terms: Expr*)(implicit ctx: Context): Tactic[Unit] = Tactic {
     def substOr(l: String): Tactic[Unit] =
-      (orL(l).`onAll`(substOr(l))).`orElse`(
-        exL(l).`onAll`(substOr(l))
-      ).`orElse`(
+      (orL(l).onAll(substOr(l))).orElse(
+        exL(l).onAll(substOr(l))
+      ).orElse(
         subst1(l)
-      ).`orElse`(skip)
+      ).orElse(skip)
     for {
       _ <- include(label, ProofLink(lemma))
       _ <- allL(label, terms*).forget

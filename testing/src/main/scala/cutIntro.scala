@@ -31,7 +31,7 @@ object parseMethod {
 
     case "reforest" => ReforestMethod
 
-    case _ if methodName.`endsWith`("_maxsat") =>
+    case _ if methodName.endsWith("_maxsat") =>
       val vectorSizes = methodName.dropRight("_maxsat".length).split("_").map(_.toInt)
       MaxSATMethod(OpenWBO, vectorSizes.toIndexedSeq*)
   }

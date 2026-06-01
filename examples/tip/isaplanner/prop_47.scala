@@ -54,7 +54,7 @@ object prop_47 extends TacticsProof {
   val max_comm_goal = hof"!x !y max2(x,y) = max2(y,x)"
   val max_comm = max_definition ++: Sequent() :+ "goal" -> max_comm_goal
   val max_comm_proof = Lemma(max_comm) {
-    analyticInduction.`withAxioms`(sequentialAxioms.forAllVariables.forLabel("goal"))
+    analyticInduction.withAxioms(sequentialAxioms.forAllVariables.forLabel("goal"))
   }
 
   val proof = Lemma(sequent) {

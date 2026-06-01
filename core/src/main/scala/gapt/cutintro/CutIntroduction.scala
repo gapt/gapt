@@ -67,8 +67,8 @@ object MaxSATMethod {
 
 case object ReforestMethod extends GrammarFindingMethod {
   def findGrammars(lang: Set[Expr]) = {
-    var state = Reforest.`start`(lang)
-    state = Reforest.`full`(state)
+    var state = Reforest.start(lang)
+    state = Reforest.full(state)
     Some(state.toVTRATG)
   }
 
@@ -146,7 +146,7 @@ case class SchematicExtendedHerbrandSequent(us: Sequent[(FOLFormula, Seq[Seq[FOL
 
 object vtratgToSEHS {
   def apply(encoding: InstanceTermEncoding, g: VTRATG): SchematicExtendedHerbrandSequent = {
-    val us = (encoding.endSequent.`zip`(encoding.symbols)).map {
+    val us = (encoding.endSequent.zip(encoding.symbols)).map {
       case (u, sym) =>
         u.asInstanceOf[FOLFormula] -> g.rightHandSides(g.startSymbolNT).map(_.head).toList.collect { case Apps(`sym`, args) => args.map { _.asInstanceOf[FOLTerm] } }
     }
@@ -162,7 +162,7 @@ object sehsToVTRATG {
     val startSymbol = rename(Var("x", encoding.instanceTermType), freeVars)
     val nonTerminals = sehs.eigenVariables.map(_.toList)
     val instances = for ((f, us) <- sehs.us; u <- us) yield instantiate(f, u)
-    val productionsFromAx = for (t <- encoding.`encode`(instances)) yield List(startSymbol) -> List(t)
+    val productionsFromAx = for (t <- encoding.encode(instances)) yield List(startSymbol) -> List(t)
     val otherProds = for ((ev, ss) <- sehs.ss; s <- ss) yield ev -> s
     val productions = productionsFromAx ++ otherProds
 
@@ -203,15 +203,15 @@ object CutIntroduction {
           else new Escargot(splitting = true, equality = true, propositional = true)
 
         override def runSession[A](program: Session[A]) = smtSolver.runSession(program)
-        override def isValid(s: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = smtSolver.`isValid`(s)
-        override def getLKProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]) = EquationalLKProver.`getLKProof`(s)
+        override def isValid(s: HOLSequent)(implicit ctx: Maybe[Context]): Boolean = smtSolver.isValid(s)
+        override def getLKProof(s: HOLSequent)(implicit ctx: Maybe[MutableContext]) = EquationalLKProver.getLKProof(s)
       }
     }
     case object PureFOL extends BackgroundTheory {
       val hasEquality = false
       object prover extends OneShotProver {
-        override def getLKProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]) = LKProver.`getLKProof`(seq)
-        override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]) = Sat4j.`isValid`(seq)
+        override def getLKProof(seq: HOLSequent)(implicit ctx: Maybe[MutableContext]) = LKProver.getLKProof(seq)
+        override def isValid(seq: HOLSequent)(implicit ctx: Maybe[Context]) = Sat4j.isValid(seq)
       }
     }
 
@@ -277,7 +277,7 @@ object CutIntroduction {
 
     /********** Term set Extraction **********/
     val encoding = InstanceTermEncoding(endSequent)
-    val termset = groundTerms(encoding.`encode`(ep))
+    val termset = groundTerms(encoding.encode(ep))
     val weightedTermsetSize = termset.view.map { case Apps(_, args) => args.size }.sum
 
     logger.metric("termset", termset.size)
@@ -436,7 +436,7 @@ object CutIntroduction {
     )
 
     def addNewInstances(instances: FOLSequent) =
-      currentGoal.flatMap(curGoal => haveInstances(instances.distinct.`diff`(curGoal.conclusion)))
+      currentGoal.flatMap(curGoal => haveInstances(instances.distinct.diff(curGoal.conclusion)))
 
     def insertProofOfSolutionCondition(i: Int) = {
       val solCond = solStruct.instantiatedSolutionCondition(i)

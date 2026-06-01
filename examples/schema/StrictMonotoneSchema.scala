@@ -53,8 +53,8 @@ object StrictMonotoneSchema extends TacticsProof {
     exR("cut", hoc"z")
     allL(hoc"z")
     allL(le"(suc z)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
-    unfold("POR").`atMost`(1).`in`("Ant_0_1")
+    unfold("POR").atMost(1).in("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_1")
     orR
     ref("NumericTransitivity")
     ref("phi")
@@ -70,8 +70,8 @@ object StrictMonotoneSchema extends TacticsProof {
     exR("cut", hoc"z")
     allL(hoc"z")
     allL(le"(suc z)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
-    unfold("POR").`atMost`(1).`in`("Ant_0_1")
+    unfold("POR").atMost(1).in("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_1")
     orR
     orL("Ant_0_1")
     exR("cut", hoc"z")

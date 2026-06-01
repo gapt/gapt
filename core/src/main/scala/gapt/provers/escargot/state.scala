@@ -331,7 +331,7 @@ class EscargotState(val ctx: MutableContext) {
 
   def axiomClause(section: ContextSection, axiom: Axiom): (Set[Cls], Map[HOLSequent, ResolutionProof]) = {
     val seq = axiom.formula +: Sequent()
-    val ground = section.`groundSequent`(seq)
+    val ground = section.groundSequent(seq)
     val cnf = structuralCNF(ground)(using ctx)
 
     val cnfMap = cnf.view.map(p => p.conclusion -> p).toMap

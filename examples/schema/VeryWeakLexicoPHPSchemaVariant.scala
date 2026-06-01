@@ -66,8 +66,8 @@ object VeryWeakLexicoPHPSchemaVariant extends TacticsProof {
     allL(le"(suc a)")
     allL("Ant_0_0", le"(suc b)")
     allL("Ant_0_0", fov"b")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
+    unfold("POR").atMost(1).in("Ant_0_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0_1")
     andR("cut_0_0_0_1")
     trivial
     trivial
@@ -115,18 +115,18 @@ object VeryWeakLexicoPHPSchemaVariant extends TacticsProof {
     forget("cut_0_0")
     allL("Ant_0", fov"a")
     allL("Ant_0_0", fov"b")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0_0")
     orL
     andR("cut_0_0_0_0_0")
     trivial
     allL("Ant_0_0", le"(suc b)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0_1")
+    unfold("POR").atMost(1).in("Ant_0_0_1")
     orL
     andR("cut_0_0_0_0_1")
     trivial
     allL("Ant_0", le"(suc a)")
     allL("Ant_0_1", fov"b")
-    unfold("POR").`atMost`(1).`in`("Ant_0_1_0")
+    unfold("POR").atMost(1).in("Ant_0_1_0")
     orL
     andR("cut_0_0_0_1")
     trivial

@@ -22,7 +22,7 @@ object moveQuantifiers {
    *         as often as possible to the input formula
    */
   def up(quantifier: QuantifierHelper, formula: Formula): Formula = formula match {
-    case AndOr(quantifier(variableAlpha, alpha), quantifier(variableBeta, beta), connective) if quantifier.`isCompatibleWith`(connective) =>
+    case AndOr(quantifier(variableAlpha, alpha), quantifier(variableBeta, beta), connective) if quantifier.isCompatibleWith(connective) =>
       fuseQuantifierOverConnective(quantifier, connective, List(variableAlpha -> alpha, variableBeta -> beta))
 
     case AndOr(quantifier(variable, beta), alpha, connective) =>
@@ -64,19 +64,19 @@ object moveQuantifiers {
    *         as often as possible to the input formula
    */
   def down(quantifier: QuantifierHelper, formula: Formula): Formula = formula match {
-    case quantifier(variable, AndOr(alpha, beta, connective)) if quantifier.`isCompatibleWith`(connective) =>
+    case quantifier(variable, AndOr(alpha, beta, connective)) if quantifier.isCompatibleWith(connective) =>
       connective(
         down(quantifier, quantifier(variable, alpha)),
         down(quantifier, quantifier(variable, beta))
       )
 
-    case quantifier(variable, AndOr(alpha, beta, connective)) if variable.`isNotFreeIn`(alpha) =>
+    case quantifier(variable, AndOr(alpha, beta, connective)) if variable.isNotFreeIn(alpha) =>
       connective(
         down(quantifier, alpha),
         down(quantifier, quantifier(variable, beta))
       )
 
-    case quantifier(variable, AndOr(beta, alpha, connective)) if variable.`isNotFreeIn`(alpha) =>
+    case quantifier(variable, AndOr(beta, alpha, connective)) if variable.isNotFreeIn(alpha) =>
       connective(
         down(quantifier, quantifier(variable, beta)),
         down(quantifier, alpha)

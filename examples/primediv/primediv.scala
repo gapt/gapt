@@ -30,7 +30,7 @@ object primediv extends TacticsProof {
   // TODO: expose current BabelSignature inside Lemma, then we can drop the (x:nat) annotation
 
   val lnpind = Lemma(hols"LNP :- IND") {
-    unfold("LNP").`in`("LNP"); unfold("IND").`in`("IND"); decompose
+    unfold("LNP").in("LNP"); unfold("IND").in("IND"); decompose
     allL("LNP", le"λ(x:nat) ¬X x").forget
     destruct("LNP"); by { exR("LNP", le"y:nat"); prop }
     decompose; chain("IND_0").at("LNP_0")
@@ -38,29 +38,29 @@ object primediv extends TacticsProof {
   }
 
   val proof = Lemma(theory ++ hols"LNP :- ∀y (y > 1 → ∃w PD w y)") {
-    include("ind", lnpind); unfold("IND").`in`("ind")
+    include("ind", lnpind); unfold("IND").in("ind")
     allL("ind", le"λu (u > 1 → ∃w PD w u)")
     chain("ind_0"); decompose
 
     cut("yprime", hof"PRIME y")
     by { // case b
-      unfold("PRIME", "D").`in`("yprime")
+      unfold("PRIME", "D").in("yprime")
       destruct("yprime"); prop; decompose
       allL("g_0", le"z:nat").forget
       destruct("g_0"); chain("mulleq").at("g_0").subst(hov"y:nat" -> le"z_0:nat"); prop; prop
-      destruct("g_0"); unfold(">").`in`("g_0"); chain("oneleqeq").at("g_0"); prop
+      destruct("g_0"); unfold(">").in("g_0"); chain("oneleqeq").at("g_0"); prop
       decompose; exR(le"w:nat").forget
       unfold("PD", "D").in("g_0", "g_1_1")
       destruct("g_1_1"); prop; decompose
       exR(le"z_1*z_0").forget
-      rewrite.many.ltr("assoc", "g_0_1").`in`("g_1_1"); trivial
+      rewrite.many.ltr("assoc", "g_0_1").in("g_1_1"); trivial
     }
     by { // case a
-      unfold("PD").`in`("g_1_1")
+      unfold("PD").in("g_1_1")
       exR(le"y: nat").forget; destruct("g_1_1"); prop
-      unfold("D").`in`("g_1_1")
+      unfold("D").in("g_1_1")
       exR("g_1_1", le"1").forget
-      rewrite.`ltr`("neutral").`in`("g_1_1")
+      rewrite.ltr("neutral").in("g_1_1")
       refl
     }
   }

@@ -88,7 +88,7 @@ object freeVariablesLK {
 object groundFreeVarsLK {
   def getMap(p: LKProof): Set[(Var, Const)] = {
     val nameGen = rename.awayFrom(containedNames(p))
-    for (v @ Var(n, t) <- freeVariablesLK(p)) yield v -> Const(nameGen.`fresh`(n), t)
+    for (v @ Var(n, t) <- freeVariablesLK(p)) yield v -> Const(nameGen.fresh(n), t)
   }
 
   def apply(p: LKProof): LKProof = Substitution(getMap(p))(p)

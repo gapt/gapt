@@ -92,8 +92,8 @@ object gapticExamples {
       Sequent()
       :+ ("b" -> hof"P(x) & Q(x)")
   ) {
-    eql("eq1", "a").`yielding`(hof"P(v) -> Q(v)")
-    eql("eq1", "a").`yielding`(hof"P(v) -> Q(u)")
+    eql("eq1", "a").yielding(hof"P(v) -> Q(v)")
+    eql("eq1", "a").yielding(hof"P(v) -> Q(u)")
     eql("eq2", "b").fromRightToLeft
     trivial
   }
@@ -116,7 +116,7 @@ object gapticExamples {
       Sequent()
       :+ ("S" -> hof"A & B | -A")
   ) {
-    repeat(orR.`orElse`(negR).`orElse`(andR).`orElse`(impL).`orElse`(trivial))
+    repeat(orR.orElse(negR).orElse(andR).orElse(impL).orElse(trivial))
   }
 
   val drinker3 = Proof(Sequent()

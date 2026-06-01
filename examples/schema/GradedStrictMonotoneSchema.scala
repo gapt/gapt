@@ -65,10 +65,10 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exR("cut_0", hoc"z")
     andR
     allL("Ant_0", hoc"z")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     trivial
     allL("Ant_0", le"(suc z)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     trivial
     ref("phi")
   }
@@ -86,12 +86,12 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exR("cut_0", fov"a")
     andR
     allL("Ant_0", fov"a")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     orL
     trivial
     ref("LEDefinition")
     allL("Ant_0", le"(suc a)")
-    unfold("POR").`atMost`(1).`in`("Ant_0_0")
+    unfold("POR").atMost(1).in("Ant_0_0")
     orL
     trivial
     ref("LEDefinition2")
@@ -109,7 +109,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exL(fov"a")
     andL
     exR(fov"a")
-    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("JumpSeq").atMost(1).in("Suc_0_0")
     ref("NumericTransitivity")
     allL(foc"z")
     ref("minimalElement")
@@ -124,7 +124,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     orL
     exL(fov"a")
     andL
-    unfold("JumpSeq").`atMost`(1).`in`("Suc_0")
+    unfold("JumpSeq").atMost(1).in("Suc_0")
     exR(fov"a")
     andR
     ref("NumericTransitivity")
@@ -153,7 +153,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exL(fov"a")
     andL
     exR("Suc_0", fov"a")
-    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("JumpSeq").atMost(1).in("Suc_0_0")
     ref("NumericTransitivity")
     allR(fov"b")
     exR("cut_0", fov"b")
@@ -176,7 +176,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     orL
     exL(fov"a")
     andL
-    unfold("JumpSeq").`atMost`(1).`in`("Suc_0")
+    unfold("JumpSeq").atMost(1).in("Suc_0")
     exR("Suc_0", fov"a")
     andR
     ref("NumericTransitivity")
@@ -213,7 +213,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exR(fov"b")
     andR
     trivial
-    unfold("JumpSeq").`in`("Suc_0_0")
+    unfold("JumpSeq").in("Suc_0_0")
     ref("NumericTransitivity")
     allL(foc"z")
     andL
@@ -233,7 +233,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exR(fov"b")
     andR
     trivial
-    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("JumpSeq").atMost(1).in("Suc_0_0")
     andR
     ref("NumericTransitivity")
     cut("cut2", hof"?x (iLEQ(suc(b),suc(x)) & E(0,f(x)) & E(0,f(suc(x)))) | !y (iLEQ(suc(b),suc(y))  & LE(f(y),0))")
@@ -266,7 +266,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exR("Suc_0", fov"b")
     andR
     trivial
-    unfold("JumpSeq").`in`("Suc_0_0")
+    unfold("JumpSeq").in("Suc_0_0")
     ref("NumericTransitivity")
     allR(fov"c")
     exR("cut_0", fov"c")
@@ -301,7 +301,7 @@ object GradedStrictMonotoneSchema extends TacticsProof {
     exR("Suc_0", fov"b")
     andR
     trivial
-    unfold("JumpSeq").`atMost`(1).`in`("Suc_0_0")
+    unfold("JumpSeq").atMost(1).in("Suc_0_0")
     andR
     ref("NumericTransitivity")
     cut("cut2", hof"?x (iLEQ(suc(b),suc(x)) & E(s(n),f(x)) & E(s(n),f(suc(x)))) | !y (iLEQ(suc(b),suc(y)) & LE(f(y),s(n)))")

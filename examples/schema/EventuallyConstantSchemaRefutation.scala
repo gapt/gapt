@@ -23,7 +23,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof(EventuallyConstan
 
   val esPRSc = Sequent(Seq("Ant_0" -> hof"phiSFAF(s(n))"), Seq())
   val PRSc: LKProof = Lemma(esPRSc) {
-    unfold("phiSFAF").`in`("Ant_0")
+    unfold("phiSFAF").in("Ant_0")
     andL
     andL
     andL("Ant_0_0_0")
@@ -73,7 +73,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof(EventuallyConstan
 
   val esPRBc = Sequent(Seq("Ant_0" -> hof"phiSFAF(0)"), Seq())
   val PRBc: LKProof = Lemma(esPRBc) {
-    unfold("phiSFAF").`in`("Ant_0")
+    unfold("phiSFAF").in("Ant_0")
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Top 0", PRBc)
@@ -87,7 +87,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof(EventuallyConstan
     Seq()
   )
   val PR2Sc: LKProof = Lemma(esPR2Sc) {
-    unfold("phiSFAT").`in`("Ant_0")
+    unfold("phiSFAT").in("Ant_0")
     andL
     andL
     andL("Ant_0_0_0")
@@ -157,7 +157,7 @@ object EventuallyConstantSchemaRefutation extends TacticsProof(EventuallyConstan
     Seq()
   )
   val PR2Bc: LKProof = Lemma(esPR2Bc) {
-    unfold("phiSFAT").`in`("Ant_0")
+    unfold("phiSFAT").in("Ant_0")
     escargot
   }
   ctx += ProofDefinitionDeclaration(le"Next 0 k", PR2Bc)
@@ -171,11 +171,11 @@ object EventuallyConstantSchemaInductionRefutation extends TacticsProof(Eventual
   CharFormPRN.PR(CFPRN)
 
   val next = Lemma(hof"!n!k ((E(n, f(g(k))) | LE(f(g(k)), n)) & (E(n, f(k)) | LE(f(k), n)) -> ~phiSFAT(n))") {
-    allR; induction(hov"n:nat").`onAll`(unfold("phiSFAT").in("g")).`onAll`(escrgt)
+    allR; induction(hov"n:nat").onAll(unfold("phiSFAT").in("g")).onAll(escrgt)
   }
 
   val prsc = Lemma(hof"!n ~phiSFAF(n)") {
-    allR; induction(hov"n:nat").`onAll`(unfold("phiSFAF").in("g"))
+    allR; induction(hov"n:nat").onAll(unfold("phiSFAF").in("g"))
     by { escrgt }
     by { include("next", next); escrgt }
   }

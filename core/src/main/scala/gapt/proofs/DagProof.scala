@@ -119,7 +119,7 @@ object DagProof {
      * Iterate over all sub-proofs including this in post-order.
      */
     def foreach(f: Proof => Unit): Unit = {
-      for (p <- self.immediateSubProofs) p.treeLike.`foreach`(f)
+      for (p <- self.immediateSubProofs) p.treeLike.foreach(f)
       f(self)
     }
 

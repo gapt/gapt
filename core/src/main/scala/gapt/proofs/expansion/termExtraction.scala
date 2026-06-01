@@ -74,7 +74,7 @@ object extractInstances {
   }
 
   def apply(expansionSequent: ExpansionSequent): HOLSequent =
-    expansionSequent.`flatMap`(apply)
+    expansionSequent.flatMap(apply)
 
   def apply(expansionProof: ExpansionProof): HOLSequent =
     apply(expansionProof.expansionSequent)
@@ -155,7 +155,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
       case Ant(i) => s"a$i"
       case Suc(i) => s"s$i"
     }
-    nameGen.`fresh`(s"$idxPart:${matrices(idx).toUntypedAsciiString.replaceAll("\\s", "").take(30)}")
+    nameGen.fresh(s"$idxPart:${matrices(idx).toUntypedAsciiString.replaceAll("\\s", "").take(30)}")
   }
 
   /**
@@ -205,7 +205,7 @@ class InstanceTermEncoding private (val endSequent: HOLSequent, val instanceTerm
   /**
    * Maps a function symbol to the index of its corresponding formula in the end-sequent.
    */
-  def findESIndex(sym: Const): Option[SequentIndex] = symbols.`indexOfOption`(sym)
+  def findESIndex(sym: Const): Option[SequentIndex] = symbols.indexOfOption(sym)
 
   /**
    * Maps a function symbol to its corresponding formula in the end-sequent.

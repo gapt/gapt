@@ -35,7 +35,7 @@ object fixDerivation {
           case _                                             => scala.util.boundary.break(None)
         }
 
-      for (case ((a, true), i) <- p.conclusion.`zip`(needToFlip) zipWithIndex)
+      for (case ((a, true), i) <- p.conclusion.zip(needToFlip) zipWithIndex)
         p = Flip(p, p.conclusion.indexOf(a, i.polarity))
 
       p = Factor(p)
