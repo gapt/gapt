@@ -31,8 +31,8 @@ object TptpToString {
   }
 
   def annotations(annots: Option[Annotations]): String = annots match {
-    case None    => ""
-    case Some(a) => (a.source +: a.optionalInfo).map(expression).map(", " + _).mkString
+    case None                                                    => ""
+    case Some(Annotations(Source.General(source), optionalInfo)) => (source +: optionalInfo).map(expression).map(", " + _).mkString
   }
 
   def expression(expr: Expr): String = expression(expr, prio.max)

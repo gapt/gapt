@@ -28,7 +28,7 @@ class TptpParserTest extends Specification {
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
         a.source must_==
-          TptpTerm("inference", TptpTerm("abc"), GeneralList(TptpTerm("status", TptpTerm("thm"))), GeneralList(TptpTerm("a")))
+          Source.General(TptpTerm("inference", TptpTerm("abc"), GeneralList(TptpTerm("status", TptpTerm("thm"))), GeneralList(TptpTerm("a"))))
       }
     }
 

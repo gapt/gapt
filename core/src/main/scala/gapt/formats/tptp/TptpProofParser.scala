@@ -124,12 +124,12 @@ extension (formula: AnnotatedFormula) {
       case e                                           => throw new IllegalArgumentException(s"cannot parse $e")
     })
     source match {
-      case TptpTerm(
+      case Source.General(TptpTerm(
             "inference",
             TptpTerm(rule),
             GeneralList(usefulInfo*),
             GeneralList(parents*)
-          ) => {
+          )) => {
         val parentInfos = parents.map(parseParentInfo).map {
           case Success(info) => info
           case Failure(e)    => throw e
@@ -207,11 +207,11 @@ object TptpProofParser {
 
   def removeStrongQuants(tptpFile: TptpFile): TptpFile = {
     val stepsWithStrongQuants = tptpFile.inputs.filter {
-      case AnnotatedFormula(_, _, _, _, Some(Annotations(TptpTerm("introduced", TptpTerm(sat_splitting), _), _))) if sat_splitting.startsWith("sat_splitting") =>
+      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(TptpTerm("introduced", TptpTerm(sat_splitting), _)), _))) if sat_splitting.startsWith("sat_splitting") =>
         false
-      case AnnotatedFormula(_, _, _, _, Some(Annotations(TptpTerm("introduced", FOLVar(avatar), _), _))) if avatar.startsWith("AVATAR") =>
+      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(TptpTerm("introduced", FOLVar(avatar), _)), _))) if avatar.startsWith("AVATAR") =>
         false
-      case AnnotatedFormula(_, _, _, _, Some(Annotations(TptpTerm("introduced", FOLConst(avatar), _), _))) if avatar.startsWith("avatar") =>
+      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(TptpTerm("introduced", FOLConst(avatar), _)), _))) if avatar.startsWith("avatar") =>
         false
       case AnnotatedFormula(_, _, "conjecture", formula, _) =>
         containsStrongQuantifier(formula, Polarity.InSuccedent)
@@ -223,7 +223,7 @@ object TptpProofParser {
       tptpFile
     else
       TptpFile(tptpFile.inputs.collect { case f: AnnotatedFormula if !stepsWithStrongQuants(f.name) => f }.map {
-        case f @ AnnotatedFormula(_, _, _, _, Some(Annotations(just, _))) if getParents(just).toSet.intersect(stepsWithStrongQuants).isEmpty => f
+        case f @ AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(just), _))) if getParents(just).toSet.intersect(stepsWithStrongQuants).isEmpty => f
         case AnnotatedFormula(_, label, "conjecture", formula, _) =>
           AnnotatedFormula("fof", label, "conjecture", formula, None)
         case f => AnnotatedFormula("fof", f.name, "axiom", f.formula, None)
@@ -245,9 +245,9 @@ object TptpProofParser {
 
   def inventSources(stepList: TptpFile): TptpFile = TptpFile(stepList.inputs.map {
     case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, None) =>
-      af.copy(annotations = Some(Annotations(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label")), Seq.empty)))
-    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Some(Annotations(TptpTerm("file", _, TptpTerm("unknown")), _))) =>
-      af.copy(annotations = Some(Annotations(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label")), Seq.empty)))
+      af.copy(annotations = Some(Annotations(Source.General(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label"))), Seq.empty)))
+    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm("unknown"))), _))) =>
+      af.copy(annotations = Some(Annotations(Source.General(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label"))), Seq.empty)))
     case other => other
   })
 
@@ -256,10 +256,10 @@ object TptpProofParser {
     val labelledCNF = mutable.Map[String, Seq[FOLClause]]().withDefaultValue(Seq())
 
     stepList.inputs.foreach {
-      case AnnotatedFormula("fof", _, "conjecture", formula: FOLFormula, Some(Annotations(TptpTerm("file", _, TptpTerm(label)), _))) =>
+      case AnnotatedFormula("fof", _, "conjecture", formula: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
         endSequent :+= formula
         labelledCNF(label) ++= CNFn(formula).toSeq
-      case AnnotatedFormula(lang, _, _, formula: FOLFormula, Some(Annotations(TptpTerm("file", _, TptpTerm(label)), _))) =>
+      case AnnotatedFormula(lang, _, _, formula: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
         endSequent +:= (if (lang == "cnf") universalClosure(formula) else formula)
         labelledCNF(label) ++= CNFp(formula).toSeq
       case _ =>
@@ -331,9 +331,9 @@ object TptpProofParser {
         (step: @unchecked) match {
           case _ if haveAlreadyVisited(stepName) =>
             throw new IllegalArgumentException(s"Cyclic inference: ${steps(stepName)}")
-          case AnnotatedFormula("fof", _, "plain", And(Imp(defn, Neg(splAtom: FOLAtom)), _), Some(Annotations(TptpTerm("introduced", TptpTerm("sat_splitting_component"), _), _))) =>
+          case AnnotatedFormula("fof", _, "plain", And(Imp(defn, Neg(splAtom: FOLAtom)), _), Some(Annotations(Source.General(TptpTerm("introduced", TptpTerm("sat_splitting_component"), _)), _))) =>
             convertAvatarDefinition(defn, splAtom)
-          case AnnotatedFormula("fof", _, "plain", Bottom(), Some(Annotations(justification @ TptpTerm("inference", TptpTerm("sat_splitting_refutation"), _, _), _))) =>
+          case AnnotatedFormula("fof", _, "plain", Bottom(), Some(Annotations(Source.General(justification @ TptpTerm("inference", TptpTerm("sat_splitting_refutation"), _, _)), _))) =>
             val sketchParents = getParents(justification).flatMap(convert)
             val splitParents = sketchParents.map { parent0 =>
               var parent = parent0
@@ -357,7 +357,7 @@ object TptpProofParser {
                 _,
                 "plain",
                 And(Imp(splAtom: FOLAtom, defn), _),
-                Some(Annotations(TptpTerm("introduced", FOLVar("AVATAR_definition") | FOLConst("avatar_definition"), _), _))
+                Some(Annotations(Source.General(TptpTerm("introduced", FOLVar("AVATAR_definition") | FOLConst("avatar_definition"), _)), _))
               ) =>
             convertAvatarDefinition(defn, splAtom)
           case AnnotatedFormula(
@@ -365,7 +365,7 @@ object TptpProofParser {
                 _,
                 "plain",
                 disj,
-                Some(Annotations(justification @ TptpTerm("inference", FOLVar("AVATAR_split_clause") | FOLConst("avatar_split_clause"), _, _), _))
+                Some(Annotations(Source.General(justification @ TptpTerm("inference", FOLVar("AVATAR_split_clause") | FOLConst("avatar_split_clause"), _, _)), _))
               ) =>
             val Seq(assertion) = CNFp(disj).toSeq
             val Seq(splittedClause, _*) = getParents(justification).flatMap(convert): @unchecked
@@ -392,20 +392,20 @@ object TptpProofParser {
                 "plain",
                 Bottom(),
                 Some(Annotations(
-                  justification @ TptpTerm(
+                  Source.General(justification @ TptpTerm(
                     "inference",
                     FOLVar("AVATAR_sat_refutation") |
                     FOLConst("avatar_sat_refutation" | "avatar_smt_refutation"),
                     _,
                     _
-                  ),
+                  )),
                   _
                 ))
               ) =>
             Seq(SketchSplitCombine(getParents(justification).flatMap(convert)))
-          case AnnotatedFormula("fof", _, "conjecture", _, Some(Annotations(TptpTerm("file", _, TptpTerm(label)), _))) =>
+          case AnnotatedFormula("fof", _, "conjecture", _, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
             labelledCNF(label).map(SketchAxiom.apply)
-          case AnnotatedFormula(_, _, _, axiom: FOLFormula, Some(Annotations(TptpTerm("file", _, TptpTerm(label)), _))) =>
+          case AnnotatedFormula(_, _, _, axiom: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
             CNFp(axiom).toSeq match {
               case Seq(axiomClause) =>
                 Seq(SketchInference(
@@ -424,7 +424,7 @@ object TptpProofParser {
                 ))
               case clauses => labelledCNF(label).map(SketchAxiom.apply)
             }
-          case AnnotatedFormula(_, _, _, conclusion: FOLFormula, Some(Annotations(justification, _))) =>
+          case AnnotatedFormula(_, _, _, conclusion: FOLFormula, Some(Annotations(Source.General(justification), _))) =>
             CNFp(conclusion).toSeq match {
               case Seq(conclusionClause) =>
                 val sketchParents = getParents(justification).flatMap(convert)

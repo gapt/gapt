@@ -26,7 +26,12 @@ class sequentProofToTptp[Proof <: SequentProof[Formula, Proof]] {
 
         val parents = p.immediateSubProofs.map(labelMap)
 
-        line(label, "plain", inf, Some(Annotations(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_)))), Seq.empty)))
+        line(
+          label,
+          "plain",
+          inf,
+          Some(Annotations(Source.General(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_))))), Seq.empty))
+        )
     }
   }
 
