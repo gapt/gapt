@@ -48,8 +48,6 @@ package object tptp {
   sealed trait TptpInput {
     override def toString = TptpToString.tptpInput(this)
   }
-  case object Unknown
-  type Source = DagSource | Unknown.type | File | Introduced
   type DagSource = TptpName | InferenceRecord
   type TptpName = AtomicWord | Int
   type ParentDetails = Option[GeneralTerm]
@@ -59,7 +57,11 @@ package object tptp {
   case class ParentInfo(source: TptpName, details: ParentDetails)
   case class InferenceRecord(inference_rule: AtomicWord, usefulInfo: GeneralListNew, parents: Seq[ParentInfo])
   case class File(fileName: AtomicWord, fileInfo: Option[TptpName])
-  case class Annotations(source: Expr, optionalInfo: Seq[GeneralTerm])
+
+  enum Source {
+    case General(term: GeneralTerm)
+  }
+  case class Annotations(source: Source, optionalInfo: Seq[GeneralTerm])
   case class AtomicWord(inner: String)
 
   case class AnnotatedFormula(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Option[Annotations]) extends TptpInput
@@ -70,16 +72,6 @@ package object tptp {
   //     case Seq()            => None
   //     case Seq(s, optInfo*) => Some(Annotations(s, optInfo))
   //   }
-
-  @deprecated("this should not be used. instead use the new annotations interface")
-  def seqGeneralTermToOptionAnnotations(seq: Seq[GeneralTerm]): Option[Annotations] = seq match {
-    case Seq()            => None
-    case Seq(s, optInfo*) => Some(Annotations(s, optInfo))
-  }
-
-  @deprecated("this should not be used. instead use the new annotations interface")
-  def optionalAnnotationsToGeneralList(annots: Option[Annotations]): GeneralListNew = annots.map(annotationsToGeneralList).getOrElse(Seq.empty)
-  def annotationsToGeneralList(a: Annotations): GeneralListNew = a.source +: a.optionalInfo
 
   // given Conversion[Option[Annotations], Seq[GeneralTerm]] = s =>
   //   s match {

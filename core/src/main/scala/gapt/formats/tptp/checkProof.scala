@@ -82,7 +82,7 @@ def checkProof2(file: InputFile): SzsStatus = {
             _,
             "negated_conjecture",
             formula,
-            Some(Annotations(TptpTerm("inference", _, _, GeneralList(parents @ _*)), _))
+            Some(Annotations(Source.General(TptpTerm("inference", _, _, GeneralList(parents @ _*))), _))
           ) =>
         // TODO: assert that parent is conjecture?
         Some((input, Sequent(parents.map(p => Neg(getFormulaFromTerm(p))), Seq(formula))))
@@ -92,7 +92,7 @@ def checkProof2(file: InputFile): SzsStatus = {
             _,
             formula,
             Some(Annotations(
-              TptpTerm(
+              Source.General(TptpTerm(
                 "inference",
                 TptpTerm("skolemize"),
                 TptpTerm(
@@ -103,7 +103,7 @@ def checkProof2(file: InputFile): SzsStatus = {
                   TptpTerm("bind", bindVariable, bindSymbol)
                 ),
                 GeneralList(parents @ _*)
-              ),
+              )),
               _
             ))
           ) => {
@@ -114,7 +114,7 @@ def checkProof2(file: InputFile): SzsStatus = {
             _,
             _,
             formula,
-            Some(Annotations(TptpTerm("inference", _, _, GeneralList(parents @ _*)), _))
+            Some(Annotations(Source.General(TptpTerm("inference", _, _, GeneralList(parents @ _*))), _))
           ) => {
         Some((input, Sequent(parents.map(getFormulaFromTerm), Seq(formula))))
       }

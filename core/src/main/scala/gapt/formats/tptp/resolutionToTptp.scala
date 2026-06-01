@@ -80,7 +80,12 @@ object resolutionToTptp {
           p.introducedDefinitions.keys.map(defMap) ++
           Some(p).collect { case p: SkolemQuantResolutionRule => defMap(p.skolemConst) }
 
-        fofOrCnf(label, "plain", inf, Some(Annotations(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_)))), Seq.empty)))
+        fofOrCnf(
+          label,
+          "plain",
+          inf,
+          Some(Annotations(Source.General(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_))))), Seq.empty))
+        )
     }
   }
 

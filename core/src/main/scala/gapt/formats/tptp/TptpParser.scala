@@ -3,7 +3,7 @@ package gapt.formats.tptp
 import gapt.expr._
 import gapt.formats.InputFile
 import org.parboiled2._
-import os._
+import os.{Path, FilePath, pwd}
 import gapt.expr
 import gapt.expr.formula.And
 import gapt.expr.formula.Bottom
@@ -42,7 +42,7 @@ class TptpParser(val input: ParserInput) extends Parser {
       ((language, name, role, formula, annotations) => AnnotatedFormula(language, name, role, formula, annotations))
   }
   private def formula_role = rule { atomic_word }
-  private def annotations: Rule1[Option[Annotations]] = rule { optional((Comma ~ source ~ optionalInfo) ~ Ws ~> ((s, o) => (Annotations(s, o.toSeq.flatten)))) }
+  private def annotations: Rule1[Option[Annotations]] = rule { optional((Comma ~ source ~ optionalInfo) ~ Ws ~> ((s, o) => (Annotations(Source.General(s), o.toSeq.flatten)))) }
   private def optionalInfo: Rule1[Option[Seq[GeneralTerm]]] = rule { (Comma ~ usefulInfo).? }
   private def usefulInfo: Rule1[Seq[GeneralTerm]] = general_list
   private def source = rule { general_term }
