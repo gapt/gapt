@@ -364,8 +364,8 @@ object Paramod {
   def withMain(subProof1: ResolutionProof, eqIdx: SequentIndex, subProof2: ResolutionProof, auxIdx: SequentIndex, main: Formula): ResolutionProof = {
     val Eq(t, s) = subProof1.conclusion(eqIdx): @unchecked
 
-    val ctxLTR = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(t).filter(main get _ contains s))
-    val ctxRTL = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(s).filter(main get _ contains t))
+    val ctxLTR = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(t).filter(main.get(_) contains s))
+    val ctxRTL = replacementContext(t.ty, main, subProof2.conclusion(auxIdx).find(s).filter(main.get(_) contains t))
 
     if (
       BetaReduction.betaNormalize(ctxLTR(t)) == subProof2.conclusion(auxIdx)

@@ -107,7 +107,7 @@ case class Sequent[+A](antecedent: Vector[A], succedent: Vector[A]) {
       new BabelExporter(unicode = true, sig = sig).`export`(this.asInstanceOf[HOLSequent])
     } else {
       val stringified = this.map { _.toString }
-      val multiLine = stringified.exists { _ contains "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
+      val multiLine = stringified.exists { _.contains("\n") } || stringified.elements.map { _.length + 2 }.sum > 80
       if (multiLine)
         s"${stringified.antecedent.mkString(",\n")}\n:-\n${stringified.succedent.mkString(",\n")}"
       else

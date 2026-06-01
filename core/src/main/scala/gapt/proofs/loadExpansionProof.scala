@@ -21,17 +21,17 @@ object loadExpansionProof {
     case fileName if fileName.endsWith(".proof_flat") =>
       val Some(expSeq) = VeriTParser.getExpansionProofWithSymmetry(FilePath(fileName)): @unchecked
       ExpansionProof(expSeq) -> CutIntroduction.BackgroundTheory.PureFOL
-    case fileName if fileName contains "/leanCoP" =>
+    case fileName if fileName.contains("/leanCoP") =>
       val Some(expSeq) = LeanCoPParser.getExpansionProof(extractFromTSTPCommentsIfNecessary(file)): @unchecked
       val p = ExpansionProof(expSeq)
       p -> CutIntroduction.BackgroundTheory.guess(p.shallow)
-    case fileName if fileName contains "/Prover9" =>
+    case fileName if fileName.contains("/Prover9") =>
       val (resProof, _) = Prover9Importer.robinsonProofWithReconstructedEndSequent(file)
       loadResolutionProof(resProof)
     case _ => // try tstp format
       val tstpOutput = file.read
 
-      logger.metric("tstp_is_cnf_ref", tstpOutput contains "CNFRefutation")
+      logger.metric("tstp_is_cnf_ref", tstpOutput.contains("CNFRefutation"))
 
       val (_, sketch) = TptpProofParser.parse(StringInputFile(tstpOutput), ignoreStrongQuants = true)
       logger.metric("tstp_sketch_size", sketch.subProofs.size)
