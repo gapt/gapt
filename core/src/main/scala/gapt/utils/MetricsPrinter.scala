@@ -22,12 +22,12 @@ class MetricsPrinter extends LogHandler {
   }
 
   val phaseStack: mutable.Buffer[String] = mutable.Buffer()
-  override def timeBegin(domain: String, level: VerbosityLevel, key: String, desc: String): Unit =
+  override def timeBegin(domain: String, level: VerbosityLevel, key: String): Unit =
     if (key != "total") {
       phaseStack += key
       value("phase", phase)
     }
-  override def time(domain: String, level: VerbosityLevel, key: String, desc: String, duration: Duration): Unit =
+  override def time(domain: String, level: VerbosityLevel, key: String, duration: Duration): Unit =
     if (key == "total") {
       value("time_total", duration.toMillis)
     } else {
@@ -36,7 +36,7 @@ class MetricsPrinter extends LogHandler {
     }
   def phase: String = phaseStack.mkString("_")
 
-  override def metric(domain: String, level: VerbosityLevel, key: String, desc: String, v: => Any): Unit =
+  override def metric(domain: String, level: VerbosityLevel, key: String, v: => Any): Unit =
     value(key, v)
 
   def println(string: String): Unit = Console.println(string)

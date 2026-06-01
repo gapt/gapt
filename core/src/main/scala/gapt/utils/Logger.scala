@@ -9,13 +9,13 @@ trait LogHandler {
 
   def message(domain: String, verbosity: VerbosityLevel, msg: => Any): Unit
 
-  def metric(domain: String, verbosity: VerbosityLevel, key: String, desc: String, value: => Any): Unit =
-    message(domain, verbosity, s"$desc: $value")
+  def metric(domain: String, verbosity: VerbosityLevel, key: String, value: => Any): Unit =
+    message(domain, verbosity, s"$key: $value")
 
-  def timeBegin(domain: String, verbosity: VerbosityLevel, key: String, desc: String): Unit = ()
+  def timeBegin(domain: String, verbosity: VerbosityLevel, key: String): Unit = ()
 
-  def time(domain: String, verbosity: VerbosityLevel, key: String, desc: String, duration: Duration): Unit =
-    message(domain, verbosity, s"$desc took ${LogHandler.formatTime(duration)}")
+  def time(domain: String, verbosity: VerbosityLevel, key: String, duration: Duration): Unit =
+    message(domain, verbosity, s"$key took ${LogHandler.formatTime(duration)}")
 }
 object LogHandler {
   val current = new DynamicVariable[LogHandler](default)
@@ -77,19 +77,17 @@ case class Logger(domain: String) {
   def warn(msg: => Any): Unit = message(domain, Warn, msg)
   def info(msg: => Any): Unit = message(domain, Info, msg)
   def debug(msg: => Any): Unit = message(domain, Debug, msg)
-  def time[T](key: String)(f: => T): T = time(key, key)(f)
-  def time[T](key: String, desc: String)(f: => T): T = {
-    handler.timeBegin(domain, Info, key, desc)
+  def time[T](key: String)(f: => T): T = {
+    handler.timeBegin(domain, Info, key)
     val a = System.nanoTime
     try f
     finally {
       val b = System.nanoTime
-      handler.time(domain, Info, key, desc, (b - a).nanos)
+      handler.time(domain, Info, key, (b - a).nanos)
     }
   }
-  def metric(key: String, value: => Any): Unit = metric(key, key, value)
-  def metric(key: String, desc: String, value: => Any): Unit =
-    handler.metric(domain, Debug, key, desc, value)
+  def metric(key: String, value: => Any): Unit =
+    handler.metric(domain, Debug, key, value)
 }
 object Logger extends LogHandler {
   def handler: LogHandler = LogHandler.current.value
@@ -97,12 +95,12 @@ object Logger extends LogHandler {
 
   override def message(domain: String, verbosity: VerbosityLevel, msg: => Any): Unit =
     handler.message(domain, verbositySetting.get(domain, verbosity), msg)
-  override def metric(domain: String, verbosity: VerbosityLevel, key: String, desc: String, value: => Any): Unit =
-    handler.metric(domain, verbositySetting.get(domain, verbosity), key, desc, value)
-  override def timeBegin(domain: String, verbosity: VerbosityLevel, key: String, desc: String): Unit =
-    handler.timeBegin(domain, verbositySetting.get(domain, verbosity), key, desc)
-  override def time(domain: String, verbosity: VerbosityLevel, key: String, desc: String, duration: Duration): Unit =
-    handler.time(domain, verbositySetting.get(domain, verbosity), key, desc, duration)
+  override def metric(domain: String, verbosity: VerbosityLevel, key: String, value: => Any): Unit =
+    handler.metric(domain, verbositySetting.get(domain, verbosity), key, value)
+  override def timeBegin(domain: String, verbosity: VerbosityLevel, key: String): Unit =
+    handler.timeBegin(domain, verbositySetting.get(domain, verbosity), key)
+  override def time(domain: String, verbosity: VerbosityLevel, key: String, duration: Duration): Unit =
+    handler.time(domain, verbositySetting.get(domain, verbosity), key, duration)
 }
 
 private[utils] abstract class VerbosityChanger(by: Int) {
