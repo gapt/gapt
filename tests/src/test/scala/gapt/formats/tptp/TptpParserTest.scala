@@ -83,6 +83,16 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse recursive parent source" in {
+      val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a, inference(b, [status(thm)], [c])]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Inference]
+          .parents(1).source.asInstanceOf[Source.Inference]
+          .parents(0).source.asInstanceOf[Source.Name] must_== Source.Name("c")
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo
