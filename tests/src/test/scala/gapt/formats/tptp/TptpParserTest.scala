@@ -93,6 +93,22 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse parent details" in {
+      val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a:some_info]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Inference].parents(0).details must beSome { TptpTerm("some_info") }
+      }
+    }
+
+    "parse parent details as none if not given" in {
+      val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Inference].parents(0).details must beNone
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo

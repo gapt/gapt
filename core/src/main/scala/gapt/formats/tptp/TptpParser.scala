@@ -49,6 +49,12 @@ class TptpParser(val input: ParserInput) extends Parser {
     general_term ~> parseSourceFromGeneralTerm
   }
 
+  private def parseParentInfoFromGeneralTerm(gt: GeneralTerm): ParentInfo = gt match {
+    case GeneralColon(source, details) =>
+      ParentInfo(parseSourceFromGeneralTerm(source), Some(details))
+    case gt =>
+      ParentInfo(parseSourceFromGeneralTerm(gt), None)
+  }
   private def parseSourceFromGeneralTerm(gt: GeneralTerm): Source = gt match {
     case TptpTerm(name) =>
       Source.Name(name)
@@ -58,7 +64,7 @@ class TptpParser(val input: ParserInput) extends Parser {
           GeneralList(usefulInfo*),
           GeneralList(parents*)
         ) =>
-      Source.Inference(rule, usefulInfo, parents.map(p => ParentInfo(parseSourceFromGeneralTerm(p))))
+      Source.Inference(rule, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p)))
     case e =>
       Source.General(e)
   }
