@@ -84,7 +84,7 @@ object resolutionToTptp {
           label,
           "plain",
           inf,
-          Some(Annotations(Source.General(TptpTerm("inference", FOLConst(inferenceName), GeneralList(), GeneralList(parents.map(FOLConst(_))))), Seq.empty))
+          Some(Annotations(Source.Inference(inferenceName, Seq.empty, parents.map(FOLConst(_))), Seq.empty))
         )
     }
   }

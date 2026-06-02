@@ -34,8 +34,9 @@ object TptpToString {
     val exprs = annots match {
       case None => Seq.empty
       case Some(Annotations(source, optionalInfo)) => source match {
-          case Source.Name(name) => TptpTerm(name) +: optionalInfo
-          case Source.General(s) => s +: optionalInfo
+          case Source.Name(name)                           => TptpTerm(name) +: optionalInfo
+          case Source.Inference(rule, usefulInfo, parents) => TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents*)) +: optionalInfo
+          case Source.General(s)                           => s +: optionalInfo
         }
     }
 
