@@ -5,7 +5,6 @@ import gapt.expr.formula.All
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Ex
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.hol.HOLAtomConst
 import gapt.expr.formula.hol.{instantiate, universalClosure}
 import gapt.expr.ty.FunctionType
@@ -84,7 +83,7 @@ object resolutionToTptp {
           label,
           "plain",
           inf,
-          Some(Annotations(Source.Inference(inferenceName, Seq.empty, parents.map(p => ParentInfo(FOLConst(p)))), Seq.empty))
+          Some(Annotations(Source.Inference(inferenceName, Seq.empty, parents.map(p => ParentInfo(Source.Name(p)))), Seq.empty))
         )
     }
   }

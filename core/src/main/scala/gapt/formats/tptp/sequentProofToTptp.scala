@@ -1,7 +1,6 @@
 package gapt.formats.tptp
 
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.hol.universalClosure
 import gapt.proofs.{SequentProof, RichFormulaSequent}
 
@@ -30,7 +29,7 @@ class sequentProofToTptp[Proof <: SequentProof[Formula, Proof]] {
           label,
           "plain",
           inf,
-          Some(Annotations(Source.Inference(inferenceName, Seq.empty, parents.map(p => ParentInfo(FOLConst(p)))), Seq.empty))
+          Some(Annotations(Source.Inference(inferenceName, Seq.empty, parents.map(p => ParentInfo(Source.Name(p)))), Seq.empty))
         )
     }
   }

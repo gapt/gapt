@@ -32,18 +32,20 @@ object TptpToString {
 
   def annotations(annots: Option[Annotations]): String = {
     val exprs = annots match {
-      case None => Seq.empty
-      case Some(Annotations(source, optionalInfo)) => source match {
-          case Source.Name(name) =>
-            TptpTerm(name) +: optionalInfo
-          case Source.Inference(rule, usefulInfo, parents) =>
-            TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents.map(_.generalTerm)*)) +: optionalInfo
-          case Source.General(s) =>
-            s +: optionalInfo
-        }
+      case None                                    => Seq.empty
+      case Some(Annotations(source, optionalInfo)) => sourceToGeneralTerm(source) +: optionalInfo
     }
 
     exprs.map(expression).map(", " + _).mkString
+  }
+
+  def sourceToGeneralTerm(source: Source): GeneralTerm = source match {
+    case Source.Name(name) =>
+      TptpTerm(name)
+    case Source.Inference(rule, usefulInfo, parents) =>
+      TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents.map(p => sourceToGeneralTerm(p.source))*))
+    case Source.General(s) =>
+      s
   }
 
   def expression(expr: Expr): String = expression(expr, prio.max)

@@ -46,19 +46,21 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def optionalInfo: Rule1[Option[Seq[GeneralTerm]]] = rule { (Comma ~ usefulInfo).? }
   private def usefulInfo: Rule1[Seq[GeneralTerm]] = general_list
   private def source: Rule1[Source] = rule {
-    general_term ~> {
-      case TptpTerm(name) =>
-        Source.Name(name)
-      case TptpTerm(
-            "inference",
-            TptpTerm(rule),
-            GeneralList(usefulInfo*),
-            GeneralList(parents*)
-          ) =>
-        Source.Inference(rule, usefulInfo, parents.map(ParentInfo(_)))
-      case e =>
-        Source.General(e)
-    }
+    general_term ~> parseSourceFromGeneralTerm
+  }
+
+  private def parseSourceFromGeneralTerm(gt: GeneralTerm): Source = gt match {
+    case TptpTerm(name) =>
+      Source.Name(name)
+    case TptpTerm(
+          "inference",
+          TptpTerm(rule),
+          GeneralList(usefulInfo*),
+          GeneralList(parents*)
+        ) =>
+      Source.Inference(rule, usefulInfo, parents.map(p => ParentInfo(parseSourceFromGeneralTerm(p))))
+    case e =>
+      Source.General(e)
   }
 
   private def formula = rule { typed_logic_formula }
