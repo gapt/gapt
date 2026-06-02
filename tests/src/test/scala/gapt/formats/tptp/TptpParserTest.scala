@@ -109,6 +109,30 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse internal source" in {
+      val input = "fof(name, plain, p, introduced(tautology, [], []))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Internal].introType must_== "tautology"
+      }
+    }
+
+    "parse vampire sat_splitting_component introduced" in {
+      val input = "fof(name, plain, p, introduced(sat_splitting_component,[new_symbols(naming,[$spl18])]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Internal].introType must_== "sat_splitting_component"
+      }
+    }
+
+    "parse internal source with nested useful info" in {
+      val input = "fof(name, plain, p, introduced(tautology,[equality,[$cnf(d(f(f(a2,a2),a1))),[0],$fot(f(a2,f(a2,a1)))]]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Internal].usefulInfo(0) must_== TptpTerm("equality")
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo

@@ -7,9 +7,7 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.Imp
 import gapt.expr.formula.Neg
 import gapt.expr.formula.fol.FOLAtom
-import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
-import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.hol.{containsStrongQuantifier, universalClosure}
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
@@ -184,11 +182,11 @@ object TptpProofParser {
 
   def removeStrongQuants(tptpFile: TptpFile): TptpFile = {
     val stepsWithStrongQuants = tptpFile.inputs.filter {
-      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(TptpTerm("introduced", TptpTerm(sat_splitting), _)), _))) if sat_splitting.startsWith("sat_splitting") =>
+      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.Internal(sat_splitting, _, _), _))) if sat_splitting.startsWith("sat_splitting") =>
         false
-      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(TptpTerm("introduced", FOLVar(avatar), _)), _))) if avatar.startsWith("AVATAR") =>
+      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.Internal(avatar, _, _), _))) if avatar.startsWith("AVATAR") =>
         false
-      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(TptpTerm("introduced", FOLConst(avatar), _)), _))) if avatar.startsWith("avatar") =>
+      case AnnotatedFormula(_, _, _, _, Some(Annotations(Source.Internal(avatar, _, _), _))) if avatar.startsWith("avatar") =>
         false
       case AnnotatedFormula(_, _, "conjecture", formula, _) =>
         containsStrongQuantifier(formula, Polarity.InSuccedent)
@@ -248,9 +246,9 @@ object TptpProofParser {
   def getParents(source: Source): Seq[String] = source match {
     case Source.Name(name)               => Seq(name)
     case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.source))
+    case Source.Internal(_, _, parents)  => parents.flatMap(p => getParents(p.source))
     case Source.General(s) => s match {
         case TptpTerm("file", _, _)                           => Seq()
-        case TptpTerm("introduced", _, _)                     => Seq()
         case TptpTerm("theory", TptpTerm("equality", _*), _*) => Seq()
         case GeneralColon(TptpTerm(label), _)                 => Seq(label)
         case TptpTerm(dagSource)                              => Seq(dagSource)
@@ -371,7 +369,7 @@ object TptpProofParser {
         (step: @unchecked) match {
           case _ if haveAlreadyVisited(stepName) =>
             throw new IllegalArgumentException(s"Cyclic inference: ${steps(stepName)}")
-          case AnnotatedFormula("fof", _, "plain", And(Imp(defn, Neg(splAtom: FOLAtom)), _), Some(Annotations(Source.General(TptpTerm("introduced", TptpTerm("sat_splitting_component"), _)), _))) =>
+          case AnnotatedFormula("fof", _, "plain", And(Imp(defn, Neg(splAtom: FOLAtom)), _), Some(Annotations(Source.Internal("sat_splitting_component", _, _), _))) =>
             convertAvatarDefinition(defn, splAtom)
 
           case AnnotatedFormula(
@@ -394,7 +392,7 @@ object TptpProofParser {
                 _,
                 "plain",
                 And(Imp(splAtom: FOLAtom, defn), _),
-                Some(Annotations(Source.General(TptpTerm("introduced", FOLVar("AVATAR_definition") | FOLConst("avatar_definition"), _)), _))
+                Some(Annotations(Source.Internal("AVATAR_definition" | "avatar_definition", _, _), _))
               ) =>
             convertAvatarDefinition(defn, splAtom)
           case AnnotatedFormula(
