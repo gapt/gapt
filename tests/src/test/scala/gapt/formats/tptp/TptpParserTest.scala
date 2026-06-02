@@ -133,6 +133,30 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse file sources" in {
+      val input = "fof(f7,axiom,(( ! [X0,X1] : (a1(X1,s_3(X1,X0),X0) | 'D_2'(X0) | ~'D_1'(X0)) )), file('counting-cnf.tptp',sequent6))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.File].fileName must_== "counting-cnf.tptp"
+      }
+    }
+
+    "parse file info" in {
+      val input = "fof(f7,axiom,(( ! [X0,X1] : (a1(X1,s_3(X1,X0),X0) | 'D_2'(X0) | ~'D_1'(X0)) )), file('counting-cnf.tptp',sequent6))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.File].fileInfo must_== Some("sequent6")
+      }
+    }
+
+    "parse file source without info" in {
+      val input = "fof(f7,axiom,(( ! [X0,X1] : (a1(X1,s_3(X1,X0),X0) | 'D_2'(X0) | ~'D_1'(X0)) )), file('counting-cnf.tptp'))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.File].fileInfo must_== None
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo
