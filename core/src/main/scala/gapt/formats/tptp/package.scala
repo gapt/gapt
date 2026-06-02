@@ -61,6 +61,9 @@ package object tptp {
   enum Source {
     case Name(name: TptpName)
     case Inference(rule: String, usefulInfo: Seq[GeneralTerm], parents: Seq[GeneralTerm])
+    // the General case is a catch-all used during the parser refactoring
+    // afterwards this case should not exist anymore
+    // every source should be accounted for by one of the other enum cases
     case General(term: GeneralTerm)
   }
   case class Annotations(source: Source, optionalInfo: Seq[GeneralTerm])
