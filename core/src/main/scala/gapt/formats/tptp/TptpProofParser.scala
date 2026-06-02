@@ -249,12 +249,11 @@ object TptpProofParser {
     case Source.Name(name)               => Seq(name)
     case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.source))
     case Source.General(s) => s match {
-        case TptpTerm("file", _, _)                                 => Seq()
-        case TptpTerm("inference", _, _, GeneralList(parents @ _*)) => parents.flatMap(getParents)
-        case TptpTerm("introduced", _, _)                           => Seq()
-        case TptpTerm("theory", TptpTerm("equality", _*), _*)       => Seq()
-        case GeneralColon(TptpTerm(label), _)                       => Seq(label)
-        case TptpTerm(dagSource)                                    => Seq(dagSource)
+        case TptpTerm("file", _, _)                           => Seq()
+        case TptpTerm("introduced", _, _)                     => Seq()
+        case TptpTerm("theory", TptpTerm("equality", _*), _*) => Seq()
+        case GeneralColon(TptpTerm(label), _)                 => Seq(label)
+        case TptpTerm(dagSource)                              => Seq(dagSource)
       }
   }
 
