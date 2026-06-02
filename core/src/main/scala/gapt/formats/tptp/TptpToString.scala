@@ -39,11 +39,23 @@ object TptpToString {
     exprs.map(expression).map(", " + _).mkString
   }
 
+  def parentInfoToGeneralTerm(p: ParentInfo): GeneralTerm = {
+    val sourceTerm = sourceToGeneralTerm(p.source)
+    p.details match {
+      case None    => sourceTerm
+      case Some(d) => GeneralColon(sourceTerm, d)
+    }
+  }
+
   def sourceToGeneralTerm(source: Source): GeneralTerm = source match {
     case Source.Name(name) =>
       TptpTerm(name)
+    case Source.Internal(introType, usefulInfo, Seq()) =>
+      TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*))
+    case Source.Internal(introType, usefulInfo, Seq(parents*)) =>
+      TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*), GeneralList(parents.map(parentInfoToGeneralTerm)*))
     case Source.Inference(rule, usefulInfo, parents) =>
-      TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents.map(p => sourceToGeneralTerm(p.source))*))
+      TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents.map(parentInfoToGeneralTerm)*))
     case Source.General(s) =>
       s
   }
