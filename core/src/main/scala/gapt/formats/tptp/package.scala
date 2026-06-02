@@ -49,7 +49,7 @@ package object tptp {
     override def toString = TptpToString.tptpInput(this)
   }
   type DagSource = TptpName | InferenceRecord
-  type TptpName = AtomicWord | Int
+  type TptpName = String
   type ParentDetails = Option[GeneralTerm]
   type GeneralListNew = Seq[GeneralTerm]
   type UsefulInfo = GeneralListNew
@@ -59,6 +59,7 @@ package object tptp {
   case class File(fileName: AtomicWord, fileInfo: Option[TptpName])
 
   enum Source {
+    case Name(name: TptpName)
     case General(term: GeneralTerm)
   }
   case class Annotations(source: Source, optionalInfo: Seq[GeneralTerm])

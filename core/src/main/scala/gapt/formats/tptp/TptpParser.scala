@@ -42,10 +42,17 @@ class TptpParser(val input: ParserInput) extends Parser {
       ((language, name, role, formula, annotations) => AnnotatedFormula(language, name, role, formula, annotations))
   }
   private def formula_role = rule { atomic_word }
-  private def annotations: Rule1[Option[Annotations]] = rule { optional((Comma ~ source ~ optionalInfo) ~ Ws ~> ((s, o) => (Annotations(Source.General(s), o.toSeq.flatten)))) }
+  private def annotations: Rule1[Option[Annotations]] = rule { optional((Comma ~ source ~ optionalInfo) ~ Ws ~> ((s, o) => (Annotations(s, o.toSeq.flatten)))) }
   private def optionalInfo: Rule1[Option[Seq[GeneralTerm]]] = rule { (Comma ~ usefulInfo).? }
   private def usefulInfo: Rule1[Seq[GeneralTerm]] = general_list
-  private def source = rule { general_term }
+  private def source: Rule1[Source] = rule {
+    general_term ~> (e =>
+      e match {
+        case TptpTerm(name) => Source.Name(name)
+        case _              => Source.General(e)
+      }
+    )
+  }
 
   private def formula = rule { typed_logic_formula }
   private def typed_logic_formula = rule { logic_formula } // add type annotation

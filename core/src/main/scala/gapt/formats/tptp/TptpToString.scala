@@ -30,9 +30,16 @@ object TptpToString {
       s"include(${single_quoted(fileName)}, ${args}).\n"
   }
 
-  def annotations(annots: Option[Annotations]): String = annots match {
-    case None                                                    => ""
-    case Some(Annotations(Source.General(source), optionalInfo)) => (source +: optionalInfo).map(expression).map(", " + _).mkString
+  def annotations(annots: Option[Annotations]): String = {
+    val exprs = annots match {
+      case None => Seq.empty
+      case Some(Annotations(source, optionalInfo)) => source match {
+          case Source.Name(name) => TptpTerm(name) +: optionalInfo
+          case Source.General(s) => s +: optionalInfo
+        }
+    }
+
+    exprs.map(expression).map(", " + _).mkString
   }
 
   def expression(expr: Expr): String = expression(expr, prio.max)
