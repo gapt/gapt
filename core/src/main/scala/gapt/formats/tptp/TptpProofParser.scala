@@ -123,20 +123,16 @@ extension (formula: AnnotatedFormula) {
       case GeneralColon(TptpTerm(name), parentDetails) => ParentInfo(name, Some(parentDetails))
       case e                                           => throw new IllegalArgumentException(s"cannot parse $e")
     })
-    source match {
-      case Source.General(TptpTerm(
-            "inference",
-            TptpTerm(rule),
-            GeneralList(usefulInfo*),
-            GeneralList(parents*)
-          )) => {
-        val parentInfos = parents.map(parseParentInfo).map {
-          case Success(info) => info
-          case Failure(e)    => throw e
-        }
-        Seq(InferenceRecord(rule, usefulInfo, parentInfos))
+    def handleInference(rule: String, usefulInfo: Seq[GeneralTerm], parents: Seq[GeneralTerm]): Seq[InferenceRecord] = {
+      val parentInfos = parents.map(parseParentInfo).map {
+        case Success(info) => info
+        case Failure(e)    => throw e
       }
-      case _ => Seq.empty
+      Seq(InferenceRecord(rule, usefulInfo, parentInfos))
+    }
+    source match {
+      case Source.Inference(rule, usefulInfo, parents) => handleInference(rule, usefulInfo, parents)
+      case _                                           => Seq.empty
     }
   }
 }
@@ -223,7 +219,7 @@ object TptpProofParser {
       tptpFile
     else
       TptpFile(tptpFile.inputs.collect { case f: AnnotatedFormula if !stepsWithStrongQuants(f.name) => f }.map {
-        case f @ AnnotatedFormula(_, _, _, _, Some(Annotations(Source.General(just), _))) if getParents(just).toSet.intersect(stepsWithStrongQuants).isEmpty => f
+        case f @ AnnotatedFormula(_, _, _, _, Some(Annotations(source, _))) if getParents(source).toSet.intersect(stepsWithStrongQuants).isEmpty => f
         case AnnotatedFormula(_, label, "conjecture", formula, _) =>
           AnnotatedFormula("fof", label, "conjecture", formula, None)
         case f => AnnotatedFormula("fof", f.name, "axiom", f.formula, None)
@@ -266,6 +262,12 @@ object TptpProofParser {
     }
 
     endSequent -> labelledCNF.toMap
+  }
+
+  def getParents(source: Source): Seq[String] = source match {
+    case Source.Name(name)               => Seq(name)
+    case Source.Inference(_, _, parents) => parents.flatMap(getParents)
+    case _                               => Seq()
   }
 
   def getParents(justification: GeneralTerm): Seq[String] = justification match {
@@ -326,6 +328,64 @@ object TptpProofParser {
     def convert(stepName: String): Seq[RefutationSketch] = {
       val step = steps.getOrElse(stepName, throw new MalformedInputFileException(s"unknown step $stepName"))
 
+      def convertSat_splitting_refutationBottomInference(source: Source): Seq[SketchSplitCombine] = {
+        val sketchParents = getParents(source).flatMap(convert)
+        val splitParents = sketchParents.map { parent0 =>
+          var parent = parent0
+          for {
+            clauseComponent <- AvatarSplit.getComponents(parent0.conclusion)
+            comp <- splDefs.values
+            renaming <- findClauseRenaming(comp.clause, clauseComponent)
+          } parent = SketchComponentElim(
+            parent,
+            comp match {
+              case comp @ AvatarNonGroundComp(_, _, vars) => comp.copy(vars = vars.map(renaming))
+              case AvatarGroundComp(_, _)                 => comp
+            }
+          )
+          require(parent.conclusion.isEmpty)
+          parent
+        }
+        Seq(SketchSplitCombine(splitParents))
+      }
+
+      def convertAVATAR_split_clauseInference(disj: Formula, source: Source): Seq[RefutationSketch] = {
+        val Seq(assertion) = CNFp(disj).toSeq
+        val Seq(splittedClause, _*) = getParents(source).flatMap(convert): @unchecked
+
+        var p = splittedClause
+        for {
+          clauseComponent <- AvatarSplit.getComponents(splittedClause.conclusion)
+          case (splAtom: FOLAtom, i) <- assertion.zipWithIndex
+          comp <- splDefs.get((splAtom, i.isSuc))
+          renaming <- findClauseRenaming(comp.clause, clauseComponent)
+        } p = SketchComponentElim(
+          p,
+          comp match {
+            case comp @ AvatarNonGroundComp(_, _, vars) => comp.copy(vars = vars.map(renaming))
+            case AvatarGroundComp(_, _)                 => comp
+          }
+        )
+
+        require(p.conclusion.isEmpty, s"$assertion\n$splittedClause\n$splDefs")
+        Seq(p)
+      }
+
+      def convertAVATAR_sat_refutationInference(source: Source): Seq[SketchSplitCombine] = {
+        Seq(SketchSplitCombine(getParents(source).flatMap(convert)))
+      }
+
+      def convertRemainingCases(conclusion: FOLFormula, source: Source): Seq[RefutationSketch] = {
+        CNFp(conclusion).toSeq match {
+          case Seq(conclusionClause) =>
+            val sketchParents = getParents(source).flatMap(convert)
+            val conclusionClause_ = filterVampireSplits(conclusionClause)
+            val sketchParents_ = sketchParents.find(p => clauseSubsumption(p.conclusion, conclusionClause_).isDefined).fold(sketchParents)(Seq(_))
+            Seq(SketchInference(conclusionClause_, sketchParents_))
+          case clauses => getParents(source).flatMap(convert)
+        }
+      }
+
       memo.getOrElseUpdate(
         stepName,
         (step: @unchecked) match {
@@ -333,25 +393,22 @@ object TptpProofParser {
             throw new IllegalArgumentException(s"Cyclic inference: ${steps(stepName)}")
           case AnnotatedFormula("fof", _, "plain", And(Imp(defn, Neg(splAtom: FOLAtom)), _), Some(Annotations(Source.General(TptpTerm("introduced", TptpTerm("sat_splitting_component"), _)), _))) =>
             convertAvatarDefinition(defn, splAtom)
-          case AnnotatedFormula("fof", _, "plain", Bottom(), Some(Annotations(Source.General(justification @ TptpTerm("inference", TptpTerm("sat_splitting_refutation"), _, _)), _))) =>
-            val sketchParents = getParents(justification).flatMap(convert)
-            val splitParents = sketchParents.map { parent0 =>
-              var parent = parent0
-              for {
-                clauseComponent <- AvatarSplit.getComponents(parent0.conclusion)
-                comp <- splDefs.values
-                renaming <- findClauseRenaming(comp.clause, clauseComponent)
-              } parent = SketchComponentElim(
-                parent,
-                comp match {
-                  case comp @ AvatarNonGroundComp(_, _, vars) => comp.copy(vars = vars.map(renaming))
-                  case AvatarGroundComp(_, _)                 => comp
-                }
-              )
-              require(parent.conclusion.isEmpty)
-              parent
-            }
-            Seq(SketchSplitCombine(splitParents))
+
+          case AnnotatedFormula(
+                "fof",
+                _,
+                "plain",
+                Bottom(),
+                Some(
+                  Annotations(
+                    source @ Source.Inference("sat_splitting_refutation", _, _),
+                    _
+                  )
+                )
+              ) => {
+            convertSat_splitting_refutationBottomInference(source)
+          }
+
           case AnnotatedFormula(
                 "fof",
                 _,
@@ -365,44 +422,24 @@ object TptpProofParser {
                 _,
                 "plain",
                 disj,
-                Some(Annotations(Source.General(justification @ TptpTerm("inference", FOLVar("AVATAR_split_clause") | FOLConst("avatar_split_clause"), _, _)), _))
+                Some(Annotations(source @ Source.Inference("AVATAR_split_clause" | "avatar_split_clause", _, _), _))
               ) =>
-            val Seq(assertion) = CNFp(disj).toSeq
-            val Seq(splittedClause, _*) = getParents(justification).flatMap(convert): @unchecked
-
-            var p = splittedClause
-            for {
-              clauseComponent <- AvatarSplit.getComponents(splittedClause.conclusion)
-              case (splAtom: FOLAtom, i) <- assertion.zipWithIndex
-              comp <- splDefs.get((splAtom, i.isSuc))
-              renaming <- findClauseRenaming(comp.clause, clauseComponent)
-            } p = SketchComponentElim(
-              p,
-              comp match {
-                case comp @ AvatarNonGroundComp(_, _, vars) => comp.copy(vars = vars.map(renaming))
-                case AvatarGroundComp(_, _)                 => comp
-              }
-            )
-
-            require(p.conclusion.isEmpty, s"$assertion\n$splittedClause\n$splDefs")
-            Seq(p)
+            convertAVATAR_split_clauseInference(disj, source)
           case AnnotatedFormula(
                 "fof",
                 _,
                 "plain",
                 Bottom(),
                 Some(Annotations(
-                  Source.General(justification @ TptpTerm(
-                    "inference",
-                    FOLVar("AVATAR_sat_refutation") |
-                    FOLConst("avatar_sat_refutation" | "avatar_smt_refutation"),
+                  justification @ Source.Inference(
+                    "AVATAR_sat_refutation" | "avatar_sat_refutation" | "avatar_smt_refutation",
                     _,
                     _
-                  )),
+                  ),
                   _
                 ))
               ) =>
-            Seq(SketchSplitCombine(getParents(justification).flatMap(convert)))
+            convertAVATAR_sat_refutationInference(justification)
           case AnnotatedFormula("fof", _, "conjecture", _, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
             labelledCNF(label).map(SketchAxiom.apply)
           case AnnotatedFormula(_, _, _, axiom: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
@@ -424,15 +461,9 @@ object TptpProofParser {
                 ))
               case clauses => labelledCNF(label).map(SketchAxiom.apply)
             }
-          case AnnotatedFormula(_, _, _, conclusion: FOLFormula, Some(Annotations(Source.General(justification), _))) =>
-            CNFp(conclusion).toSeq match {
-              case Seq(conclusionClause) =>
-                val sketchParents = getParents(justification).flatMap(convert)
-                val conclusionClause_ = filterVampireSplits(conclusionClause)
-                val sketchParents_ = sketchParents.find(p => clauseSubsumption(p.conclusion, conclusionClause_).isDefined).fold(sketchParents)(Seq(_))
-                Seq(SketchInference(conclusionClause_, sketchParents_))
-              case clauses => getParents(justification).flatMap(convert)
-            }
+          case AnnotatedFormula(_, _, _, conclusion: FOLFormula, Some(Annotations(source, _))) => {
+            convertRemainingCases(conclusion, source)
+          }
         }
       )
     }
