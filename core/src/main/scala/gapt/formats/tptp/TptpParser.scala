@@ -48,9 +48,9 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def source: Rule1[Source] = rule {
     general_term ~> (e =>
       e match {
-        case TptpTerm(name)                                                     => Source.Name(name)
-        case TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), _) => Source.Inference(rule, usefulInfo)
-        case _                                                                  => Source.General(e)
+        case TptpTerm(name)                                                                         => Source.Name(name)
+        case TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents*)) => Source.Inference(rule, usefulInfo, parents)
+        case _                                                                                      => Source.General(e)
       }
     )
   }
