@@ -55,7 +55,7 @@ package object tptp {
   type UsefulInfo = GeneralListNew
   case class Introduced(introType: AtomicWord, usefulInfo: GeneralListNew, parents: Seq[ParentInfo])
 
-  case class ParentInfo(val source: Source)
+  case class ParentInfo(source: Source, details: Option[GeneralTerm] = None)
 
   case class InferenceRecord(inference_rule: AtomicWord, usefulInfo: GeneralListNew, parents: Seq[ParentInfo])
   case class File(fileName: AtomicWord, fileInfo: Option[TptpName])
