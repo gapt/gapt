@@ -220,9 +220,9 @@ object TptpProofParser {
 
   def inventSources(stepList: TptpFile): TptpFile = TptpFile(stepList.inputs.map {
     case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, None) =>
-      af.copy(annotations = Some(Annotations(Source.General(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label"))), Seq.empty)))
-    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm("unknown"))), _))) =>
-      af.copy(annotations = Some(Annotations(Source.General(TptpTerm("file", TptpTerm("unknown"), TptpTerm(s"source_$label"))), Seq.empty)))
+      af.copy(annotations = Some(Annotations(Source.File("unknown", Some(s"source_$label")), Seq.empty)))
+    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Some(Annotations(Source.File(_, Some("unknown")), _))) =>
+      af.copy(annotations = Some(Annotations(Source.File("unknown", Some(s"source_$label")), Seq.empty)))
     case other => other
   })
 
@@ -231,10 +231,10 @@ object TptpProofParser {
     val labelledCNF = mutable.Map[String, Seq[FOLClause]]().withDefaultValue(Seq())
 
     stepList.inputs.foreach {
-      case AnnotatedFormula("fof", _, "conjecture", formula: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
+      case AnnotatedFormula("fof", _, "conjecture", formula: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
         endSequent :+= formula
         labelledCNF(label) ++= CNFn(formula).toSeq
-      case AnnotatedFormula(lang, _, _, formula: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
+      case AnnotatedFormula(lang, _, _, formula: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
         endSequent +:= (if (lang == "cnf") universalClosure(formula) else formula)
         labelledCNF(label) ++= CNFp(formula).toSeq
       case _ =>
@@ -247,8 +247,8 @@ object TptpProofParser {
     case Source.Name(name)               => Seq(name)
     case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.source))
     case Source.Internal(_, _, parents)  => parents.flatMap(p => getParents(p.source))
+    case Source.File(_, _)               => Seq()
     case Source.General(s) => s match {
-        case TptpTerm("file", _, _)                           => Seq()
         case TptpTerm("theory", TptpTerm("equality", _*), _*) => Seq()
         case GeneralColon(TptpTerm(label), _)                 => Seq(label)
         case TptpTerm(dagSource)                              => Seq(dagSource)
@@ -418,9 +418,9 @@ object TptpProofParser {
                 ))
               ) =>
             convertAVATAR_sat_refutationInference(justification)
-          case AnnotatedFormula("fof", _, "conjecture", _, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
+          case AnnotatedFormula("fof", _, "conjecture", _, Some(Annotations(Source.File(_, Some(label)), _))) =>
             labelledCNF(label).map(SketchAxiom.apply)
-          case AnnotatedFormula(_, _, _, axiom: FOLFormula, Some(Annotations(Source.General(TptpTerm("file", _, TptpTerm(label))), _))) =>
+          case AnnotatedFormula(_, _, _, axiom: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
             CNFp(axiom).toSeq match {
               case Seq(axiomClause) =>
                 Seq(SketchInference(

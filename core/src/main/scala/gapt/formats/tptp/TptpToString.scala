@@ -50,6 +50,10 @@ object TptpToString {
   def sourceToGeneralTerm(source: Source): GeneralTerm = source match {
     case Source.Name(name) =>
       TptpTerm(name)
+    case Source.File(fileName, None) =>
+      TptpTerm("file", TptpTerm(fileName))
+    case Source.File(fileName, Some(fileInfo)) =>
+      TptpTerm("file", TptpTerm(fileName), TptpTerm(fileInfo))
     case Source.Internal(introType, usefulInfo, Seq()) =>
       TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*))
     case Source.Internal(introType, usefulInfo, Seq(parents*)) =>

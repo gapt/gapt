@@ -58,6 +58,10 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def parseSourceFromGeneralTerm(gt: GeneralTerm): Source = gt match {
     case TptpTerm(name) =>
       Source.Name(name)
+    case TptpTerm("file", TptpTerm(fileName)) =>
+      Source.File(fileName, None)
+    case TptpTerm("file", TptpTerm(fileName), TptpTerm(fileInfo)) =>
+      Source.File(fileName, Some(fileInfo))
     case TptpTerm(
           "inference",
           TptpTerm(rule),
