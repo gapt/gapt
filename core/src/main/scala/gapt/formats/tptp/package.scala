@@ -60,7 +60,7 @@ package object tptp {
 
   enum Source {
     case Name(name: TptpName)
-    case Inference(rule: String)
+    case Inference(rule: String, usefulInfo: Seq[GeneralTerm])
     case General(term: GeneralTerm)
   }
   case class Annotations(source: Source, optionalInfo: Seq[GeneralTerm])
