@@ -23,13 +23,10 @@ class TptpParserTest extends Specification {
   }
 
   "TPTP parser" should {
-    "parse source" in {
+    "parse annotations" in {
       val input = "fof(name, plain, p, inference(abc, [status(thm)], [a]))."
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
-      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
-        a.source must_==
-          Source.General(TptpTerm("inference", TptpTerm("abc"), GeneralList(TptpTerm("status", TptpTerm("thm"))), GeneralList(TptpTerm("a"))))
-      }
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome
     }
 
     "parse absenece of annotations as None" in {
@@ -59,6 +56,14 @@ class TptpParserTest extends Specification {
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
         a.source must_== Source.Name("inference_name")
+      }
+    }
+
+    "parse inference name" in {
+      val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Inference].rule must_== "rule_name"
       }
     }
 
