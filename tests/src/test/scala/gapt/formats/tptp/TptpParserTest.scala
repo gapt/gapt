@@ -46,7 +46,28 @@ class TptpParserTest extends Specification {
       }
     }
 
-    "parse annotated formula name as name, not just string" in todo
+    "parse inference name" in {
+      val input = "fof(name, plain, p, inference_name)."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source must_== Source.Name("inference_name")
+      }
+    }
+
+    "parse inference name with whitespace afterwards" in {
+      val input = "fof(name, plain, p, inference_name    )."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source must_== Source.Name("inference_name")
+      }
+    }
+
+    "not parse invalid source" in todo
+
+    "parse integer names" in todo
+    "parse single-quoted names" in todo
+    "parse back-quoted names" in todo
+    "not parse upper-case names" in todo
 
     "parse include directives" in todo
   }

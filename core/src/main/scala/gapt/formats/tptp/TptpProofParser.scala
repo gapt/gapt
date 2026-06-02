@@ -151,7 +151,7 @@ extension (using tptpFile: TptpFile)(a: AnnotatedFormula) {
     }
     inferenceRecord.parents.map(p =>
       tptpFile.inputs.collect {
-        case af @ AnnotatedFormula(_, name, _, _, _) if AtomicWord(name) == p.source => af
+        case af @ AnnotatedFormula(_, name, _, _, _) if name == p.source => af
       }.single
     )
   }
