@@ -67,6 +67,14 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse useful info" in {
+      val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a]))."
+      val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Inference].usefulInfo must_== Seq(TptpTerm("status", TptpTerm("thm")))
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo
