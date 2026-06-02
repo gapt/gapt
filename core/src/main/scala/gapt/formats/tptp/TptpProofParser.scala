@@ -22,7 +22,6 @@ import gapt.proofs.sketch._
 import gapt.proofs.{FOLClause, HOLSequent, Sequent}
 
 import scala.collection.mutable
-import scala.util.{Try, Success, Failure}
 
 sealed trait TptpProofStep {
   def name: String
@@ -113,33 +112,19 @@ extension (formula: AnnotatedFormula) {
 
   def claimsIsNegatedConjectureStep: Boolean = formula.role == "negated_conjecture"
 
-  def inferenceRecords: Seq[InferenceRecord] = {
-    val source = formula.annotations match {
-      case None    => return Seq.empty
-      case Some(a) => a.source
-    }
-    def parseParentInfo(expr: Expr): Try[ParentInfo] = Try(ParentInfo(expr))
-    def handleInference(rule: String, usefulInfo: Seq[GeneralTerm], parents: Seq[GeneralTerm]): Seq[InferenceRecord] = {
-      val parentInfos = parents.map(parseParentInfo).map {
-        case Success(info) => info
-        case Failure(e)    => throw e
-      }
-      Seq(InferenceRecord(rule, usefulInfo, parentInfos))
-    }
-    source match {
-      case Source.Inference(rule, usefulInfo, parents) => handleInference(rule, usefulInfo, parents.map(_.generalTerm))
-      case _                                           => Seq.empty
-    }
+  def inferenceRecord: Option[InferenceRecord] = formula.annotations match {
+    case Some(Annotations(Source.Inference(rule, usefulInfo, parents), _)) =>
+      Some(InferenceRecord(rule, usefulInfo, parents))
+    case _ => None
   }
 }
 
 extension (using tptpFile: TptpFile)(a: AnnotatedFormula) {
   // assumes that parents of a actually occur in tptpFile
   def parents: Seq[AnnotatedFormula] = {
-    val inferenceRecord = a.inferenceRecords match {
-      case Seq()   => return Seq.empty
-      case Seq(xs) => xs
-      case _       => throw IllegalArgumentException("Expected at most one inference record, got " + a.inferenceRecords.size)
+    val inferenceRecord = a.inferenceRecord match {
+      case None    => return Seq.empty
+      case Some(i) => i
     }
     inferenceRecord.parents.map(p =>
       tptpFile.inputs.collect {
@@ -262,18 +247,18 @@ object TptpProofParser {
 
   def getParents(source: Source): Seq[String] = source match {
     case Source.Name(name)               => Seq(name)
-    case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.generalTerm))
-    case _                               => Seq()
+    case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.source))
+    case Source.General(s) => s match {
+        case TptpTerm("file", _, _)                                 => Seq()
+        case TptpTerm("inference", _, _, GeneralList(parents @ _*)) => parents.flatMap(getParents)
+        case TptpTerm("introduced", _, _)                           => Seq()
+        case TptpTerm("theory", TptpTerm("equality", _*), _*)       => Seq()
+        case GeneralColon(TptpTerm(label), _)                       => Seq(label)
+        case TptpTerm(dagSource)                                    => Seq(dagSource)
+      }
   }
 
-  def getParents(justification: GeneralTerm): Seq[String] = justification match {
-    case TptpTerm("file", _, _)                                 => Seq()
-    case TptpTerm("inference", _, _, GeneralList(parents @ _*)) => parents.flatMap(getParents)
-    case TptpTerm("introduced", _, _)                           => Seq()
-    case TptpTerm("theory", TptpTerm("equality", _*), _*)       => Seq()
-    case GeneralColon(TptpTerm(label), _)                       => Seq(label)
-    case TptpTerm(dagSource)                                    => Seq(dagSource)
-  }
+  def getParents(justification: GeneralTerm): Seq[String] = getParents(Source.General(justification))
 
   def findClauseRenaming(from: HOLSequent, to: HOLSequent): Option[Map[Var, Var]] =
     if (from.sizes != to.sizes)
