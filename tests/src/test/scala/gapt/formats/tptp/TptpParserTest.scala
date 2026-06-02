@@ -43,23 +43,23 @@ class TptpParserTest extends Specification {
       }
     }
 
-    "parse inference name" in {
-      val input = "fof(name, plain, p, inference_name)."
+    "parse source name" in {
+      val input = "fof(name, plain, p, source_name)."
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
-        a.source must_== Source.Name("inference_name")
+        a.source must_== Source.Name("source_name")
       }
     }
 
-    "parse inference name with whitespace afterwards" in {
-      val input = "fof(name, plain, p, inference_name    )."
+    "parse source name with whitespace afterwards" in {
+      val input = "fof(name, plain, p, source_name    )."
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
-        a.source must_== Source.Name("inference_name")
+        a.source must_== Source.Name("source_name")
       }
     }
 
-    "parse inference name" in {
+    "parse inference rule name" in {
       val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a]))."
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
