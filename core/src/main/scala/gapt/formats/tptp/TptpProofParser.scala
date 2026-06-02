@@ -112,9 +112,9 @@ extension (formula: AnnotatedFormula) {
 
   def claimsIsNegatedConjectureStep: Boolean = formula.role == "negated_conjecture"
 
-  def inferenceRecord: Option[InferenceRecord] = formula.annotations match {
+  def inferenceRecord: Option[Source.Inference] = formula.annotations match {
     case Some(Annotations(Source.Inference(rule, usefulInfo, parents), _)) =>
-      Some(InferenceRecord(rule, usefulInfo, parents))
+      Some(Source.Inference(rule, usefulInfo, parents))
     case _ => None
   }
 }
