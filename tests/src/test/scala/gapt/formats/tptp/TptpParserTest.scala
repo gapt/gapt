@@ -75,11 +75,11 @@ class TptpParserTest extends Specification {
       }
     }
 
-    "parse parents" in {
+    "parse parent source" in {
       val input = "fof(name, plain, p, inference(rule_name, [status(thm)], [a]))."
       val tptpFile = TptpImporter.loadWithoutIncludes(InputFile.fromString(input))
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
-        a.source.asInstanceOf[Source.Inference].parents must_== Seq(TptpTerm("a"))
+        a.source.asInstanceOf[Source.Inference].parents(0).source must_== Source.Name("a")
       }
     }
 

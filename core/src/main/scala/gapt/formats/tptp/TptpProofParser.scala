@@ -118,11 +118,7 @@ extension (formula: AnnotatedFormula) {
       case None    => return Seq.empty
       case Some(a) => a.source
     }
-    def parseParentInfo(expr: Expr): Try[ParentInfo] = Try(expr match {
-      case TptpTerm(name)                              => ParentInfo(name, None)
-      case GeneralColon(TptpTerm(name), parentDetails) => ParentInfo(name, Some(parentDetails))
-      case e                                           => throw new IllegalArgumentException(s"cannot parse $e")
-    })
+    def parseParentInfo(expr: Expr): Try[ParentInfo] = Try(ParentInfo(expr))
     def handleInference(rule: String, usefulInfo: Seq[GeneralTerm], parents: Seq[GeneralTerm]): Seq[InferenceRecord] = {
       val parentInfos = parents.map(parseParentInfo).map {
         case Success(info) => info
@@ -131,7 +127,7 @@ extension (formula: AnnotatedFormula) {
       Seq(InferenceRecord(rule, usefulInfo, parentInfos))
     }
     source match {
-      case Source.Inference(rule, usefulInfo, parents) => handleInference(rule, usefulInfo, parents)
+      case Source.Inference(rule, usefulInfo, parents) => handleInference(rule, usefulInfo, parents.map(_.generalTerm))
       case _                                           => Seq.empty
     }
   }
@@ -147,7 +143,7 @@ extension (using tptpFile: TptpFile)(a: AnnotatedFormula) {
     }
     inferenceRecord.parents.map(p =>
       tptpFile.inputs.collect {
-        case af @ AnnotatedFormula(_, name, _, _, _) if name == p.source => af
+        case af @ AnnotatedFormula(_, name, _, _, _) if Source.Name(name) == p.source => af
       }.single
     )
   }
@@ -266,7 +262,7 @@ object TptpProofParser {
 
   def getParents(source: Source): Seq[String] = source match {
     case Source.Name(name)               => Seq(name)
-    case Source.Inference(_, _, parents) => parents.flatMap(getParents)
+    case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.generalTerm))
     case _                               => Seq()
   }
 
