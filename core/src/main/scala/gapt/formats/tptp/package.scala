@@ -54,13 +54,22 @@ package object tptp {
   type GeneralListNew = Seq[GeneralTerm]
   type UsefulInfo = GeneralListNew
   case class Introduced(introType: AtomicWord, usefulInfo: GeneralListNew, parents: Seq[ParentInfo])
-  case class ParentInfo(source: TptpName, details: ParentDetails)
+
+  case class ParentInfo(val generalTerm: GeneralTerm)
+
+  extension (p: ParentInfo) {
+    def source: Source = p.generalTerm match {
+      case TptpTerm(name) => Source.Name(name)
+      case _              => ???
+    }
+  }
+
   case class InferenceRecord(inference_rule: AtomicWord, usefulInfo: GeneralListNew, parents: Seq[ParentInfo])
   case class File(fileName: AtomicWord, fileInfo: Option[TptpName])
 
   enum Source {
     case Name(name: TptpName)
-    case Inference(rule: String, usefulInfo: Seq[GeneralTerm], parents: Seq[GeneralTerm])
+    case Inference(rule: String, usefulInfo: Seq[GeneralTerm], parents: Seq[ParentInfo])
     // the General case is a catch-all used during the parser refactoring
     // afterwards this case should not exist anymore
     // every source should be accounted for by one of the other enum cases
