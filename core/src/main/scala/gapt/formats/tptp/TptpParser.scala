@@ -168,13 +168,14 @@ class TptpParser(val input: ParserInput) extends Parser {
 
   private def name: Rule1[String] = rule { atomic_word | integer }
   // We include defined words as atomic_word, since no prover can keep them apart...
-  private def atomic_word = rule { (capture(lower_word) ~ Ws) | single_quoted }
+  private def atomic_word = rule { (capture(lower_word) ~ Ws) | single_quoted | back_quoted }
 
   private def number = rule { rational | real | integer }
 
   private def file_name = rule { single_quoted }
 
   private def single_quoted = rule { '\'' ~ sg_char.+ ~ '\'' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
+  private def back_quoted = rule { '`' ~ capture(upper_word) }
 
   private def distinct_object = rule { '"' ~ do_char.* ~ '"' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
 

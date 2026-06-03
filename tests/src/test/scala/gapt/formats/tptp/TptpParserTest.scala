@@ -220,8 +220,18 @@ class TptpParserTest extends Specification {
       parse("fof(, axiom, p).") must throwAn[IllegalArgumentException]
     }
 
-    "parse back-quoted names" in todo
-    "not parse upper-case names" in todo
+    "parse back-quoted names" in {
+      parse("fof(`A, axiom, p).").inputs(0).asInstanceOf[AnnotatedFormula].name must_== "A"
+    }
+
+    "not parse back-quoted name that doesn't start with upper-case" in {
+      parse("fof(`a, axiom, p).") must throwAn[IllegalArgumentException]
+    }
+
+    "not parse upper-case names" in {
+      parse("fof(A, axiom, p).") must throwAn[IllegalArgumentException]
+    }
+
     "parse include directives" in todo
     "parse different languages" in todo
     "should do X if passed a proof which has unknown as a name in a parent of an inference?" in todo
