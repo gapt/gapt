@@ -60,6 +60,8 @@ class TptpParser(val input: ParserInput) extends Parser {
       Source.Unknown
     case TptpTerm(name) =>
       Source.Name(name)
+    case GeneralList(sources*) =>
+      Source.List(sources.map(parseSourceFromGeneralTerm))
     case TptpTerm("file", TptpTerm(fileName)) =>
       Source.File(fileName, None)
     case TptpTerm("file", TptpTerm(fileName), TptpTerm(fileInfo)) =>

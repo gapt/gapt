@@ -185,6 +185,13 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse list of sources" in {
+      val tptp = parse("fof(f,plain,p,[a, b]).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source must_== Source.List(Seq(Source.Name("a"), Source.Name("b")))
+      }
+    }
+
     "not parse invalid source" in todo
     "parse integer names" in todo
     "parse single-quoted names" in todo
