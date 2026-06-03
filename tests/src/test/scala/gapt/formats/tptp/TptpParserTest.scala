@@ -192,6 +192,14 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "not parse list of empty sources" in {
+      parse("fof(f, plain, p, []).") must throwAn[IllegalArgumentException]
+    }
+
+    "not parse nested empty sources" in {
+      parse("fof(f, plain, p, [a, [], b]).") must throwAn[IllegalArgumentException]
+    }
+
     "not parse invalid source" in todo
     "parse integer names" in todo
     "parse single-quoted names" in todo
