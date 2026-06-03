@@ -212,6 +212,10 @@ class TptpParserTest extends Specification {
       parse("fof('name', axiom, p).").inputs(0).asInstanceOf[AnnotatedFormula].name must_== "name"
     }
 
+    "not parse empty single-quoted name" in {
+      parse("fof('', axiom, p).") must throwAn[IllegalArgumentException]
+    }
+
     "not parse empty name" in {
       parse("fof(, axiom, p).") must throwAn[IllegalArgumentException]
     }
