@@ -60,6 +60,10 @@ object TptpToString {
       TptpTerm("introduced", TptpTerm(introType), GeneralList(usefulInfo*), GeneralList(parents.map(parentInfoToGeneralTerm)*))
     case Source.Inference(rule, usefulInfo, parents) =>
       TptpTerm("inference", TptpTerm(rule), GeneralList(usefulInfo*), GeneralList(parents.map(parentInfoToGeneralTerm)*))
+    case Source.Theory(name, Seq()) =>
+      TptpTerm("theory", TptpTerm(name))
+    case Source.Theory(name, Seq(usefulInfo*)) =>
+      TptpTerm("theory", TptpTerm(name), GeneralList(usefulInfo*))
     case Source.General(s) =>
       s
   }
