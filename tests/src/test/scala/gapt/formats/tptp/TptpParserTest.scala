@@ -109,7 +109,7 @@ class TptpParserTest extends Specification {
     }
 
     "parse vampire sat_splitting_component introduced" in {
-      val tptpFile = parse("fof(name, plain, p, introduced(sat_splitting_component,[new_symbols(naming,[$spl18])])).")
+      val tptpFile = parse("fof(name, plain, p, introduced(sat_splitting_component,[new_symbols(naming,[spl18])])).")
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
         a.source.asInstanceOf[Source.Internal].introType must_== "sat_splitting_component"
       }
@@ -200,9 +200,10 @@ class TptpParserTest extends Specification {
       parse("fof(f, plain, p, [a, [], b]).") must throwAn[IllegalArgumentException]
     }
 
-    "not parse invalid source" in todo
-    "parse integer names" in todo
-    "parse single-quoted names" in todo
+    "not parse invalid source" in {
+      parse("fof(f, axiom, p, some_other_source(info)).") must throwAn[IllegalArgumentException]
+    }
+
     "parse back-quoted names" in todo
     "not parse upper-case names" in todo
     "parse include directives" in todo

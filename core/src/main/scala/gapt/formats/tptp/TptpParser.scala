@@ -65,7 +65,7 @@ class TptpParser(val input: ParserInput) extends Parser {
     case TptpTerm("unknown") =>
       Source.Unknown
     case GeneralList() =>
-      throw new IllegalArgumentException("no list source is empty")
+      throw new IllegalArgumentException("every list source must be empty")
     case GeneralList(sources*) =>
       Source.List(sources.map(s => parseSourceFromGeneralTerm(s).get))
     case TptpTerm(name) =>
@@ -113,7 +113,7 @@ class TptpParser(val input: ParserInput) extends Parser {
         ) =>
       Source.Creator(name, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p).get))
     case e =>
-      Source.General(e)
+      throw new IllegalArgumentException("input is not a valid source")
   })
 
   private def formula = rule { typed_logic_formula }
