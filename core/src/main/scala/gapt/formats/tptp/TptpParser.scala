@@ -20,6 +20,7 @@ import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
 
 import scala.util.{Failure, Success}
+import scala.util.Try
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -46,22 +47,29 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def optionalInfo: Rule1[Option[Seq[GeneralTerm]]] = rule { (Comma ~ usefulInfo).? }
   private def usefulInfo: Rule1[Seq[GeneralTerm]] = general_list
   private def source: Rule1[Source] = rule {
-    general_term ~> parseSourceFromGeneralTerm
+    general_term ~> (gt =>
+      parseSourceFromGeneralTerm(gt) match {
+        case Failure(exception) => failX(exception.getMessage())
+        case Success(s)         => push(s)
+      }
+    )
   }
 
-  private def parseParentInfoFromGeneralTerm(gt: GeneralTerm): ParentInfo = gt match {
+  private def parseParentInfoFromGeneralTerm(gt: GeneralTerm): Try[ParentInfo] = Try(gt match {
     case GeneralColon(source, details) =>
-      ParentInfo(parseSourceFromGeneralTerm(source), Some(details))
+      ParentInfo(parseSourceFromGeneralTerm(source).get, Some(details))
     case gt =>
-      ParentInfo(parseSourceFromGeneralTerm(gt), None)
-  }
-  private def parseSourceFromGeneralTerm(gt: GeneralTerm): Source = gt match {
+      ParentInfo(parseSourceFromGeneralTerm(gt).get, None)
+  })
+  private def parseSourceFromGeneralTerm(gt: GeneralTerm): Try[Source] = Try(gt match {
     case TptpTerm("unknown") =>
       Source.Unknown
+    case GeneralList() =>
+      throw new IllegalArgumentException("no list source is empty")
+    case GeneralList(sources*) =>
+      Source.List(sources.map(s => parseSourceFromGeneralTerm(s).get))
     case TptpTerm(name) =>
       Source.Name(name)
-    case GeneralList(sources*) =>
-      Source.List(sources.map(parseSourceFromGeneralTerm))
     case TptpTerm("file", TptpTerm(fileName)) =>
       Source.File(fileName, None)
     case TptpTerm("file", TptpTerm(fileName), TptpTerm(fileInfo)) =>
@@ -72,7 +80,7 @@ class TptpParser(val input: ParserInput) extends Parser {
           GeneralList(usefulInfo*),
           GeneralList(parents*)
         ) =>
-      Source.Inference(rule, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p)))
+      Source.Inference(rule, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p).get))
     case e @ TptpTerm(
           "introduced",
           TptpTerm(introType),
@@ -85,7 +93,7 @@ class TptpParser(val input: ParserInput) extends Parser {
           GeneralList(usefulInfo*),
           GeneralList(parents*)
         ) =>
-      Source.Internal(introType, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p)))
+      Source.Internal(introType, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p).get))
     case TptpTerm(
           "theory",
           TptpTerm(name)
@@ -103,10 +111,10 @@ class TptpParser(val input: ParserInput) extends Parser {
           GeneralList(usefulInfo*),
           GeneralList(parents*)
         ) =>
-      Source.Creator(name, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p)))
+      Source.Creator(name, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p).get))
     case e =>
       Source.General(e)
-  }
+  })
 
   private def formula = rule { typed_logic_formula }
   private def typed_logic_formula = rule { logic_formula } // add type annotation
