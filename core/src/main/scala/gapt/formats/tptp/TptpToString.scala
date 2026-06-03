@@ -64,6 +64,8 @@ object TptpToString {
       TptpTerm("theory", TptpTerm(name))
     case Source.Theory(name, Seq(usefulInfo*)) =>
       TptpTerm("theory", TptpTerm(name), GeneralList(usefulInfo*))
+    case Source.Creator(name, usefulInfo, parents) =>
+      TptpTerm("creator", TptpTerm(name), GeneralList(usefulInfo*), GeneralList(parents.map(parentInfoToGeneralTerm)*))
     case Source.General(s) =>
       s
   }

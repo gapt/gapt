@@ -157,6 +157,27 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse creator source name" in {
+      val tptp = parse("fof(f,axiom,a=a,creator(creator_name, [], [])).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Creator].name must_== "creator_name"
+      }
+    }
+
+    "parse creator source info" in {
+      val tptp = parse("fof(f,axiom,a=a,creator(creator_name, [info], [])).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Creator].usefulInfo(0) must_== TptpTerm("info")
+      }
+    }
+
+    "parse creator source parents" in {
+      val tptp = parse("fof(f,axiom,a=a,creator(creator_name, [], [parent1, parent2])).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Creator].parents must_== Seq(ParentInfo(Source.Name("parent1")), ParentInfo(Source.Name("parent2")))
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo
