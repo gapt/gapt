@@ -56,6 +56,8 @@ class TptpParser(val input: ParserInput) extends Parser {
       ParentInfo(parseSourceFromGeneralTerm(gt), None)
   }
   private def parseSourceFromGeneralTerm(gt: GeneralTerm): Source = gt match {
+    case TptpTerm("unknown") =>
+      Source.Unknown
     case TptpTerm(name) =>
       Source.Name(name)
     case TptpTerm("file", TptpTerm(fileName)) =>

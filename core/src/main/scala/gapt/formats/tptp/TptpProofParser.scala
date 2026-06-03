@@ -250,6 +250,7 @@ object TptpProofParser {
     case Source.File(_, _)               => Seq.empty
     case Source.Theory(_, _)             => Seq.empty
     case Source.Creator(_, _, parents)   => parents.flatMap(p => getParents(p.source))
+    case Source.Unknown                  => Seq.empty
     case Source.General(s) => s match {
         case GeneralColon(TptpTerm(label), _) => Seq(label)
         case TptpTerm(dagSource)              => Seq(dagSource)

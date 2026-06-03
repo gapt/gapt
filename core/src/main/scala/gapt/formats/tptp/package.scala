@@ -62,6 +62,7 @@ package object tptp {
     case File(fileName: String, fileInfo: Option[TptpName])
     case Theory(name: String, usefulInfo: Seq[GeneralTerm])
     case Creator(name: String, usefulInfo: Seq[GeneralTerm], parents: Seq[ParentInfo])
+    case Unknown
     // the General case is a catch-all used during the parser refactoring
     // afterwards this case should not exist anymore
     // every source should be accounted for by one of the other enum cases

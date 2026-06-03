@@ -66,6 +66,7 @@ object TptpToString {
       TptpTerm("theory", TptpTerm(name), GeneralList(usefulInfo*))
     case Source.Creator(name, usefulInfo, parents) =>
       TptpTerm("creator", TptpTerm(name), GeneralList(usefulInfo*), GeneralList(parents.map(parentInfoToGeneralTerm)*))
+    case Source.Unknown => TptpTerm("unknown")
     case Source.General(s) =>
       s
   }

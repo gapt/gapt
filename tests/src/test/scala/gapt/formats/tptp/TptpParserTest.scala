@@ -178,15 +178,20 @@ class TptpParserTest extends Specification {
       }
     }
 
-    "not parse invalid source" in todo
+    "parse unknown source" in {
+      val tptp = parse("fof(f,axiom,p,unknown).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source must_== Source.Unknown
+      }
+    }
 
+    "not parse invalid source" in todo
     "parse integer names" in todo
     "parse single-quoted names" in todo
     "parse back-quoted names" in todo
     "not parse upper-case names" in todo
-
     "parse include directives" in todo
-
     "parse different languages" in todo
+    "should do X if passed a proof which has unknown as a name in a parent of an inference?" in todo
   }
 }
