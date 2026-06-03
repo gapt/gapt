@@ -174,7 +174,7 @@ class TptpParser(val input: ParserInput) extends Parser {
 
   private def file_name = rule { single_quoted }
 
-  private def single_quoted = rule { '\'' ~ sg_char.* ~ '\'' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
+  private def single_quoted = rule { '\'' ~ sg_char.+ ~ '\'' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
 
   private def distinct_object = rule { '"' ~ do_char.* ~ '"' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
 

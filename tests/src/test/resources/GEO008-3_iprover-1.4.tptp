@@ -2,7 +2,7 @@ cnf(c_37,plain,
 ( between(X0_$i,X1_$i,X2_$i)
 | ~ between(X0_$i,X3_$i,X2_$i)
 | ~ between(X0_$i,X1_$i,X3_$i) ),
-file('', b9) ).
+file('.', b9) ).
 
 cnf(c_181748,plain,
 ( between(X0_$i,X1_$i,X2_$i)
@@ -12,13 +12,13 @@ inference(subtyping,[status(esa)],[c_37]) ).
 
 cnf(c_26,plain,
 ( between(X0_$i,X1_$i,X2_$i) | ~ between(X2_$i,X1_$i,X0_$i) ),
-file('', t1) ).
+file('.', t1) ).
 
 cnf(c_181750,plain,
 ( between(X0_$i,X1_$i,X2_$i) | ~ between(X2_$i,X1_$i,X0_$i) ),
 inference(subtyping,[status(esa)],[c_26]) ).
 
-cnf(c_62,plain,( between(a,d,e) ),file('', d_between_a_and_e) ).
+cnf(c_62,plain,( between(a,d,e) ),file('.', d_between_a_and_e) ).
 
 cnf(c_181820,plain,
 ( between(a,d,e) ),
@@ -36,19 +36,19 @@ cnf(c_183087,plain,
 ( ~ between(e,a,X0_$i) | between(X0_$i,d,e) ),
 inference(resolution,[status(thm)],[c_182806,c_181750]) ).
 
-cnf(c_61,plain,( between(a,c,e) ),file('', c_between_a_and_e) ).
+cnf(c_61,plain,( between(a,c,e) ),file('.', c_between_a_and_e) ).
 
 cnf(c_111,plain,
 ( between(a,c,e) ),
 inference(subtyping,[status(esa)],[c_61]) ).
 
-cnf(c_63,plain,( between(c,b,d) ),file('', b_between_c_and_d) ).
+cnf(c_63,plain,( between(c,b,d) ),file('.', b_between_c_and_d) ).
 
 cnf(c_109,plain,
 ( between(c,b,d) ),
 inference(subtyping,[status(esa)],[c_63]) ).
 
-cnf(c_64,plain,( ~ between(a,b,e) ),file('', prove_betweenness) ).
+cnf(c_64,plain,( ~ between(a,b,e) ),file('.', prove_betweenness) ).
 
 cnf(c_88,plain,
 ( ~ between(a,b,e) ),
@@ -58,7 +58,7 @@ cnf(c_36,plain,
 ( between(X0_$i,X1_$i,X2_$i)
 | ~ between(X3_$i,X1_$i,X2_$i)
 | ~ between(X0_$i,X3_$i,X2_$i) ),
-file('', b8) ).
+file('.', b8) ).
 
 cnf(c_521,plain,
 ( between(X0_$i,X1_$i,X2_$i)
@@ -105,7 +105,7 @@ cnf(c_60,plain,
 | between(X1_$i,X0_$i,X2_$i)
 | ~ between(X3_$i,X0_$i,X2_$i)
 | ~ between(X3_$i,X1_$i,X2_$i) ),
-file('', b14) ).
+file('.', b14) ).
 
 cnf(c_54335,plain,
 ( between(X0_$i,X1_$i,X2_$i)
@@ -170,7 +170,7 @@ cnf(c_33,plain,
 ( between(X0_$i,X1_$i,X2_$i)
 | ~ between(X3_$i,X1_$i,X2_$i)
 | ~ between(X3_$i,X0_$i,X1_$i) ),
-file('', b5) ).
+file('.', b5) ).
 
 cnf(c_181742,plain,
 ( between(X0_$i,X1_$i,X2_$i)
@@ -180,7 +180,7 @@ inference(subtyping,[status(esa)],[c_33]) ).
 
 cnf(c_11,plain,
 ( between(X0_$i,X1_$i,reflection(X0_$i,X1_$i)) ),
-file('', r2_1) ).
+file('.', r2_1) ).
 
 cnf(c_181780,plain,
 ( between(X0_$i,X1_$i,reflection(X0_$i,X1_$i)) ),
