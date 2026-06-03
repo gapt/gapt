@@ -204,6 +204,18 @@ class TptpParserTest extends Specification {
       parse("fof(f, axiom, p, some_other_source(info)).") must throwAn[IllegalArgumentException]
     }
 
+    "parse integer names" in {
+      parse("fof(1, axiom, p).").inputs(0).asInstanceOf[AnnotatedFormula].name must_== "1"
+    }
+
+    "parse single-quoted names" in {
+      parse("fof('name', axiom, p).").inputs(0).asInstanceOf[AnnotatedFormula].name must_== "name"
+    }
+
+    "not parse empty name" in {
+      parse("fof(, axiom, p).") must throwAn[IllegalArgumentException]
+    }
+
     "parse back-quoted names" in todo
     "not parse upper-case names" in todo
     "parse include directives" in todo
