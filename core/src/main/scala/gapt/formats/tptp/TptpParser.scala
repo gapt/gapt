@@ -82,6 +82,17 @@ class TptpParser(val input: ParserInput) extends Parser {
           GeneralList(parents*)
         ) =>
       Source.Internal(introType, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p)))
+    case TptpTerm(
+          "theory",
+          TptpTerm(name)
+        ) =>
+      Source.Theory(name, Seq.empty)
+    case TptpTerm(
+          "theory",
+          TptpTerm(name),
+          GeneralList(usefulInfo*)
+        ) =>
+      Source.Theory(name, usefulInfo)
     case e =>
       Source.General(e)
   }

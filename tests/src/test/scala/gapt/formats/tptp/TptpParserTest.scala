@@ -143,6 +143,20 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse theory source with name" in {
+      val tptp = parse("fof(f,axiom,a=a,theory(equality)).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Theory].name must_== "equality"
+      }
+    }
+
+    "parse theory source with additional info" in {
+      val tptp = parse("fof(f,axiom,a=a,theory(equality, [info])).")
+      tptp.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Theory].usefulInfo(0) must_== TptpTerm("info")
+      }
+    }
+
     "not parse invalid source" in todo
 
     "parse integer names" in todo
@@ -151,5 +165,7 @@ class TptpParserTest extends Specification {
     "not parse upper-case names" in todo
 
     "parse include directives" in todo
+
+    "parse different languages" in todo
   }
 }
