@@ -167,7 +167,7 @@ object TptpProofParser {
       return TptpRefutationSketch(sketch, None)
 
     if usedNegatedConjectures.size > 1 then
-      throw new IllegalArgumentException("Expected exactly one negated conjecture used in the refutation sketch, got " + usedNegatedConjectures.size)
+      throw new IllegalArgumentException(s"Expected exactly one negated conjecture used in the refutation sketch, got ${usedNegatedConjectures.size}")
 
     val negatedConjecture = usedNegatedConjectures.head
     val conjectures = tptpFile.inputs.collect {
