@@ -69,6 +69,31 @@ extension (annotatedFormula: AnnotatedFormula) {
 
     statuses.contains(inferenceStatus)
   }
+
+  def parents: Set[String] = boundary {
+    val annotations = annotatedFormula.annotations.getOrElse {
+      boundary.break(Set.empty)
+    }
+    val parentInfos = annotations.source match {
+      case Source.Inference(rule, usefulInfo, parents)     => parents
+      case Source.Internal(introType, usefulInfo, parents) => parents
+      case Source.Creator(name, usefulInfo, parents)       => parents
+      case Source.List(sources) =>
+        throw new UnsupportedOperationException("cannot get parents of alternative list sources")
+
+      case Source.Name(name)               => Set.empty
+      case Source.File(fileName, fileInfo) => Set.empty
+      case Source.Theory(name, usefulInfo) => Set.empty
+      case Source.Unknown                  => Set.empty
+      case Source.General(term)            => Set.empty
+    }
+
+    parentInfos.map {
+      case ParentInfo(Source.Name(name), _) => name
+      case _ =>
+        throw new UnsupportedOperationException("cannot get non-name parent")
+    }.toSet
+  }
 }
 
 case class TptpProofMap private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
@@ -93,6 +118,30 @@ object TptpProofMap {
   }
 }
 
+case class TptpProofDag private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
+  export map.*
+}
+
+def isCyclic[T](nodes: Set[T], neighbors: T => Set[T]): Boolean = {
+  val visited = scala.collection.mutable.Set[T]()
+  def isPartOfCycle(node: T, path: Seq[T] = Seq.empty): Boolean = {
+    if path.contains(node) then return true
+    if visited.contains(node) then return false
+    visited.add(node)
+    neighbors(node).exists(p => isPartOfCycle(p, path :+ node))
+  }
+
+  nodes.exists(n => isPartOfCycle(n))
+}
+
+object TptpProofDag {
+  def apply(map: TptpProofMap): Try[TptpProofDag] = Try {
+    if isCyclic(map.keySet, n => map(n).parents) then
+      throw IllegalArgumentException(s"Cycle detected in proof starting from node ${map.keySet.head}")
+    else new TptpProofDag(map.toMap)
+  }
+}
+
 // implementation of checkProof that checks the input by constructing a resolution proof from the input
 def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
   boundary {
@@ -113,15 +162,18 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         val tptpProofMap = TptpProofMap(annotatedFormulaSteps).getOrElse {
           boundary.break(SzsStatus.FailedVerified)
         }
+        val tptpProofDag = TptpProofDag(tptpProofMap).getOrElse {
+          boundary.break(SzsStatus.FailedVerified)
+        }
 
-        val claimedNegatedConjectures = tptpProofMap.values.collect {
+        val claimedNegatedConjectures = tptpProofDag.values.collect {
           case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
         }
         if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatusAmong(Set("cth"))) then {
           boundary.break(SzsStatus.FailedVerified)
         }
 
-        val plainInferences = tptpProofMap.values.collect {
+        val plainInferences = tptpProofDag.values.collect {
           case a @ AnnotatedFormula(_, _, "plain", _, _) => a
         }
         if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
