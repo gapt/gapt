@@ -40,13 +40,13 @@ extension (gt: GeneralTerm) {
 }
 
 extension (usefulInfo: Seq[GeneralTerm]) {
-  def findStatus(): Option[InferenceStatus] =
-    usefulInfo.flatMap(_.asStatus).headOption
+  def statusSet: Set[InferenceStatus] =
+    usefulInfo.flatMap(_.asStatus).toSet
 }
 
 extension (inference: Source.Inference) {
-  def statusOption: Option[InferenceStatus] =
-    inference.usefulInfo.findStatus()
+  def statuses: Set[InferenceStatus] =
+    inference.usefulInfo.statusSet
 }
 
 extension (source: Source) {
@@ -64,7 +64,7 @@ extension (annotatedFormula: AnnotatedFormula) {
     val inferenceSource = annotations.source.asInferenceOption.getOrElse {
       boundary.break(false)
     }
-    val inferenceStatus = inferenceSource.statusOption.getOrElse {
+    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse {
       boundary.break(false)
     }
 

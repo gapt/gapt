@@ -150,6 +150,12 @@ extension [T](a: IterableOnce[T]) {
     case Seq(x) => x
     case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
   }
+
+  def singleOption: Option[T] = a.iterator.take(2).toSeq match {
+    case Seq()  => None
+    case Seq(x) => Some(x)
+    case _      => None
+  }
 }
 
 object TptpProofParser {
