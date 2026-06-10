@@ -48,7 +48,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.IncorrectNegatedConjectureInference)
       }
 
       "should verify a proof that contains unused incorrect conjecture to negated_conjecture inference but is otherwise correct" in {
@@ -67,7 +67,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus)
       }
 
       "should fail on negated conjecture without a status" in {
@@ -76,7 +76,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus)
       }
 
       "should fail on negated conjecture inference with more than one distinct statuses" in {
@@ -85,7 +85,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus)
       }
 
       "should verify negated conjecture inference with more than one equal cth statuses" in {
@@ -108,7 +108,7 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "should fail on negated conjecture step without a parent" in todo
-      "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
+      "should fail on negated conjecture step which has conjecture and non-conjecture parents" in todo
       "should do X on negated conjecture step with multiple conjecture parents" in todo
 
       "should fail on plain inference without parents" in todo
@@ -118,7 +118,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
       }
 
       "should fail on plain inference with more than one distinct statuses" in {
@@ -127,7 +127,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm),status(esa)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
       }
 
       "should fail on plain inference with cth status" in {
@@ -136,7 +136,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
       }
 
       "should verify on plain inference with esa status" in {
@@ -154,7 +154,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
       }
       "should fail on plain inference whose parent is a conjecture" in todo
 
@@ -173,7 +173,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.DifferentFormulasWithSameName)
       }
 
       "should verify proof with two steps with the same name if proof steps are equal" in {
@@ -192,7 +192,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [cont])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.InferenceCycle)
       }
 
       "should fail on proof with inference steps that form a 2-step cycle" in {
@@ -202,7 +202,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont1, plain, p, inference(fromFalsum, [status(thm)], [cont2])).
         |fof(cont2, plain, $false, inference(falsum, [status(thm)], [cont1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.FailedVerified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.InferenceCycle)
       }
       "should fail on proof with named parents that don't exist in proof" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
