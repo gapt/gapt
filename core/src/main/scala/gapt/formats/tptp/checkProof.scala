@@ -57,7 +57,7 @@ extension (source: Source) {
 }
 
 extension (annotatedFormula: AnnotatedFormula) {
-  def hasCorrectNegatedConjectureInference: Boolean = boundary {
+  def hasUnambiguousStatus(status: String): Boolean = boundary {
     val annotations = annotatedFormula.annotations.getOrElse {
       boundary.break(false)
     }
@@ -68,7 +68,7 @@ extension (annotatedFormula: AnnotatedFormula) {
       boundary.break(false)
     }
 
-    inferenceStatus == InferenceStatus("cth")
+    inferenceStatus == InferenceStatus(status)
   }
 }
 
@@ -87,7 +87,7 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
           case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
         }
 
-        if claimedNegatedConjectures.exists(c => !c.hasCorrectNegatedConjectureInference) then {
+        if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatus("cth")) then {
           boundary.break(SzsStatus.FailedVerified)
         }
 
