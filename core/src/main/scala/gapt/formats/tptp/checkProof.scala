@@ -104,7 +104,9 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
             case _: IllegalArgumentException => boundary.break(SzsStatus.FailedVerified)
         }
 
-        val annotatedFormulaSteps = tptpFile.inputs.collect {
+        val annotatedFormulaSteps = tptpFile.inputs.map {
+          case i @ IncludeDirective(_, _) =>
+            throw UnsupportedOperationException(s"cannot handle include directive when checking proof. got $i")
           case a @ AnnotatedFormula(_, _, _, _, _) => a
         }
 
@@ -142,7 +144,7 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         }
       }
     catch {
-      case _: TimeOutException => {
+      case _: TimeOutException | _: UnsupportedOperationException => {
         SzsStatus.NotVerified
       }
     }

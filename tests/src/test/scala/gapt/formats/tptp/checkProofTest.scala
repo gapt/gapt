@@ -169,6 +169,15 @@ class checkProofUnitTest extends mutable.Specification {
 
       // we do this for now to avoid having to do a big refactor of the parsers
       "should not verify proof that contains inference parents which are not simple names" in todo
+      "should not verify if input has include directives (we do not support this yet)" in {
+        val input = InputFile.fromString("""
+        |include('filename', [a]).
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.NotVerified
+      }
 
       "should fail on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
       "should do X on a proof that doesn't use negated conjecture" in todo("specify")
