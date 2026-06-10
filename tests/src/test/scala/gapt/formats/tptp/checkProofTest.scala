@@ -97,8 +97,15 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should fail on negated conjecture step whose parent is not a conjecture" in todo
-      "should fail on negated conjecture step without a parent" in todo
+      "should fail on negated conjecture step whose parent is not a conjecture" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [a1])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        todo
+        checkProof(input) must_== SzsStatus.Verified
+      }
 
       "should fail on negated conjecture step without a parent" in todo
       "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
@@ -178,7 +185,26 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.Verified
       }
-      "should fail on proof with inference steps that form a cycle" in todo
+
+      "should fail on proof with inference steps that form a 1-step cycle" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [cont])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
+
+      "should fail on proof with inference steps that form a 2-step cycle" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont1, plain, p, inference(fromFalsum, [status(thm)], [cont2])).
+        |fof(cont2, plain, $false, inference(falsum, [status(thm)], [cont1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
+      "should fail on proof with named parents that don't exist in proof" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
 
       "should not verify proof that contains inference parents which are not simple names" in todo
@@ -247,5 +273,35 @@ class checkProofExampleTest extends Specification {
     |checkProof2
     |${spec(i => checkProof2(i))}
   """.stripMargin
+  }
+}
+
+class acyclicityTest extends org.specs2.mutable.Specification {
+
+  "isCyclic" should {
+    "return false on empty graph" in {
+      isCyclic(Set(), Map()) must beFalse
+    }
+    "return false on single node unconnected graph" in {
+      isCyclic(Set(1), Map().withDefaultValue(Set.empty)) must beFalse
+    }
+    "return true on single node connected graph" in {
+      isCyclic(Set(1), Map(1 -> Set(1))) must beTrue
+    }
+    "return false on two node acyclic grpah" in {
+      isCyclic(Set(1, 2), Map(1 -> Set(2)).withDefaultValue(Set.empty)) must beFalse
+    }
+    "return true on two node acyclic graph" in {
+      isCyclic(Set(1, 2), Map(1 -> Set(2), 2 -> Set(1))) must beTrue
+    }
+    "return false on acyclic non-connected graph" in {
+      isCyclic(Set(1, 2, 3, 4), Map(1 -> Set(2), 3 -> Set(4)).withDefaultValue(Set.empty)) must beFalse
+    }
+    "return true on 3-step cycle" in {
+      isCyclic(Set(1, 2, 3), Map(1 -> Set(2), 2 -> Set(3), 3 -> Set(1))) must beTrue
+    }
+    "return false on graph that is cyclic as undirected graph" in {
+      isCyclic(Set(1, 2, 3, 4), Map(1 -> Set(2, 3), 2 -> Set(4), 3 -> Set(4)).withDefaultValue(Set.empty)) must beFalse
+    }
   }
 }
