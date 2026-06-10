@@ -103,8 +103,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [a1])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        todo
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithNonConjectureParent)
       }
 
       "should fail on negated conjecture step without a parent" in todo
