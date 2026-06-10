@@ -15,18 +15,33 @@ import gapt.expr.Expr
 import scala.util.boundary
 import scala.util.Try
 
+enum FailedVerifiedReason {
+  case InputSyntaxError
+  case DifferentFormulasWithSameName
+  case InferenceCycle
+  case NegatedConjectureWithInvalidStatus
+  case NegatedConjectureWithNonConjectureParent
+  case PlainInferenceWithInvalidStatus
+  case IncorrectNegatedConjectureInference
+  case IncorrectPlainInference
+}
+
 enum SzsStatus {
   case Verified
-  case FailedVerified
+  case FailedVerified(reason: FailedVerifiedReason)
   case NotVerified
 
   override def toString(): String = this match {
-    case Verified       => "Verified"
-    case FailedVerified => "FailedVerified"
-    case NotVerified    => "NotVerified"
+    case Verified               => "Verified"
+    case FailedVerified(reason) => s"FailedVerified : $reason"
+    case NotVerified            => "NotVerified"
   }
 
   def statusLine: String = s"%SZS status ${this.toString()}"
+}
+
+object SzsStatus {
+  def failed(reason: FailedVerifiedReason): SzsStatus.FailedVerified = FailedVerified(reason)
 }
 
 def checkProof(file: InputFile): SzsStatus = checkProof1(file)
@@ -120,6 +135,24 @@ object TptpProofMap {
 
 case class TptpProofDag private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
   export map.*
+
+  def parentsOf(formulaName: String): Set[AnnotatedFormula] = {
+    map(formulaName).parents.map(p => map(p))
+  }
+
+  def ancestorsOf(formulaName: String): Set[AnnotatedFormula] = {
+    val formula = map(formulaName)
+    val parents = formula.parents.map(p => map(p))
+    parents ++ parents.flatMap(p => ancestorsOf(p.name))
+  }
+
+  def isUsedInDerivationOf(used: String, derivationOf: String): Boolean = {
+    used == derivationOf || ancestorsOf(derivationOf).exists(_.name == used)
+  }
+
+  def hasNonConjectureParent(formulaName: String): Boolean = {
+    parentsOf(formulaName).exists(p => p.role != "conjecture")
+  }
 }
 
 def isCyclic[T](nodes: Set[T], neighbors: T => Set[T]): Boolean = {
@@ -150,7 +183,7 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
           try TptpImporter.loadWithoutIncludes(file)
           catch
             // In this case the input file was not valid TPTP
-            case _: IllegalArgumentException => boundary.break(SzsStatus.FailedVerified)
+            case _: IllegalArgumentException => boundary.break(SzsStatus.failed(FailedVerifiedReason.InputSyntaxError))
         }
 
         val annotatedFormulaSteps = tptpFile.inputs.map {
@@ -160,38 +193,41 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         }
 
         val tptpProofMap = TptpProofMap(annotatedFormulaSteps).getOrElse {
-          boundary.break(SzsStatus.FailedVerified)
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.DifferentFormulasWithSameName))
         }
         val tptpProofDag = TptpProofDag(tptpProofMap).getOrElse {
-          boundary.break(SzsStatus.FailedVerified)
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.InferenceCycle))
         }
 
         val claimedNegatedConjectures = tptpProofDag.values.collect {
           case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
         }
         if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatusAmong(Set("cth"))) then {
-          boundary.break(SzsStatus.FailedVerified)
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus))
+        }
+        if claimedNegatedConjectures.exists(c => tptpProofDag.hasNonConjectureParent(c.name)) then {
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithNonConjectureParent))
         }
 
         val plainInferences = tptpProofDag.values.collect {
           case a @ AnnotatedFormula(_, _, "plain", _, _) => a
         }
         if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
-          boundary.break(SzsStatus.FailedVerified)
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus))
         }
 
-        val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(file)
+        val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(tptpProofDag)
         tptpRefutationSketch.conjectureNegatedConjecturePair match {
           case Some((conjecture, negatedConjecture)) =>
             if !Escargot.isValid(Neg(conjecture) --> negatedConjecture) then
-              boundary.break(SzsStatus.FailedVerified)
+              boundary.break(SzsStatus.failed(FailedVerifiedReason.IncorrectNegatedConjectureInference))
           case None =>
         }
 
         val sketch = tptpRefutationSketch.refutationSketch
         val proof = RefutationSketchToResolution(sketch)
         proof match {
-          case Left(UnprovableSketchInference(_)) => SzsStatus.FailedVerified
+          case Left(UnprovableSketchInference(_)) => SzsStatus.failed(FailedVerifiedReason.IncorrectPlainInference)
           case Right(_)                           => SzsStatus.Verified
         }
       }
@@ -285,7 +321,7 @@ def checkProof2(file: InputFile): SzsStatus = {
   val failed = verifications.filter(_._3.contains(false))
   val unverified = verifications.filter(_._3.isEmpty)
 
-  if failed.nonEmpty then SzsStatus.FailedVerified
+  if failed.nonEmpty then SzsStatus.failed(FailedVerifiedReason.IncorrectPlainInference)
   else if unverified.nonEmpty then SzsStatus.NotVerified
   else SzsStatus.Verified
 }

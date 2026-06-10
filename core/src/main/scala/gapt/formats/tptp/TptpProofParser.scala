@@ -20,6 +20,7 @@ import gapt.proofs.sketch._
 import gapt.proofs.{FOLClause, HOLSequent, Sequent}
 
 import scala.collection.mutable
+import gapt.formats.tptp.check.TptpProofDag
 
 sealed trait TptpProofStep {
   def name: String
@@ -159,14 +160,16 @@ extension [T](a: IterableOnce[T]) {
 }
 
 object TptpProofParser {
-  def parseTptpRefutationSketch(input: InputFile): TptpRefutationSketch = {
+  def parseTptpRefutationSketch(dag: TptpProofDag): TptpRefutationSketch = {
+    given tptpFile: TptpFile = TptpFile(dag.map(_._2).toSeq)
+    val input = InputFile.fromString(tptpFile.toString)
     val (_, sketch) = parse(input)
-    given tptpFile: TptpFile = TptpImporter.loadWithoutIncludes(input)
     val refutationHead = tptpFile.inputs.collect {
       case a @ AnnotatedFormula(_, _, _, Bottom(), _) => a
     }.single
-    val usedNegatedConjectures = tptpFile.inputs.collect {
-      case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) if a.isUsedInDerivationOf(refutationHead) => a
+    val usedNegatedConjectures = dag.values.collect {
+      case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _)
+          if dag.isUsedInDerivationOf(a.name, refutationHead.name) => a
     }
 
     if usedNegatedConjectures.isEmpty then
