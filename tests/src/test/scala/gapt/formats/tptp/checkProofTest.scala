@@ -61,13 +61,12 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should fail on negated conjecture step without cth status" in {
+      "should fail on negated conjecture step with thm status" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p).
         |fof(c, conjecture, p).
-        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        todo
         checkProof(input) must_== SzsStatus.FailedVerified
       }
 
