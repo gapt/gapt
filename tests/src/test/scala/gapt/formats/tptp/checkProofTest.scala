@@ -163,7 +163,16 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.FailedVerified
       }
-      "should fail on proof with two steps with the same name even if proof steps are equal" in todo
+
+      "should verify proof with two steps with the same name if proof steps are equal" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
       "should fail on proof with inference steps that form a cycle" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
 

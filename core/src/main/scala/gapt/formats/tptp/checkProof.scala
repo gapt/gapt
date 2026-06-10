@@ -80,12 +80,12 @@ object TptpProofMap {
     val map = scala.collection.mutable.Map[String, AnnotatedFormula]()
     for s <- steps do {
       map.updateWith(s.name) {
-        case None => Some(s)
-        case Some(formula) =>
+        case Some(formula) if s != formula =>
           throw IllegalArgumentException(
             s"""formula $formula with name ${formula.name} is already present.
                |Attempted to add another formula $s with the same name.""".stripMargin
           )
+        case _ => Some(s)
       }
     }
 
