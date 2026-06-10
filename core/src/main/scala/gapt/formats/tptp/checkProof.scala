@@ -21,6 +21,7 @@ enum FailedVerifiedReason {
   case InferenceCycle
   case NegatedConjectureWithInvalidStatus
   case NegatedConjectureWithNonConjectureParent
+  case NegatedConjectureWithoutParent
   case PlainInferenceWithInvalidStatus
   case IncorrectNegatedConjectureInference
   case IncorrectPlainInference
@@ -207,6 +208,9 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         }
         if claimedNegatedConjectures.exists(c => tptpProofDag.hasNonConjectureParent(c.name)) then {
           boundary.break(SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithNonConjectureParent))
+        }
+        if claimedNegatedConjectures.exists(c => tptpProofDag.parentsOf(c.name).isEmpty) then {
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithoutParent))
         }
 
         val plainInferences = tptpProofDag.values.collect {

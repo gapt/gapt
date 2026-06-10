@@ -106,7 +106,14 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithNonConjectureParent)
       }
 
-      "should fail on negated conjecture step without a parent" in todo
+      "should fail on negated conjecture step without a parent" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithoutParent)
+      }
       "should fail on negated conjecture step which has conjecture and non-conjecture parents" in todo
       "should do X on negated conjecture step with multiple conjecture parents" in todo
 
