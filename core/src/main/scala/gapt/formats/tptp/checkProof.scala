@@ -13,6 +13,7 @@ import gapt.proofs.sketch.UnprovableSketchInference
 import scala.concurrent.duration._
 import gapt.expr.Expr
 import scala.util.boundary
+import scala.util.Try
 
 enum SzsStatus {
   case Verified
@@ -70,6 +71,28 @@ extension (annotatedFormula: AnnotatedFormula) {
   }
 }
 
+case class TptpProofMap private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
+  export map.*
+}
+
+object TptpProofMap {
+  def apply(steps: Seq[AnnotatedFormula]): Try[TptpProofMap] = Try {
+    val map = scala.collection.mutable.Map[String, AnnotatedFormula]()
+    for s <- steps do {
+      map.updateWith(s.name) {
+        case None => Some(s)
+        case Some(formula) =>
+          throw IllegalArgumentException(
+            s"""formula $formula with name ${formula.name} is already present.
+               |Attempted to add another formula $s with the same name.""".stripMargin
+          )
+      }
+    }
+
+    new TptpProofMap(map.toMap)
+  }
+}
+
 // implementation of checkProof that checks the input by constructing a resolution proof from the input
 def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
   boundary {
@@ -81,14 +104,22 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
             case _: IllegalArgumentException => boundary.break(SzsStatus.FailedVerified)
         }
 
-        val claimedNegatedConjectures = tptpFile.inputs.collect {
+        val annotatedFormulaSteps = tptpFile.inputs.collect {
+          case a @ AnnotatedFormula(_, _, _, _, _) => a
+        }
+
+        val tptpProofMap = TptpProofMap(annotatedFormulaSteps).getOrElse {
+          boundary.break(SzsStatus.FailedVerified)
+        }
+
+        val claimedNegatedConjectures = tptpProofMap.values.collect {
           case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
         }
         if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatusAmong(Set("cth"))) then {
           boundary.break(SzsStatus.FailedVerified)
         }
 
-        val plainInferences = tptpFile.inputs.collect {
+        val plainInferences = tptpProofMap.values.collect {
           case a @ AnnotatedFormula(_, _, "plain", _, _) => a
         }
         if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
