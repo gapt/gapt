@@ -154,7 +154,15 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on skolemization step that doesn't specify variable to be skolemized" in todo
       "should fail on proof with incorrect skolemization step" in todo("figure out possible failure scenarios skolemization")
 
-      "should fail on proof with two steps with the same name if proof steps are different" in todo
+      "should fail on proof with two steps with the same name if proof steps are different" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(a1, axiom, q).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
       "should fail on proof with two steps with the same name even if proof steps are equal" in todo
       "should fail on proof with inference steps that form a cycle" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
