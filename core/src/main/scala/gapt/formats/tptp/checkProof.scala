@@ -30,22 +30,20 @@ enum SzsStatus {
 
 def checkProof(file: InputFile): SzsStatus = checkProof1(file)
 
-case class InferenceStatus(status: String)
-
 extension (gt: GeneralTerm) {
-  def asStatus: Option[InferenceStatus] = gt match {
-    case TptpTerm("status", TptpTerm(value)) => Some(InferenceStatus(value))
+  def asStatus: Option[String] = gt match {
+    case TptpTerm("status", TptpTerm(value)) => Some(value)
     case _                                   => None
   }
 }
 
 extension (usefulInfo: Seq[GeneralTerm]) {
-  def statusSet: Set[InferenceStatus] =
+  def statusSet: Set[String] =
     usefulInfo.flatMap(_.asStatus).toSet
 }
 
 extension (inference: Source.Inference) {
-  def statuses: Set[InferenceStatus] =
+  def statuses: Set[String] =
     inference.usefulInfo.statusSet
 }
 
@@ -57,7 +55,7 @@ extension (source: Source) {
 }
 
 extension (annotatedFormula: AnnotatedFormula) {
-  def hasUnambiguousStatus(status: String): Boolean = boundary {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
     val annotations = annotatedFormula.annotations.getOrElse {
       boundary.break(false)
     }
@@ -68,7 +66,7 @@ extension (annotatedFormula: AnnotatedFormula) {
       boundary.break(false)
     }
 
-    inferenceStatus == InferenceStatus(status)
+    statuses.contains(inferenceStatus)
   }
 }
 
@@ -86,8 +84,14 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         val claimedNegatedConjectures = tptpFile.inputs.collect {
           case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
         }
+        if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatusAmong(Set("cth"))) then {
+          boundary.break(SzsStatus.FailedVerified)
+        }
 
-        if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatus("cth")) then {
+        val plainInferences = tptpFile.inputs.collect {
+          case a @ AnnotatedFormula(_, _, "plain", _, _) => a
+        }
+        if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
           boundary.break(SzsStatus.FailedVerified)
         }
 

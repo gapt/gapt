@@ -103,8 +103,50 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on input where formula doesn't match formula from import" in todo
 
       "should fail on plain inference without parents" in todo
-      "should fail on plain inference without status" in todo
-      "should fail on plain inference with more than one distinct statuses" in todo
+      "should fail on plain inference without status" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
+
+      "should fail on plain inference with more than one distinct statuses" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm),status(esa)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
+
+      "should fail on plain inference with cth status" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
+
+      "should verify on plain inference with esa status" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(esa)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
+      "should fail on plain inference with cth status" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
 
       "should fail on skolemization step without esa status" in todo
       "should fail on skolemization step without new_symbols" in todo
