@@ -11,6 +11,8 @@ import gapt.provers.escargot.Escargot
 import gapt.utils.TimeOutException
 import gapt.proofs.sketch.UnprovableSketchInference
 import scala.concurrent.duration._
+import gapt.expr.Expr
+import scala.util.boundary
 
 enum SzsStatus {
   case Verified
@@ -28,11 +30,67 @@ enum SzsStatus {
 
 def checkProof(file: InputFile): SzsStatus = checkProof1(file)
 
+case class InferenceStatus(status: String)
+
+extension (gt: GeneralTerm) {
+  def asStatus: Option[InferenceStatus] = gt match {
+    case TptpTerm("status", TptpTerm(value)) => Some(InferenceStatus(value))
+    case _                                   => None
+  }
+}
+
+extension (usefulInfo: Seq[GeneralTerm]) {
+  def findStatus(): Option[InferenceStatus] =
+    usefulInfo.flatMap(_.asStatus).headOption
+}
+
+extension (inference: Source.Inference) {
+  def statusOption: Option[InferenceStatus] =
+    inference.usefulInfo.findStatus()
+}
+
+extension (source: Source) {
+  def asInferenceOption: Option[Source.Inference] = source match {
+    case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
+    case _                                               => None
+  }
+}
+
+extension (annotatedFormula: AnnotatedFormula) {
+  def hasCorrectNegatedConjectureInference: Boolean = boundary {
+    val annotations = annotatedFormula.annotations.getOrElse {
+      boundary.break(false)
+    }
+    val inferenceSource = annotations.source.asInferenceOption.getOrElse {
+      boundary.break(false)
+    }
+    val inferenceStatus = inferenceSource.statusOption.getOrElse {
+      boundary.break(false)
+    }
+
+    inferenceStatus == InferenceStatus("cth")
+  }
+}
+
 // implementation of checkProof that checks the input by constructing a resolution proof from the input
 def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
-  import scala.util.boundary
   boundary {
     try withTimeout(timeout) {
+        val tptpFile = {
+          try TptpImporter.loadWithoutIncludes(file)
+          catch
+            // In this case the input file was not valid TPTP
+            case _: IllegalArgumentException => boundary.break(SzsStatus.FailedVerified)
+        }
+
+        val claimedNegatedConjectures = tptpFile.inputs.collect {
+          case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
+        }
+
+        if claimedNegatedConjectures.exists(c => !c.hasCorrectNegatedConjectureInference) then {
+          boundary.break(SzsStatus.FailedVerified)
+        }
+
         val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(file)
         tptpRefutationSketch.conjectureNegatedConjecturePair match {
           case Some((conjecture, negatedConjecture)) =>
