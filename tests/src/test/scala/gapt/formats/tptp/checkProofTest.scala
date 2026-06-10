@@ -100,7 +100,9 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on negated conjecture step whose parent is not a conjecture" in todo
       "should fail on negated conjecture step without a parent" in todo
 
-      "should fail on input where formula doesn't match formula from import" in todo
+      "should fail on negated conjecture step without a parent" in todo
+      "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
+      "should do X on negated conjecture step with multiple conjecture parents" in todo
 
       "should fail on plain inference without parents" in todo
       "should fail on plain inference without status" in {
@@ -147,6 +149,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.FailedVerified
       }
+      "should fail on plain inference whose parent is a conjecture" in todo
+
+      "should fail on input where formula doesn't match formula from import" in todo
 
       "should fail on skolemization step without esa status" in todo
       "should fail on skolemization step without new_symbols" in todo
@@ -176,7 +181,6 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on proof with inference steps that form a cycle" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
 
-      // we do this for now to avoid having to do a big refactor of the parsers
       "should not verify proof that contains inference parents which are not simple names" in todo
       "should not verify if input has include directives (we do not support this yet)" in {
         val input = InputFile.fromString("""
