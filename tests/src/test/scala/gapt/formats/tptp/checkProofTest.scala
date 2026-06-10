@@ -79,7 +79,24 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.FailedVerified
       }
 
-      "should fail on plain inference with more than one distinct statuses" in todo
+      "should fail on negated conjecture inference with more than one distinct statuses" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(thm)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.FailedVerified
+      }
+
+      "should verify negated conjecture inference with more than one equal cth statuses" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
       "should fail on negated conjecture step whose parent is not a conjecture" in todo
       "should fail on negated conjecture step without a parent" in todo
 
