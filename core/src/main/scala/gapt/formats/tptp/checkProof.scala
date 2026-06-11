@@ -23,6 +23,7 @@ enum FailedVerifiedReason {
   case NegatedConjectureWithNonConjectureParent
   case NegatedConjectureWithoutParent
   case PlainInferenceWithInvalidStatus
+  case PlainInferenceWithConjectureParent
   case IncorrectNegatedConjectureInference
   case IncorrectPlainInference
 }
@@ -154,6 +155,10 @@ case class TptpProofDag private (private val map: Map[String, AnnotatedFormula])
   def hasNonConjectureParent(formulaName: String): Boolean = {
     parentsOf(formulaName).exists(p => p.role != "conjecture")
   }
+
+  def hasConjectureParent(formulaName: String): Boolean = {
+    parentsOf(formulaName).exists(p => p.role == "conjecture")
+  }
 }
 
 def isCyclic[T](nodes: Set[T], neighbors: T => Set[T]): Boolean = {
@@ -218,6 +223,9 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         }
         if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
           boundary.break(SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus))
+        }
+        if plainInferences.exists(c => tptpProofDag.hasConjectureParent(c.name)) then {
+          boundary.break(SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithConjectureParent))
         }
 
         val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(tptpProofDag)

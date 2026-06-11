@@ -114,10 +114,10 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithoutParent)
       }
-      "should fail on negated conjecture step which has conjecture and non-conjecture parents" in todo
+      "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
       "should do X on negated conjecture step with multiple conjecture parents" in todo
 
-      "should fail on plain inference without parents" in todo
+      "should do X on plain inference without parents" in todo
       "should fail on plain inference without status" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p).
@@ -162,7 +162,15 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
       }
-      "should fail on plain inference whose parent is a conjecture" in todo
+      "should fail on plain inference whose parent is a conjecture" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(inf_p, plain, p, inference(p, [status(thm)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithConjectureParent)
+      }
 
       "should fail on input where formula doesn't match formula from import" in todo
 
@@ -224,9 +232,9 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.NotVerified
       }
 
-      "should fail on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
+      "should do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
       "should do X on a proof that doesn't use negated conjecture" in todo("specify")
-      "should do X if input has not negated conjecture" in todo("specify")
+      "should do X if input has no negated conjecture" in todo("specify")
 
       "should do X if an inference has two distinct statuses" in todo("specify")
       "should do X if input has no conjecture" in todo("specify")
