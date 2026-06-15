@@ -183,8 +183,8 @@ object TptpProofDag {
 
 // implementation of checkProof that checks the input by constructing a resolution proof from the input
 def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
-  boundary {
-    try withTimeout(timeout) {
+  try boundary {
+      withTimeout(timeout) {
         val tptpFile = {
           try TptpImporter.loadWithoutIncludes(file)
           catch
@@ -243,12 +243,8 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
           case Right(_)                           => SzsStatus.Verified
         }
       }
-    catch {
-      case _: TimeOutException | _: UnsupportedOperationException => {
-        SzsStatus.NotVerified
-      }
     }
-  }
+  catch _ => SzsStatus.NotVerified
 }
 
 // implementation of checkProof that only performs the proof checking without constructing the proof

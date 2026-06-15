@@ -25,12 +25,12 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "throw an exception on empty input file" in {
-        checkProof(InputFile.fromString("")) must throwAn[Exception]
+        checkProof(InputFile.fromString("")) must_== SzsStatus.NotVerified
       }
 
       "throw an exception on an input file without a conjecture" in {
         val input = InputFile.fromString("fof(a1, axiom, p(a) & ~p(b), file('example1_c.p',a1)).")
-        checkProof(input) must throwAn[Exception]
+        checkProof(input) must_== SzsStatus.NotVerified
       }
 
       "throw an exception on an input file without a $false inference" in {
@@ -38,7 +38,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(a, axiom, p(a)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, ~p(a), inference(negated_conjecture, [status(cth)], [c])).""".stripMargin)
-        checkProof(input) must throwAn[Exception]
+        checkProof(input) must_== SzsStatus.NotVerified
       }
 
       "should fail on negated conjecture if conclusion is not implied by negation of conjecture" in {
@@ -178,6 +178,17 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should fail if an axiom is used that doesn't occur in the input problem" in todo
       "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
+
+      // we are not handling such cases right now and assume that in that case
+      // skolemization would be applied first so
+      "should not verify on input that contains inferences with strong quantifiers without skolemization" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, ?[X]: p(X)).
+        |fof(c, conjecture, ?[X]: p(X)).
+        |fof(nc, negated_conjecture, ~(?[X]: p(X)), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.NotVerified
+      }
 
       "should fail on skolemization step without esa status" in todo
       "should fail on skolemization step without new_symbols" in todo
