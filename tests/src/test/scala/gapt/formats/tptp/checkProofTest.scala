@@ -173,6 +173,11 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "should fail on input where formula doesn't match formula from import" in todo
+      "should fail on file source, if claimed formula doesn't match formula from file" in todo
+      "should do X on a file source, if the file doesn't exist" in todo("specify")
+
+      "should fail if an axiom is used that doesn't occur in the input problem" in todo
+      "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
 
       "should fail on skolemization step without esa status" in todo
       "should fail on skolemization step without new_symbols" in todo

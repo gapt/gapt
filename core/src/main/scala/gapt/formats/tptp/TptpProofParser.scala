@@ -217,7 +217,6 @@ object TptpProofParser {
   def parse(tptp: TptpFile, ignoreStrongQuants: Boolean): (Sequent[FOLFormula], RefutationSketch) = {
     var tptpFile = tptp
     if (ignoreStrongQuants) tptpFile = removeStrongQuants(tptpFile)
-    tptpFile = inventSources(tptpFile)
     val (endSequent, labelledCNF) = extractEndSequentAndCNF(tptpFile)
     endSequent -> parseSteps(tptpFile, labelledCNF)
   }
@@ -227,25 +226,25 @@ object TptpProofParser {
     parse(tptpFile, ignoreStrongQuants)
   }
 
-  def inventSources(stepList: TptpFile): TptpFile = TptpFile(stepList.inputs.map {
-    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, None) =>
-      af.copy(annotations = Some(Annotations(Source.File("unknown", Some(s"source_$label")), Seq.empty)))
-    case af @ AnnotatedFormula(_, label, role @ ("axiom" | "hypothesis" | "conjecture" | "negated_conjecture"), formula, Some(Annotations(Source.File(_, Some("unknown")), _))) =>
-      af.copy(annotations = Some(Annotations(Source.File("unknown", Some(s"source_$label")), Seq.empty)))
-    case other => other
-  })
-
   def extractEndSequentAndCNF(stepList: TptpFile): (Sequent[FOLFormula], Map[String, Seq[FOLClause]]) = {
     var endSequent = Sequent[FOLFormula]()
     val labelledCNF = mutable.Map[String, Seq[FOLClause]]().withDefaultValue(Seq())
 
+    def addAsCNFAxioms(language: String, label: String, formula: FOLFormula): Unit = {
+      endSequent +:= (if (language == "cnf") universalClosure(formula) else formula)
+      labelledCNF(label) ++= CNFp(formula).toSeq
+    }
+
     stepList.inputs.foreach {
-      case AnnotatedFormula("fof", _, "conjecture", formula: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
+      case AnnotatedFormula("fof", label, "conjecture", formula: FOLFormula, _) =>
         endSequent :+= formula
         labelledCNF(label) ++= CNFn(formula).toSeq
-      case AnnotatedFormula(lang, _, _, formula: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
-        endSequent +:= (if (lang == "cnf") universalClosure(formula) else formula)
-        labelledCNF(label) ++= CNFp(formula).toSeq
+      case AnnotatedFormula(language, _, "plain", formula: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
+        // for now we add file sources as axioms without checking whether
+        // the file being referred to actually contains the formula as an axiom
+        addAsCNFAxioms(language, label, formula)
+      case AnnotatedFormula(lang, label, "axiom" | "negated_conjecture" | "hypothesis", formula: FOLFormula, _) =>
+        addAsCNFAxioms(lang, label, formula)
       case _ =>
     }
 
@@ -256,7 +255,7 @@ object TptpProofParser {
     case Source.Name(name)               => Seq(name)
     case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.source))
     case Source.Internal(_, _, parents)  => parents.flatMap(p => getParents(p.source))
-    case Source.File(_, _)               => Seq.empty
+    case Source.File(_, _)               => Seq.empty // for now we treat file sources as axioms that don't have parents
     case Source.Theory(_, _)             => Seq.empty
     case Source.Creator(_, _, parents)   => parents.flatMap(p => getParents(p.source))
     case Source.Unknown                  => Seq.empty
@@ -266,8 +265,6 @@ object TptpProofParser {
         case TptpTerm(dagSource)              => Seq(dagSource)
       }
   }
-
-  def getParents(justification: GeneralTerm): Seq[String] = getParents(Source.General(justification))
 
   def findClauseRenaming(from: HOLSequent, to: HOLSequent): Option[Map[Var, Var]] =
     if (from.sizes != to.sizes)
@@ -430,19 +427,18 @@ object TptpProofParser {
                 ))
               ) =>
             convertAVATAR_sat_refutationInference(justification)
-          case AnnotatedFormula("fof", _, "conjecture", _, Some(Annotations(Source.File(_, Some(label)), _))) =>
+          case AnnotatedFormula("fof", label, "conjecture", _, _) =>
             labelledCNF(label).map(SketchAxiom.apply)
-          case AnnotatedFormula(_, _, _, axiom: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
-            CNFp(axiom).toSeq match {
-              case Seq(axiomClause) =>
-                Seq(SketchInference(
-                  axiomClause,
-                  labelledCNF(label).map(SketchAxiom.apply)
-                ))
-              case clauses => labelledCNF(label).map(SketchAxiom.apply)
-            }
-          case AnnotatedFormula("cnf", _, "axiom", axiom: FOLFormula, None) =>
-            val label = stepName
+          case AnnotatedFormula(_, _, "plain", axiom: FOLFormula, Some(Annotations(Source.File(_, Some(label)), _))) =>
+            // we treat plain inferences from file sources as axioms for now without checking
+            labelledCNF(label).map(SketchAxiom.apply)
+          case AnnotatedFormula(_, label, "axiom" | "negated_conjecture" | "hypothesis", axiom: FOLFormula, _)
+              // sometimes provers add an axiom that wasn't directly part of the input, but
+              // they add this axiom as a new name that only refers to an existing axiom that
+              // was part of the input problem. in that case labelledCNF wouldn't contain this
+              // axiom, so this case will fall through to the next.
+              // for now this means that we treat such axioms just like ordinary plain inferences
+              if labelledCNF.contains(label) =>
             CNFp(axiom).toSeq match {
               case Seq(axiomClause) =>
                 Seq(SketchInference(
