@@ -5,16 +5,17 @@ import java.io.IOException
 import scala.concurrent._
 import scala.concurrent.duration._
 import gapt.formats.InputFile
+import os.Path
 
 object runProcess {
 
-  def withTempInputFile(cmd: Seq[String], input: String, catchStderr: Boolean = false): String =
+  def withTempInputFile(cmd: Seq[String], input: String, catchStderr: Boolean = false, cwd: Path = os.pwd): String =
     withTempFile.fromString(input) { tempFile =>
-      apply(cmd :+ tempFile.toString, "", catchStderr)
+      apply(cmd :+ tempFile.toString, "", catchStderr, cwd)
     }
 
-  def apply(cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false): String =
-    withExitValue(cmd, stdin, catchStderr) match {
+  def apply(cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false, cwd: Path = os.pwd): String =
+    withExitValue(cmd, stdin, catchStderr, cwd) match {
       case (0, out)         => out
       case (exitValue, out) => throw new IOException(s"${cmd.mkString(" ")} exited with value $exitValue:\n$out")
     }
@@ -22,8 +23,9 @@ object runProcess {
   private implicit val newThreadExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutor(runnable => new Thread(runnable).start())
 
-  def withExitValue(cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false): (Int, String) = {
+  def withExitValue(cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false, cwd: Path = os.pwd): (Int, String) = {
     val pb = new ProcessBuilder(cmd*)
+    pb.directory(cwd.toIO)
 
     if (catchStderr) pb.redirectErrorStream(true)
 
