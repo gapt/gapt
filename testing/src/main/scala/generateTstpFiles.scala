@@ -2,14 +2,11 @@ package gapt.testing
 
 import os.{walk, pwd}
 import gapt.utils.runProcess
-import gapt.formats.tptp.TptpProofParser
-import gapt.formats.InputFile
 import gapt.utils.withTimeout
 import scala.concurrent.duration._
 import gapt.utils.TimeOutException
 import scala.collection.parallel.CollectionConverters._
 import os.Path
-import java.io.IOException
 
 case class Prover(name: String, fn: Path => String)
 
