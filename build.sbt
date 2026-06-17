@@ -348,7 +348,9 @@ lazy val testing = project.in(file("testing")).dependsOn(core, examples)
     description := "gapt extended regression tests",
     publish / skip := true,
     packagedArtifacts := Map(),
-    dependencyOverrides ++= dependencyConflictResolutions
+    dependencyOverrides ++= dependencyConflictResolutions,
+    run / fork := true,
+    run / connectInput := true
   )
 
 lazy val releaseDist =
