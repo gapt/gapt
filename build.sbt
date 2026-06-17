@@ -323,7 +323,9 @@ lazy val testing = project.in(file("testing")).dependsOn(core, examples)
     Compile / scalacOptions += "-Werror",
     publish / skip := true,
     packagedArtifacts := Map(),
-    dependencyOverrides ++= dependencyConflictResolutions
+    dependencyOverrides ++= dependencyConflictResolutions,
+    run / fork := true,
+    run / connectInput := true
   )
 
 lazy val releaseDist =
