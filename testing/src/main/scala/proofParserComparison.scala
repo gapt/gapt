@@ -92,11 +92,12 @@ val messageEndMarker = "__GAPT_PROOF_PARSING_WORKER_MESSAGE_END__"
   val results =
     try {
       paths.par.flatMap { path =>
-        Option.when(!solutionsThatTakeLongToParse.exists(p => path.toString.endsWith(p))) {
+        Option.when(!solutionsThatTakeLongToParse.contains(path.lastSegments(2))) {
           Console.err.println(s"computing results for $path")
           workerPool.borrow { workerPair =>
             path ->
               CallResult(
+                path,
                 workerPair.oldWorker.request(path.toString),
                 workerPair.newWorker.request(path.toString)
               )
@@ -116,7 +117,9 @@ val messageEndMarker = "__GAPT_PROOF_PARSING_WORKER_MESSAGE_END__"
         Option.when(result.oldResult == "timeout")("old timed out"),
         Option.when(result.newResult == "timeout")("new timed out"),
         Option.when(result.oldResult != "ok")(s"old failed: ${result.oldResult}"),
-        Option.when(result.newResult != "ok")(s"new failed: ${result.newResult}")
+        Option.when(result.newResult != "ok")(s"new failed: ${result.newResult}"),
+        Option.when(result.isAccountedForMismatch)("mismatch is accounted for"),
+        Option.when(result.isMismatch && !result.isAccountedForMismatch)("mismatch is unaccounted for")
       ).flatten
 
       Option.when(errors.nonEmpty)(path -> errors)
@@ -130,20 +133,32 @@ val messageEndMarker = "__GAPT_PROOF_PARSING_WORKER_MESSAGE_END__"
 
   val skipped = paths.count(path => solutionsThatTakeLongToParse.exists(p => path.toString.endsWith(p)))
   val mismatches = results.values.count(result => result.isMismatch)
+  val accountedForMismatches = results.values.count(_.isAccountedForMismatch)
+  val unaccountedForMismatches = mismatches - accountedForMismatches
   val oldTimeouts = results.values.count(_.oldResult == "timeout")
   val newTimeouts = results.values.count(_.newResult == "timeout")
+  val knownTimeouts = solutionsThatTakeLongToParse.size
   Console.err.println(s"checked ${results.size} proof files")
   Console.err.println(s"skipped $skipped long-running proof files")
   Console.err.println(s"old/new mismatches: $mismatches")
+  Console.err.println(s"unaccounted-for mismatches: $unaccountedForMismatches")
   Console.err.println(s"old timeouts: $oldTimeouts")
   Console.err.println(s"new timeouts: $newTimeouts")
+  Console.err.println(s"known timeouts that were not tried: $knownTimeouts")
   Console.err.println(s"failures: ${failures.size}")
 
   if failures.nonEmpty then sys.exit(1)
 }
 
-final case class CallResult(oldResult: String, newResult: String) {
+extension (p: os.Path) {
+  def lastSegments(n: Int): String = p.segments.drop(p.segments.size - n).mkString("/")
+}
+
+final case class CallResult(path: os.Path, oldResult: String, newResult: String) {
   def isMismatch: Boolean = oldResult.split(":").head != newResult.split(":").head
+  def isAccountedForMismatch: Boolean = intendedOldFailNewSucceeded.contains(path.lastSegments(2))
+    && oldResult.startsWith("fail")
+    && newResult.startsWith("ok")
 }
 
 final case class WorkerPair(
@@ -382,4 +397,44 @@ val solutionsThatTakeLongToParse = Seq(
   "ALG158+1.p/vampire.tstp",
   "ALG166+1.p/vampire.tstp",
   "ALG167+1.p/vampire.tstp"
+)
+
+val intendedOldFailNewSucceeded = Seq(
+  "ALG173+1.p/eprover.tstp",
+  "ALG172+1.p/eprover.tstp",
+  "ALG170+1.p/eprover.tstp",
+  "ALG039+1.p/eprover.tstp",
+  "ALG171+1.p/eprover.tstp",
+  "ALG014+1.p/eprover.tstp",
+  "ALG174+1.p/eprover.tstp",
+  "ALG016+1.p/eprover.tstp",
+  "ALG017+1.p/eprover.tstp",
+  "ALG110+1.p/eprover.tstp",
+  "ALG111+1.p/eprover.tstp",
+  "ALG105+1.p/eprover.tstp",
+  "ALG113+1.p/eprover.tstp",
+  "ALG113+1.p/eprover.tstp",
+  "ALG045+1.p/eprover.tstp",
+  "ALG042+1.p/eprover.tstp",
+  "ALG020+1.p/eprover.tstp",
+  "ALG037+1.p/eprover.tstp",
+  "ALG036+1.p/eprover.tstp",
+  "ALG114+1.p/eprover.tstp",
+  "SWV139+1.p/eprover.tstp",
+  "SWV132+1.p/eprover.tstp",
+  "SWV131+1.p/eprover.tstp",
+  "SWV142+1.p/eprover.tstp",
+  "SWV143+1.p/eprover.tstp",
+  "SWV141+1.p/eprover.tstp",
+  "SWV140+1.p/eprover.tstp",
+  "SWV144+1.p/eprover.tstp",
+  "CSR016+1.p/eprover.tstp",
+  "CSR023+1.p/eprover.tstp",
+  "CSR018+1.p/eprover.tstp"
+)
+
+val toLookInto = Seq(
+  "SWV128+1.p/eprover.tstp",
+  "SWV106+1.p/eprover.tstp",
+  "SWV121+1.p/eprover.tstp"
 )
