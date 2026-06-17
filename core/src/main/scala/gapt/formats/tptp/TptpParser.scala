@@ -83,6 +83,11 @@ class TptpParser(val input: ParserInput) extends Parser {
       Source.Inference(rule, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p).get))
     case e @ TptpTerm(
           "introduced",
+          TptpTerm(introType)
+        ) =>
+      Source.Internal(introType, Seq.empty, Seq.empty)
+    case e @ TptpTerm(
+          "introduced",
           TptpTerm(introType),
           GeneralList(usefulInfo*)
         ) =>
@@ -113,7 +118,7 @@ class TptpParser(val input: ParserInput) extends Parser {
         ) =>
       Source.Creator(name, usefulInfo, parents.map(p => parseParentInfoFromGeneralTerm(p).get))
     case e =>
-      throw new IllegalArgumentException("input is not a valid source")
+      throw new IllegalArgumentException(s"input is not a valid source: $e")
   })
 
   private def formula = rule { typed_logic_formula }

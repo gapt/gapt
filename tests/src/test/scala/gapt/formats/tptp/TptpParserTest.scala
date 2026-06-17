@@ -122,6 +122,13 @@ class TptpParserTest extends Specification {
       }
     }
 
+    "parse internal source with single argument" in {
+      val tptpFile = parse("fof(name, plain, p, introduced(definition)).")
+      tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
+        a.source.asInstanceOf[Source.Internal].introType must_== "definition"
+      }
+    }
+
     "parse file sources" in {
       val tptpFile = parse("fof(f7,axiom,(( ! [X0,X1] : (a1(X1,s_3(X1,X0),X0) | 'D_2'(X0) | ~'D_1'(X0)) )), file('counting-cnf.tptp',sequent6)).")
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome { (a: Annotations) =>
