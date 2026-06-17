@@ -197,6 +197,16 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on skolemization step that doesn't specify variable to be skolemized" in todo
       "should fail on proof with incorrect skolemization step" in todo("figure out possible failure scenarios skolemization")
 
+      "should fail on axiom step without thm status" in todo
+      "should fail on axiom step without file directive" in todo
+      "should fail on axiom step with file directive, but without label to a formula" in todo
+      "should fail on axiom step with file directive that points to non-existent file" in todo
+      "should fail on axiom step with file directive that points to non-parsable problem file" in todo
+      "should fail on axiom step with file directive that points to file that doesn't contain the label" in todo
+      "should fail on axiom step with file directive that points to formula which is not alpha-equivalent to formula in step" in todo
+      "should verifiy an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in todo
+      "should verify axiom step verify if label in problem file differs from label in proof file" in todo
+
       "should fail on proof with two steps with the same name if proof steps are different" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p).
