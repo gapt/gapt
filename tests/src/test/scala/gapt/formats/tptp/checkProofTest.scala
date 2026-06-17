@@ -11,6 +11,7 @@ import org.specs2.specification.core.Fragment
 import org.specs2.specification.core.Execution
 import org.specs2.execute.Pending
 import scala.concurrent.duration._
+import gapt.formats.tptp.TptpProofImportError
 
 class checkProofUnitTest extends mutable.Specification {
   def todo(message: String): Pending = Pending(s"TODO: $message")
@@ -48,7 +49,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.IncorrectNegatedConjectureInference)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.IncorrectNegatedConjectureInference)
       }
 
       "should verify a proof that contains unused incorrect conjecture to negated_conjecture inference but is otherwise correct" in {
@@ -67,7 +68,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithInvalidStatus)
       }
 
       "should fail on negated conjecture without a status" in {
@@ -76,7 +77,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithInvalidStatus)
       }
 
       "should fail on negated conjecture inference with more than one distinct statuses" in {
@@ -85,7 +86,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithInvalidStatus)
       }
 
       "should verify negated conjecture inference with more than one equal cth statuses" in {
@@ -103,7 +104,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [a1])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithNonConjectureParent)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithNonConjectureParent)
       }
 
       "should fail on negated conjecture step without a parent" in {
@@ -112,7 +113,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.NegatedConjectureWithoutParent)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithoutParent)
       }
       "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
       "should do X on negated conjecture step with multiple conjecture parents" in todo
@@ -124,7 +125,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
       }
 
       "should fail on plain inference with more than one distinct statuses" in {
@@ -133,7 +134,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm),status(esa)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
       }
 
       "should fail on plain inference with cth status" in {
@@ -142,7 +143,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
       }
 
       "should verify on plain inference with esa status" in {
@@ -160,7 +161,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithInvalidStatus)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
       }
       "should fail on plain inference whose parent is a conjecture" in {
         val input = InputFile.fromString("""
@@ -169,7 +170,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(p, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.PlainInferenceWithConjectureParent)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithConjectureParent)
       }
 
       "should fail on input where formula doesn't match formula from import" in todo
@@ -203,7 +204,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.DifferentFormulasWithSameName)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.DifferentFormulasWithSameName)
       }
 
       "should verify proof with two steps with the same name if proof steps are equal" in {
@@ -222,7 +223,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [cont])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.InferenceCycle)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.InferenceCycle)
       }
 
       "should fail on proof with inference steps that form a 2-step cycle" in {
@@ -232,7 +233,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont1, plain, p, inference(fromFalsum, [status(thm)], [cont2])).
         |fof(cont2, plain, $false, inference(falsum, [status(thm)], [cont1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(FailedVerifiedReason.InferenceCycle)
+        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.InferenceCycle)
       }
       "should fail on proof with named parents that don't exist in proof" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
@@ -303,35 +304,5 @@ class checkProofExampleTest extends Specification {
     |checkProof2
     |${spec(i => checkProof2(i))}
   """.stripMargin
-  }
-}
-
-class acyclicityTest extends org.specs2.mutable.Specification {
-
-  "isCyclic" should {
-    "return false on empty graph" in {
-      isCyclic(Set(), Map()) must beFalse
-    }
-    "return false on single node unconnected graph" in {
-      isCyclic(Set(1), Map().withDefaultValue(Set.empty)) must beFalse
-    }
-    "return true on single node connected graph" in {
-      isCyclic(Set(1), Map(1 -> Set(1))) must beTrue
-    }
-    "return false on two node acyclic grpah" in {
-      isCyclic(Set(1, 2), Map(1 -> Set(2)).withDefaultValue(Set.empty)) must beFalse
-    }
-    "return true on two node acyclic graph" in {
-      isCyclic(Set(1, 2), Map(1 -> Set(2), 2 -> Set(1))) must beTrue
-    }
-    "return false on acyclic non-connected graph" in {
-      isCyclic(Set(1, 2, 3, 4), Map(1 -> Set(2), 3 -> Set(4)).withDefaultValue(Set.empty)) must beFalse
-    }
-    "return true on 3-step cycle" in {
-      isCyclic(Set(1, 2, 3), Map(1 -> Set(2), 2 -> Set(3), 3 -> Set(1))) must beTrue
-    }
-    "return false on graph that is cyclic as undirected graph" in {
-      isCyclic(Set(1, 2, 3, 4), Map(1 -> Set(2, 3), 2 -> Set(4), 3 -> Set(4)).withDefaultValue(Set.empty)) must beFalse
-    }
   }
 }
