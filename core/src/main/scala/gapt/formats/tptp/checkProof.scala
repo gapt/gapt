@@ -14,23 +14,34 @@ import scala.concurrent.duration._
 import gapt.expr.Expr
 import scala.util.boundary
 import boundary.break
+import gapt.formats.tptp.check.NotVerifiedReason.UnexpectedException
+
+enum NotVerifiedReason {
+  case UnexpectedInput
+  case CannotHandleInput
+  case UnexpectedException(throwable: Throwable)
+  case Timeout
+}
 
 enum SzsStatus {
   case Verified
   case FailedVerified(reason: TptpProofImportError)
-  case NotVerified
+  case NotVerified(reason: NotVerifiedReason)
 
-  override def toString(): String = this match {
+  def status: String = this match {
     case Verified               => "Verified"
     case FailedVerified(reason) => s"FailedVerified : $reason"
-    case NotVerified            => "NotVerified"
+    case NotVerified(_)         => "NotVerified"
   }
-
-  def statusLine: String = s"%SZS status ${this.toString()}"
+  def statusLine: String = s"%SZS status $status"
 }
 
 object SzsStatus {
   def failed(reason: TptpProofImportError): SzsStatus.FailedVerified = FailedVerified(reason)
+  def timeout: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.Timeout)
+  def unexpectedInput: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedInput)
+  def cannotHandleInput: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.CannotHandleInput)
+  def unexpectedException(throwable: Throwable): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedException(throwable))
 }
 
 def checkProof(file: InputFile): SzsStatus = checkProof1(file)
@@ -40,9 +51,10 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
   try boundary {
       withTimeout(timeout) {
         val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(file) match {
-          case Left(TptpProofImportError.CannotHandleInput(input)) => break(SzsStatus.NotVerified)
-          case Left(reason)                                        => break(SzsStatus.failed(reason))
-          case Right(sketch)                                       => sketch
+          case Left(TptpProofImportError.CannotHandleInput(input)) =>
+            break(SzsStatus.cannotHandleInput)
+          case Left(reason)  => break(SzsStatus.failed(reason))
+          case Right(sketch) => sketch
         }
         tptpRefutationSketch.conjectureNegatedConjecturePair match {
           case Some((conjecture, negatedConjecture)) =>
@@ -59,7 +71,7 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         }
       }
     }
-  catch _ => SzsStatus.NotVerified
+  catch e => SzsStatus.unexpectedException(e)
 }
 
 // implementation of checkProof that only performs the proof checking without constructing the proof
@@ -145,6 +157,6 @@ def checkProof2(file: InputFile): SzsStatus = {
   val unverified = verifications.filter(_._3.isEmpty)
 
   if failed.nonEmpty then SzsStatus.failed(TptpProofImportError.IncorrectPlainInference)
-  else if unverified.nonEmpty then SzsStatus.NotVerified
+  else if unverified.nonEmpty then SzsStatus.timeout
   else SzsStatus.Verified
 }
