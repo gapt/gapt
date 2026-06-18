@@ -137,7 +137,7 @@ extension (source: Source) {
     case Source.List(sources)                             => sources.flatMap(_.parentLabels)
     case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
     case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
-    case Source.General(term)                             => throw IllegalArgumentException(s"cannot get parent labels of term: $term")
+    case Source.General(term)                             => throw IllegalArgumentException(s"parent must be a simple term. got: $term")
   }
 }
 
