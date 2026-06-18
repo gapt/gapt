@@ -7,6 +7,7 @@ import gapt.proofs.sketch.RefutationSketchToResolution
 import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
+import gapt.formats.InputFile
 
 class TptpProofParserTest extends Specification {
 
@@ -38,8 +39,21 @@ class TptpProofParserTest extends Specification {
   }
 }
 
-class acyclicityTest extends org.specs2.mutable.Specification {
+class TptpProofParserUnitTest extends Specification {
+  "TptpProofParser.parseTptpRefutationSketch" should {
+    "handle nested inference sources" in {
+      val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
+      TptpProofParser.parseTptpRefutationSketch(input) must beRight
+    }
+  }
+}
 
+class acyclicityTest extends Specification {
   "isCyclic" should {
     "return false on empty graph" in {
       isCyclic(Set(), Map()) must beFalse

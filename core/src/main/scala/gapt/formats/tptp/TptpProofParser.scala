@@ -208,11 +208,12 @@ case class TptpProofDag private (private val map: Map[String, AnnotatedFormula])
   }
 }
 
+case class CycleError(message: String) extends IllegalArgumentException(message)
 object TptpProofDag {
-  def apply(map: TptpProofMap): Try[TptpProofDag] = Try {
+  def apply(map: TptpProofMap): Either[CycleError, TptpProofDag] = {
     if isCyclic(map.keySet, n => map(n).parents) then
-      throw IllegalArgumentException(s"Cycle detected in proof starting from node ${map.keySet.head}")
-    else new TptpProofDag(map.toMap)
+      Left(CycleError(s"Cycle detected in proof starting from node ${map.keySet.head}"))
+    else Right(new TptpProofDag(map.toMap))
   }
 }
 
