@@ -312,7 +312,7 @@ class checkProofExampleTest extends Specification {
 
       val incorrectProofs = foreachPath(testResourcesRoot / "proover_competition" / "proofs" / "incorrect") { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
-        s"fail verification of $relativePath" ! (check(example) must_== SzsStatus.FailedVerified)
+        s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.FailedVerified])
       }
 
       correctProofs ^ incorrectProofs
