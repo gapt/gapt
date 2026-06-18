@@ -239,6 +239,7 @@ class TptpParserTest extends Specification {
       parse("fof(A, axiom, p).") must throwAn[IllegalArgumentException]
     }
 
+    "should use Either for error signalling" in todo
     "parse include directives" in todo
     "parse different languages" in todo
     "should do X if passed a proof which has unknown as a name in a parent of an inference?" in todo
