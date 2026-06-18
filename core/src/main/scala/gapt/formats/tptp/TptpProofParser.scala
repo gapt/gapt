@@ -325,16 +325,11 @@ object TptpProofParser {
       })
   }
 
-  def parse(tptp: TptpFile, ignoreStrongQuants: Boolean): (Sequent[FOLFormula], RefutationSketch) = {
-    var tptpFile = tptp
+  def parse(out: InputFile, ignoreStrongQuants: Boolean = false): (Sequent[FOLFormula], RefutationSketch) = {
+    var tptpFile = TptpImporter.loadWithoutIncludes(out)
     if (ignoreStrongQuants) tptpFile = removeStrongQuants(tptpFile)
     val (endSequent, labelledCNF) = extractEndSequentAndCNF(tptpFile)
     endSequent -> parseSteps(tptpFile, labelledCNF)
-  }
-
-  def parse(out: InputFile, ignoreStrongQuants: Boolean = false): (Sequent[FOLFormula], RefutationSketch) = {
-    val tptpFile = TptpImporter.loadWithoutIncludes(out)
-    parse(tptpFile, ignoreStrongQuants)
   }
 
   def extractEndSequentAndCNF(stepList: TptpFile): (Sequent[FOLFormula], Map[String, Seq[FOLClause]]) = {
