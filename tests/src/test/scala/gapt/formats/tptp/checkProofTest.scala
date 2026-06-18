@@ -163,6 +163,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
       }
+
       "should fail on plain inference whose parent is a conjecture" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p).
@@ -171,6 +172,16 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(inf_p, plain, p, inference(p, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithConjectureParent)
+      }
+
+      "should verify plain inference with nested inference sources" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
       }
 
       "should fail on input where formula doesn't match formula from import" in todo
