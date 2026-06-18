@@ -21,6 +21,7 @@ import gapt.proofs.{FOLClause, HOLSequent, Sequent}
 
 import scala.collection.mutable
 import scala.util.boundary
+import boundary.break
 import scala.util.Try
 
 enum InferenceStatus {
@@ -144,13 +145,13 @@ extension (source: Source) {
 extension (annotatedFormula: AnnotatedFormula) {
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
     val annotations = annotatedFormula.annotations.getOrElse {
-      boundary.break(false)
+      break(false)
     }
     val inferenceSource = annotations.source.asInferenceOption.getOrElse {
-      boundary.break(false)
+      break(false)
     }
     val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse {
-      boundary.break(false)
+      break(false)
     }
 
     statuses.contains(inferenceStatus)
@@ -158,7 +159,7 @@ extension (annotatedFormula: AnnotatedFormula) {
 
   def parents: Set[String] = boundary {
     val annotations = annotatedFormula.annotations.getOrElse {
-      boundary.break(Set.empty)
+      break(Set.empty)
     }
     annotations.source.parentLabels.toSet
   }
@@ -217,7 +218,7 @@ object TptpProofParser {
       try TptpImporter.loadWithoutIncludes(file)
       catch
         // In this case the input file was not valid TPTP
-        case _: IllegalArgumentException => boundary.break(Left(TptpProofImportError.InputSyntaxError))
+        case _: IllegalArgumentException => break(Left(TptpProofImportError.InputSyntaxError))
     }
 
     val annotatedFormulaSteps = tptpFile.inputs.map {
@@ -227,33 +228,33 @@ object TptpProofParser {
     }
 
     val tptpProofMap = TptpProofMap(annotatedFormulaSteps).getOrElse {
-      boundary.break(Left(TptpProofImportError.DifferentFormulasWithSameName))
+      break(Left(TptpProofImportError.DifferentFormulasWithSameName))
     }
     val tptpProofDag = TptpProofDag(tptpProofMap).getOrElse {
-      boundary.break(Left(TptpProofImportError.InferenceCycle))
+      break(Left(TptpProofImportError.InferenceCycle))
     }
 
     val claimedNegatedConjectures = tptpProofDag.values.collect {
       case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
     }
     if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatusAmong(Set("cth"))) then {
-      boundary.break(Left(TptpProofImportError.NegatedConjectureWithInvalidStatus))
+      break(Left(TptpProofImportError.NegatedConjectureWithInvalidStatus))
     }
     if claimedNegatedConjectures.exists(c => tptpProofDag.hasNonConjectureParent(c.name)) then {
-      boundary.break(Left(TptpProofImportError.NegatedConjectureWithNonConjectureParent))
+      break(Left(TptpProofImportError.NegatedConjectureWithNonConjectureParent))
     }
     if claimedNegatedConjectures.exists(c => tptpProofDag.parentsOf(c.name).isEmpty) then {
-      boundary.break(Left(TptpProofImportError.NegatedConjectureWithoutParent))
+      break(Left(TptpProofImportError.NegatedConjectureWithoutParent))
     }
 
     val plainInferences = tptpProofDag.values.collect {
       case a @ AnnotatedFormula(_, _, "plain", _, _) => a
     }
     if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
-      boundary.break(Left(TptpProofImportError.PlainInferenceWithInvalidStatus))
+      break(Left(TptpProofImportError.PlainInferenceWithInvalidStatus))
     }
     if plainInferences.exists(c => tptpProofDag.hasConjectureParent(c.name)) then {
-      boundary.break(Left(TptpProofImportError.PlainInferenceWithConjectureParent))
+      break(Left(TptpProofImportError.PlainInferenceWithConjectureParent))
     }
 
     val (_, sketch) = parse(file)
