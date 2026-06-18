@@ -160,25 +160,7 @@ extension (annotatedFormula: AnnotatedFormula) {
     val annotations = annotatedFormula.annotations.getOrElse {
       boundary.break(Set.empty)
     }
-    val parentInfos = annotations.source match {
-      case Source.Inference(rule, usefulInfo, parents)     => parents
-      case Source.Internal(introType, usefulInfo, parents) => parents
-      case Source.Creator(name, usefulInfo, parents)       => parents
-      case Source.List(sources) =>
-        throw new UnsupportedOperationException("cannot get parents of alternative list sources")
-
-      case Source.Name(name)               => Set.empty
-      case Source.File(fileName, fileInfo) => Set.empty
-      case Source.Theory(name, usefulInfo) => Set.empty
-      case Source.Unknown                  => Set.empty
-      case Source.General(term)            => Set.empty
-    }
-
-    parentInfos.map {
-      case ParentInfo(Source.Name(name), _) => name
-      case _ =>
-        throw new UnsupportedOperationException("cannot get non-name parent")
-    }.toSet
+    annotations.source.parentLabels.toSet
   }
 }
 
