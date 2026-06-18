@@ -125,6 +125,20 @@ extension (source: Source) {
     case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
     case _                                               => None
   }
+
+  def parentLabels: Seq[String] = source match {
+    case Source.Name(name)                                => Seq(name)
+    case Source.Inference(_, _, parents)                  => parents.flatMap(_.source.parentLabels)
+    case Source.Internal(_, _, parents)                   => parents.flatMap(_.source.parentLabels)
+    case Source.File(_, _)                                => Seq.empty // for now we treat file sources as axioms that don't have parents
+    case Source.Theory(_, _)                              => Seq.empty
+    case Source.Creator(_, _, parents)                    => parents.flatMap(_.source.parentLabels)
+    case Source.Unknown                                   => Seq.empty
+    case Source.List(sources)                             => sources.flatMap(_.parentLabels)
+    case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
+    case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
+    case Source.General(term)                             => throw IllegalArgumentException(s"cannot get parent labels of term: $term")
+  }
 }
 
 extension (annotatedFormula: AnnotatedFormula) {
@@ -261,7 +275,7 @@ object TptpProofParser {
 
     val (_, sketch) = parse(file)
 
-    val refutationHead = tptpFile.inputs.collect {
+    val refutationHead = tptpProofDag.values.collect {
       case a @ AnnotatedFormula(_, _, _, Bottom(), _) => a
     }.single
     val usedNegatedConjectures = tptpProofDag.values.collect {
@@ -304,7 +318,7 @@ object TptpProofParser {
       tptpFile
     else
       TptpFile(tptpFile.inputs.collect { case f: AnnotatedFormula if !stepsWithStrongQuants(f.name) => f }.map {
-        case f @ AnnotatedFormula(_, _, _, _, Some(Annotations(source, _))) if getParents(source).toSet.intersect(stepsWithStrongQuants).isEmpty => f
+        case f @ AnnotatedFormula(_, _, _, _, Some(Annotations(source, _))) if source.parentLabels.toSet.intersect(stepsWithStrongQuants).isEmpty => f
         case AnnotatedFormula(_, label, "conjecture", formula, _) =>
           AnnotatedFormula("fof", label, "conjecture", formula, None)
         case f => AnnotatedFormula("fof", f.name, "axiom", f.formula, None)
@@ -346,21 +360,6 @@ object TptpProofParser {
     }
 
     endSequent -> labelledCNF.toMap
-  }
-
-  def getParents(source: Source): Seq[String] = source match {
-    case Source.Name(name)               => Seq(name)
-    case Source.Inference(_, _, parents) => parents.flatMap(p => getParents(p.source))
-    case Source.Internal(_, _, parents)  => parents.flatMap(p => getParents(p.source))
-    case Source.File(_, _)               => Seq.empty // for now we treat file sources as axioms that don't have parents
-    case Source.Theory(_, _)             => Seq.empty
-    case Source.Creator(_, _, parents)   => parents.flatMap(p => getParents(p.source))
-    case Source.Unknown                  => Seq.empty
-    case Source.List(sources)            => sources.flatMap(s => getParents(s))
-    case Source.General(s) => s match {
-        case GeneralColon(TptpTerm(label), _) => Seq(label)
-        case TptpTerm(dagSource)              => Seq(dagSource)
-      }
   }
 
   def findClauseRenaming(from: HOLSequent, to: HOLSequent): Option[Map[Var, Var]] =
@@ -413,7 +412,7 @@ object TptpProofParser {
       val step = steps.getOrElse(stepName, throw new MalformedInputFileException(s"unknown step $stepName"))
 
       def convertSat_splitting_refutationBottomInference(source: Source): Seq[SketchSplitCombine] = {
-        val sketchParents = getParents(source).flatMap(convert)
+        val sketchParents = source.parentLabels.flatMap(convert)
         val splitParents = sketchParents.map { parent0 =>
           var parent = parent0
           for {
@@ -435,7 +434,7 @@ object TptpProofParser {
 
       def convertAVATAR_split_clauseInference(disj: Formula, source: Source): Seq[RefutationSketch] = {
         val Seq(assertion) = CNFp(disj).toSeq
-        val Seq(splittedClause, _*) = getParents(source).flatMap(convert): @unchecked
+        val Seq(splittedClause, _*) = source.parentLabels.flatMap(convert): @unchecked
 
         var p = splittedClause
         for {
@@ -456,17 +455,17 @@ object TptpProofParser {
       }
 
       def convertAVATAR_sat_refutationInference(source: Source): Seq[SketchSplitCombine] = {
-        Seq(SketchSplitCombine(getParents(source).flatMap(convert)))
+        Seq(SketchSplitCombine(source.parentLabels.flatMap(convert)))
       }
 
       def convertRemainingCases(conclusion: FOLFormula, source: Source): Seq[RefutationSketch] = {
         CNFp(conclusion).toSeq match {
           case Seq(conclusionClause) =>
-            val sketchParents = getParents(source).flatMap(convert)
+            val sketchParents = source.parentLabels.flatMap(convert)
             val conclusionClause_ = filterVampireSplits(conclusionClause)
             val sketchParents_ = sketchParents.find(p => clauseSubsumption(p.conclusion, conclusionClause_).isDefined).fold(sketchParents)(Seq(_))
             Seq(SketchInference(conclusionClause_, sketchParents_))
-          case clauses => getParents(source).flatMap(convert)
+          case clauses => source.parentLabels.flatMap(convert)
         }
       }
 
