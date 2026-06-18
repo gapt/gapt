@@ -12,10 +12,6 @@ fof(marriage, axiom,
     ? [Groom] :
     in_love(Groom, Bride)).
 
-%----There exists at least one marriage
-fof(exists_marriage, axiom,
-    is_marriage(m0)).
-
 %----Conjecture: someone is in love
 fof(c, conjecture,
     ? [X] :

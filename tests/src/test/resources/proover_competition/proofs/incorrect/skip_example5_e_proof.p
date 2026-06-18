@@ -1,14 +1,14 @@
 %------------------------------------------------------------------------------
 % File     : example2_proof : ProoVer 2026
-% Proof    : ../problem/example2_c.p
+% Proof    : Problems/example2_c.p
 % Source   : ProoVer 2026
 % Status   : Unknown
 % SPC      : FOF_UNK_RFO_NEQ
 %------------------------------------------------------------------------------
 % SZS output start Proof
-fof(a1, axiom, ![X]: (p(X) => p(f(X))), file('example2_c.p',ax1)).
-fof(a2, axiom, p(a), file('example2_c.p',ax2)).
-fof(c, conjecture, p(f(f(a))), file('example2_c.p',c)).
+fof(a1, axiom, ![X]: (p(X) => p(f(X))), file('Problems/example2_c.p',ax1)).
+fof(a2, axiom, p(a), file('Problems/example2_c.p',ax2)).
+fof(c, conjecture, p(f(f(a))), file('Problems/example2_c.p',c)).
 fof(s1, negated_conjecture, ~p(f(f(a))), inference(negated_conjecture, [status(thm)], [c])).
 fof(s2, plain, p(a) => p(f(a)), inference(instantiate, [status(thm)], [a1])).
 fof(s3, plain, p(f(a)) => p(f(f(a))), inference(instantiate, [status(thm)], [a1])).
