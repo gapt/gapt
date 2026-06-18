@@ -13,6 +13,7 @@ import gapt.proofs.sketch.UnprovableSketchInference
 import scala.concurrent.duration._
 import gapt.expr.Expr
 import scala.util.boundary
+import boundary.break
 
 enum SzsStatus {
   case Verified
@@ -39,13 +40,13 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
   try boundary {
       withTimeout(timeout) {
         val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(file) match {
-          case Left(reason)  => boundary.break(SzsStatus.failed(reason))
+          case Left(reason)  => break(SzsStatus.failed(reason))
           case Right(sketch) => sketch
         }
         tptpRefutationSketch.conjectureNegatedConjecturePair match {
           case Some((conjecture, negatedConjecture)) =>
             if !Escargot.isValid(Neg(conjecture) --> negatedConjecture) then
-              boundary.break(SzsStatus.failed(TptpProofImportError.IncorrectNegatedConjectureInference))
+              break(SzsStatus.failed(TptpProofImportError.IncorrectNegatedConjectureInference))
           case None =>
         }
 
