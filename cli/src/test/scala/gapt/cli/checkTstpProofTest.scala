@@ -76,23 +76,21 @@ class checkTstpProofTest extends Specification with BeforeAll {
 
     def nonExistentPath: Result = {
       val (exitCode, stdout, stderr) =
-        proofCheckerProcess("./proofs/non_existing_file.p").!!!
+        proofCheckerProcess("./Proofs/non_existing_file.p").!!!
 
-      (exitCode must beGreaterThan(0)) and
-        (stdout must beEmpty) and
-        (stderr must startWith("file not found"))
+      (exitCode must beGreaterThan(0)).and(stdout must beEmpty).and(stderr must startWith("file not found"))
     }
 
     def relativePaths: Result = {
       val (exitCode, _, _) =
-        proofCheckerProcess("./proofs/correct/example1_c_proof.p").!!!
+        proofCheckerProcess("./Proofs/correct_example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
     def absolutePaths: Result = {
       val (exitCode, _, _) =
-        proofCheckerProcess(s"${cwd.path}/proofs/correct/example1_c_proof.p").!!!
+        proofCheckerProcess(s"${cwd.path}/Proofs/correct_example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
@@ -101,20 +99,21 @@ class checkTstpProofTest extends Specification with BeforeAll {
       val (exitCode, stdout, _) =
         proofCheckerProcess(example.toString).!!!
 
-      (exitCode must_== 0) and
-        (stdout must_== "%SZS status Verified")
+      (exitCode must_== 0).and(
+        stdout must_== "%SZS status Verified"
+      )
     }
 
     def failVerification(example: Path): Result = {
       val (exitCode, stdout, _) =
         proofCheckerProcess(example.toString).!!!
 
-      (exitCode must_== 0) and
-        (stdout must_== "%SZS status FailedVerified")
+      (exitCode must_== 0).and(
+        stdout must startWith("%SZS status FailedVerified")
+      )
     }
 
-    def foreachPath(directory: Path)(f: Path => Fragment): Fragments = {
-      val paths = os.list(directory)
+    def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {
       Fragments.foreach(paths) { path =>
         val fragment = f(path)
         val relativePath = path.relativeTo(ProoverCompetitionRoot.path)
@@ -127,13 +126,17 @@ class checkTstpProofTest extends Specification with BeforeAll {
     }
 
     val correctProofs =
-      foreachPath(ProoverCompetitionRoot.path / "proofs" / "correct") { example =>
+      val correctProofPaths = os.walk(ProoverCompetitionRoot.path / "Proofs")
+        .filter(_.baseName.startsWith("correct_"))
+      foreachPath(correctProofPaths) { example =>
         val relativePath = example.relativeTo(ProoverCompetitionRoot.path)
         s"verify $relativePath correctly" ! verifyCorrect(example)
       }
 
     val incorrectProofs =
-      foreachPath(ProoverCompetitionRoot.path / "proofs" / "incorrect") { example =>
+      val incorrectProofPaths = os.walk(ProoverCompetitionRoot.path / "Proofs")
+        .filter(_.baseName.startsWith("incorrect_"))
+      foreachPath(incorrectProofPaths) { example =>
         val relativePath = example.relativeTo(ProoverCompetitionRoot.path)
         s"fail verification of $relativePath" ! failVerification(example)
       }

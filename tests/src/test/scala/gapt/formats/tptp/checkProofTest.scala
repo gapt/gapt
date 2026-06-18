@@ -291,8 +291,7 @@ class checkProofExampleTest extends Specification {
   val testResourcesRoot = os.Path(getClass.getResource("/").toURI)
 
   def is: SpecStructure = {
-    def foreachPath(directory: Path)(f: Path => Fragment): Fragments = {
-      val paths = os.list(directory)
+    def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {
       Fragments.foreach(paths) { path =>
         val fragment = f(path)
         val relativePath = path.relativeTo(testResourcesRoot)
@@ -305,12 +304,12 @@ class checkProofExampleTest extends Specification {
     }
 
     def spec(check: InputFile => SzsStatus): Fragments = {
-      val correctProofs = foreachPath(testResourcesRoot / "proover_competition" / "proofs" / "correct") { example =>
+      val correctProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.Verified)
       }
 
-      val incorrectProofs = foreachPath(testResourcesRoot / "proover_competition" / "proofs" / "incorrect") { example =>
+      val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.FailedVerified])
       }
