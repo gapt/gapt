@@ -1,6 +1,6 @@
 %------------------------------------------------------------------------------
 % File     : example3_proof : ProoVer 2026
-% Proof    : ../problem/example3_c.p
+% Proof    : Problems/example3_c.p
 % Source   : ProoVer 2026
 % Status   : Unknown
 % SPC      : FOF_UNK_RFO_NEQ
@@ -11,17 +11,13 @@ fof(marriage, axiom,
     ! [Marriage] :
     ? [Bride] :
     ? [Groom] :
-    in_love(Groom, Bride), file('example3_c.p',marriage)).
-
-%----There exists at least one marriage
-fof(exists_marriage, axiom,
-    is_marriage(m0), file('example3_c.p',exists_marriage)).
+    in_love(Groom, Bride), file('Problems/example3_c.p',marriage)).
 
 %----Conjecture: someone is in love
 fof(c, conjecture,
     ? [X] :
     ? [Y] :
-    in_love(X, Y), file('example3_c.p',conjecture)).
+    in_love(X, Y), file('Problems/example3_c.p',conjecture)).
 
 %----Negate conjecture: nobody is in love
 fof(neg_c, negated_conjecture,
@@ -33,12 +29,12 @@ fof(neg_c, negated_conjecture,
 fof(bride, plain,
     ! [Marriage] :
     ? [Groom] :
-    in_love(Groom, sK0(Marriage)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemized(Bride), bind(Bride, sK0(Marriage))], [marriage])).
+    in_love(Groom, sK0(Marriage)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Bride, sK0(Marriage))], [marriage])).
 
 %----Skolemize Groom
 fof(groom, plain,
     ! [Marriage] :
-    in_love(sK1(Marriage), sK0(Marriage)), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemized(Groom), bind(Groom, sK1(Marriage))], [bride])).
+    in_love(sK1(Marriage), sK0(Marriage)), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemize(Groom, sK1(Marriage))], [bride])).
 
 %----Instantiate at the known marriage m0
 fof(groom_m0, plain,
