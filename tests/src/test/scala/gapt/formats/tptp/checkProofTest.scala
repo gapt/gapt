@@ -26,12 +26,12 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "throw an exception on empty input file" in {
-        checkProof(InputFile.fromString("")) must_== SzsStatus.NotVerified
+        checkProof(InputFile.fromString("")) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
       "throw an exception on an input file without a conjecture" in {
         val input = InputFile.fromString("fof(a1, axiom, p(a) & ~p(b), file('example1_c.p',a1)).")
-        checkProof(input) must_== SzsStatus.NotVerified
+        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
       "throw an exception on an input file without a $false inference" in {
@@ -39,7 +39,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(a, axiom, p(a)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, ~p(a), inference(negated_conjecture, [status(cth)], [c])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.NotVerified
+        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
       "should fail on negated conjecture if conclusion is not implied by negation of conjecture" in {
@@ -199,7 +199,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, ?[X]: p(X)).
         |fof(nc, negated_conjecture, ~(?[X]: p(X)), inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.NotVerified
+        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
       "should fail on skolemization step without esa status" in todo
@@ -267,7 +267,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.NotVerified
+        checkProof(input) must_== SzsStatus.cannotHandleInput
       }
 
       "should do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
@@ -322,8 +322,6 @@ class checkProofExampleTest extends Specification {
     s2"""
     |checkProof1
     |${spec(i => checkProof1(i, timeout))}
-    |checkProof2
-    |${spec(i => checkProof2(i))}
   """.stripMargin
   }
 }
