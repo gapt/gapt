@@ -40,8 +40,9 @@ def checkProof1(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
   try boundary {
       withTimeout(timeout) {
         val tptpRefutationSketch = TptpProofParser.parseTptpRefutationSketch(file) match {
-          case Left(reason)  => break(SzsStatus.failed(reason))
-          case Right(sketch) => sketch
+          case Left(TptpProofImportError.CannotHandleInput(input)) => break(SzsStatus.NotVerified)
+          case Left(reason)                                        => break(SzsStatus.failed(reason))
+          case Right(sketch)                                       => sketch
         }
         tptpRefutationSketch.conjectureNegatedConjecturePair match {
           case Some((conjecture, negatedConjecture)) =>

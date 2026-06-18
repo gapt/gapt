@@ -40,6 +40,7 @@ enum TptpProofImportError {
   case PlainInferenceWithConjectureParent
   case IncorrectNegatedConjectureInference
   case IncorrectPlainInference
+  case CannotHandleInput(input: TptpInput)
 }
 
 case class TptpRefutationSketch(
@@ -133,9 +134,9 @@ object TptpProofParser {
     }
 
     val annotatedFormulaSteps = tptpFile.inputs.map {
-      case i @ IncludeDirective(_, _) =>
-        throw UnsupportedOperationException(s"cannot handle include directive when checking proof. got $i")
-      case a @ AnnotatedFormula(_, _, _, _, _) => a
+      case i: IncludeDirective =>
+        break(Left(TptpProofImportError.CannotHandleInput(i)))
+      case a: AnnotatedFormula => a
     }
 
     val tptpProofMap = TptpProofMap(annotatedFormulaSteps).getOrElse {
