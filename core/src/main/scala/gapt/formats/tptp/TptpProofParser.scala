@@ -22,7 +22,6 @@ import gapt.proofs.{FOLClause, HOLSequent, Sequent}
 import scala.collection.mutable
 import scala.util.boundary
 import boundary.break
-import scala.util.Try
 
 enum InferenceStatus {
   case Thm
@@ -54,114 +53,26 @@ case class TptpRefutationSketch(
  */
 class MalformedInputFileException(s: String) extends IllegalArgumentException(s)
 
-case class TptpInferenceRecord(val name: String, val usefulInfo: Seq[GeneralTerm], val parents: Seq[String])
-
-extension (inference: TptpInferenceRecord) {
-  def statuses: Seq[InferenceStatus] = {
-    inference.usefulInfo.collect {
-      case TptpTerm("status", TptpTerm(s)) => s match {
-          case "thm" => InferenceStatus.Thm
-          case "cth" => InferenceStatus.Cth
-          case "esa" => InferenceStatus.Esa
-        }
-    }
-  }
-}
-
-extension [T](a: IterableOnce[T]) {
-  def single: T = a.iterator.take(2).toSeq match {
-    case Seq()  => throw new NoSuchElementException
-    case Seq(x) => x
-    case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
-  }
-
-  def singleOption: Option[T] = a.iterator.take(2).toSeq match {
-    case Seq()  => None
-    case Seq(x) => Some(x)
-    case _      => None
-  }
-}
-
 case class TptpProofMap private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
   export map.*
 }
 
+case class MultipleAnnotatedFormulasWithSameName(message: String)
 object TptpProofMap {
-  def apply(steps: Seq[AnnotatedFormula]): Try[TptpProofMap] = Try {
+  def apply(steps: Seq[AnnotatedFormula]): Either[MultipleAnnotatedFormulasWithSameName, TptpProofMap] = boundary {
     val map = scala.collection.mutable.Map[String, AnnotatedFormula]()
     for s <- steps do {
       map.updateWith(s.name) {
         case Some(formula) if s != formula =>
-          throw IllegalArgumentException(
+          break(Left(MultipleAnnotatedFormulasWithSameName(
             s"""formula $formula with name ${formula.name} is already present.
                |Attempted to add another formula $s with the same name.""".stripMargin
-          )
+          )))
         case _ => Some(s)
       }
     }
 
-    new TptpProofMap(map.toMap)
-  }
-}
-
-extension (gt: GeneralTerm) {
-  def asStatus: Option[String] = gt match {
-    case TptpTerm("status", TptpTerm(value)) => Some(value)
-    case _                                   => None
-  }
-}
-
-extension (usefulInfo: Seq[GeneralTerm]) {
-  def statusSet: Set[String] =
-    usefulInfo.flatMap(_.asStatus).toSet
-}
-
-extension (inference: Source.Inference) {
-  def statuses: Set[String] =
-    inference.usefulInfo.statusSet
-}
-
-extension (source: Source) {
-  def asInferenceOption: Option[Source.Inference] = source match {
-    case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
-    case _                                               => None
-  }
-
-  def parentLabels: Seq[String] = source match {
-    case Source.Name(name)                                => Seq(name)
-    case Source.Inference(_, _, parents)                  => parents.flatMap(_.source.parentLabels)
-    case Source.Internal(_, _, parents)                   => parents.flatMap(_.source.parentLabels)
-    case Source.File(_, _)                                => Seq.empty // for now we treat file sources as axioms that don't have parents
-    case Source.Theory(_, _)                              => Seq.empty
-    case Source.Creator(_, _, parents)                    => parents.flatMap(_.source.parentLabels)
-    case Source.Unknown                                   => Seq.empty
-    case Source.List(sources)                             => sources.flatMap(_.parentLabels)
-    case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
-    case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
-    case Source.General(term)                             => throw IllegalArgumentException(s"parent must be a simple term. got: $term")
-  }
-}
-
-extension (annotatedFormula: AnnotatedFormula) {
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    val annotations = annotatedFormula.annotations.getOrElse {
-      break(false)
-    }
-    val inferenceSource = annotations.source.asInferenceOption.getOrElse {
-      break(false)
-    }
-    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse {
-      break(false)
-    }
-
-    statuses.contains(inferenceStatus)
-  }
-
-  def parents: Set[String] = boundary {
-    val annotations = annotatedFormula.annotations.getOrElse {
-      break(Set.empty)
-    }
-    annotations.source.parentLabels.toSet
+    Right(new TptpProofMap(map.toMap))
   }
 }
 
@@ -535,5 +446,80 @@ object TptpProofParser {
     }.head
     convert(emptyClauseLabel).head
 
+  }
+}
+
+extension [T](a: IterableOnce[T]) {
+  def single: T = a.iterator.take(2).toSeq match {
+    case Seq()  => throw new NoSuchElementException
+    case Seq(x) => x
+    case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
+  }
+
+  def singleOption: Option[T] = a.iterator.take(2).toSeq match {
+    case Seq()  => None
+    case Seq(x) => Some(x)
+    case _      => None
+  }
+}
+
+extension (gt: GeneralTerm) {
+  def asStatus: Option[String] = gt match {
+    case TptpTerm("status", TptpTerm(value)) => Some(value)
+    case _                                   => None
+  }
+}
+
+extension (usefulInfo: Seq[GeneralTerm]) {
+  def statusSet: Set[String] =
+    usefulInfo.flatMap(_.asStatus).toSet
+}
+
+extension (inference: Source.Inference) {
+  def statuses: Set[String] =
+    inference.usefulInfo.statusSet
+}
+
+extension (source: Source) {
+  def asInferenceOption: Option[Source.Inference] = source match {
+    case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
+    case _                                               => None
+  }
+
+  def parentLabels: Seq[String] = source match {
+    case Source.Name(name)                                => Seq(name)
+    case Source.Inference(_, _, parents)                  => parents.flatMap(_.source.parentLabels)
+    case Source.Internal(_, _, parents)                   => parents.flatMap(_.source.parentLabels)
+    case Source.File(_, _)                                => Seq.empty // for now we treat file sources as axioms that don't have parents
+    case Source.Theory(_, _)                              => Seq.empty
+    case Source.Creator(_, _, parents)                    => parents.flatMap(_.source.parentLabels)
+    case Source.Unknown                                   => Seq.empty
+    case Source.List(sources)                             => sources.flatMap(_.parentLabels)
+    case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
+    case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
+    case Source.General(term)                             => throw IllegalArgumentException(s"parent must be a simple term. got: $term")
+  }
+}
+
+extension (annotatedFormula: AnnotatedFormula) {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
+    val annotations = annotatedFormula.annotations.getOrElse {
+      break(false)
+    }
+    val inferenceSource = annotations.source.asInferenceOption.getOrElse {
+      break(false)
+    }
+    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse {
+      break(false)
+    }
+
+    statuses.contains(inferenceStatus)
+  }
+
+  def parents: Set[String] = boundary {
+    val annotations = annotatedFormula.annotations.getOrElse {
+      break(Set.empty)
+    }
+    annotations.source.parentLabels.toSet
   }
 }
