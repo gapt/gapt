@@ -40,7 +40,7 @@ class TptpProofParserTest extends Specification {
 }
 
 class TptpProofParserUnitTest extends Specification {
-  "TptpProofParser.parseTptpRefutationSketch" should {
+  "TptpDerivation" should {
     "handle nested inference sources" in {
       val input = InputFile.fromString("""
         |fof(a1, axiom, p).
@@ -48,8 +48,28 @@ class TptpProofParserUnitTest extends Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
-      TptpProofParser.parseTptpRefutationSketch(input) must beRight
+      TptpDerivation.fromInputFile(input) must beRight
     }
+
+    "succeed for input where conjecture contains universal quantifier" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X)).
+        |fof(c, conjecture, ![X]: p(X)).
+        |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, sK0), skolemize(X, sK0)], [nc])).
+        |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
+      TptpDerivation.fromInputFile(input) must beRight
+    }
+
+    "work for a derivation that is not a refutation" in todo
+    "do X if no conjecture is given" in todo
+    "do X if multiple conjectures are given" in todo
+    "fail if given derivation which ends in a conjecture" in todo
+  }
+
+  "RootedTptpDerivaiton" should {
+    "fail import if given root label is not present" in todo
   }
 }
 

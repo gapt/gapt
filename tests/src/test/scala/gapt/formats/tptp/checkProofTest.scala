@@ -11,7 +11,13 @@ import org.specs2.specification.core.Fragment
 import org.specs2.specification.core.Execution
 import org.specs2.execute.Pending
 import scala.concurrent.duration._
-import gapt.formats.tptp.TptpProofImportError
+import gapt.formats.tptp.IncorrectInference
+import gapt.formats.tptp.NegatedConjectureStepWithNonConjectureParent
+import gapt.formats.tptp.NegatedConjectureWithoutParent
+import gapt.formats.tptp.PlainInferenceWithConjectureParent
+import gapt.formats.tptp.DifferentFormulasWithSameName
+import gapt.formats.tptp.InferenceCycle
+import gapt.formats.tptp.StepWithInvalidStatus
 
 class checkProofUnitTest extends mutable.Specification {
   def todo(message: String): Pending = Pending(s"TODO: $message")
@@ -25,16 +31,16 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "throw an exception on empty input file" in {
+      "not verify an empty input file" in {
         checkProof(InputFile.fromString("")) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
-      "throw an exception on an input file without a conjecture" in {
+      "not verify an input file without a conjecture" in {
         val input = InputFile.fromString("fof(a1, axiom, p(a) & ~p(b), file('example1_c.p',a1)).")
         checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
-      "throw an exception on an input file without a $false inference" in {
+      "not verify an input file without a $false inference" in {
         val input = InputFile.fromString("""
         |fof(a, axiom, p(a)).
         |fof(c, conjecture, p(a)).
@@ -49,7 +55,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.IncorrectNegatedConjectureInference)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[IncorrectInference]
+        }
       }
 
       "should verify a proof that contains unused incorrect conjecture to negated_conjecture inference but is otherwise correct" in {
@@ -68,7 +76,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should fail on negated conjecture without a status" in {
@@ -77,7 +87,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should fail on negated conjecture inference with more than one distinct statuses" in {
@@ -86,7 +98,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should verify negated conjecture inference with more than one equal cth statuses" in {
@@ -104,7 +118,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [a1])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithNonConjectureParent)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureStepWithNonConjectureParent]
+        }
       }
 
       "should fail on negated conjecture step without a parent" in {
@@ -113,7 +129,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.NegatedConjectureWithoutParent)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureWithoutParent]
+        }
       }
       "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
       "should do X on negated conjecture step with multiple conjecture parents" in todo
@@ -125,7 +143,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should fail on plain inference with more than one distinct statuses" in {
@@ -134,7 +154,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm),status(esa)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should fail on plain inference with cth status" in {
@@ -143,7 +165,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should verify on plain inference with esa status" in {
@@ -161,7 +185,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithInvalidStatus)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
       }
 
       "should fail on plain inference whose parent is a conjecture" in {
@@ -171,7 +197,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(p, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.PlainInferenceWithConjectureParent)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
+        }
       }
 
       "should verify plain inference with nested inference sources" in {
@@ -191,21 +219,20 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail if an axiom is used that doesn't occur in the input problem" in todo
       "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
 
-      // we are not handling such cases right now and assume that in that case
-      // skolemization would be applied first so
-      "should not verify on input that contains inferences with strong quantifiers without skolemization" in {
+      "should verify input that contains inferences with strong quantifiers if inference is easy" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, ?[X]: p(X)).
         |fof(c, conjecture, ?[X]: p(X)).
         |fof(nc, negated_conjecture, ~(?[X]: p(X)), inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
+        checkProof(input) must_=== SzsStatus.Verified
       }
 
       "should fail on skolemization step without esa status" in todo
       "should fail on skolemization step without new_symbols" in todo
       "should throw exception on skolemization step with more than one new symbol" in todo
       "should fail on skolemization step that doesn't specify variable to be skolemized" in todo
+      "should do X on proof the uses skolem constant that is only introduced in later step" in todo("specify")
       "should fail on proof with incorrect skolemization step" in todo("figure out possible failure scenarios skolemization")
 
       "should fail on axiom step without thm status" in todo
@@ -225,7 +252,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.DifferentFormulasWithSameName)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[DifferentFormulasWithSameName]
+        }
       }
 
       "should verify proof with two steps with the same name if proof steps are equal" in {
@@ -244,7 +273,9 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [cont])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.InferenceCycle)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[InferenceCycle]
+        }
       }
 
       "should fail on proof with inference steps that form a 2-step cycle" in {
@@ -254,8 +285,11 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont1, plain, p, inference(fromFalsum, [status(thm)], [cont2])).
         |fof(cont2, plain, $false, inference(falsum, [status(thm)], [cont1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.failed(TptpProofImportError.InferenceCycle)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[InferenceCycle]
+        }
       }
+
       "should fail on proof with named parents that don't exist in proof" in todo
       "should throw exception on proof with invalid tptp syntax" in todo
 
@@ -279,12 +313,13 @@ class checkProofUnitTest extends mutable.Specification {
       "should do X if input has no $false proof step" in todo("specify")
       "should do X if input has more than one conjecture" in todo("specify")
       "should do X if input has more than one $false proof step" in todo("specify")
+
+      "should do X on inputs with higher-order formulas" in todo("specify")
     }
   }
 
   val timeout = 1.second
-  spec(i => checkProof1(i, timeout))
-  // spec(checkProof2)
+  spec(i => checkProof(i, timeout))
 }
 
 class checkProofExampleTest extends Specification {
@@ -320,7 +355,7 @@ class checkProofExampleTest extends Specification {
     val timeout = 25.seconds
     s2"""
     |checkProof1
-    |${spec(i => checkProof1(i, timeout))}
+    |${spec(i => checkProof(i, timeout))}
   """.stripMargin
   }
 }
