@@ -18,181 +18,299 @@ import gapt.logic.hol.CNFp
 import gapt.proofs.resolution.{AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit}
 import gapt.proofs.sketch._
 import gapt.proofs.{FOLClause, HOLSequent, Sequent}
+import gapt.utils.getOrBreak
 
 import scala.collection.mutable
 import scala.util.boundary
 import boundary.break
+import scala.util.boundary.Label
 
-enum InferenceStatus {
-  case Thm
-  case Cth
-  case Esa
+sealed trait TptpDerivationStep {
+  def formula: FOLFormula
+  def name: String
+  def annotationsOption: Option[Annotations]
+}
+sealed trait NonConjectureStep extends TptpDerivationStep
+case class TptpConjectureStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep
+case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends NonConjectureStep
+sealed trait TptpInferenceStep extends NonConjectureStep {
+  def annotations: Annotations
+  override def annotationsOption: Option[Annotations] = Some(annotations)
+}
+case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpInferenceStep
+case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpInferenceStep
+
+sealed trait TptpDerivationImportError {
+  def message: String
+}
+case class InputSyntaxError(cause: IllegalArgumentException) extends TptpDerivationImportError {
+  override def message: String = cause.getMessage
+}
+case class DifferentFormulasWithSameName(message: String) extends TptpDerivationImportError
+case class InferenceCycle(message: String) extends TptpDerivationImportError
+case class StepWithInvalidStatus(message: String, step: TptpDerivationStep) extends TptpDerivationImportError
+case class NegatedConjectureStepWithNonConjectureParent(message: String) extends TptpDerivationImportError
+case class NegatedConjectureWithoutParent(message: String) extends TptpDerivationImportError
+case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainInferenceStep) extends TptpDerivationImportError
+case class IncorrectInference(message: String, step: TptpInferenceStep) extends TptpDerivationImportError
+
+case class CannotHandleInput(message: String, input: TptpInput) extends TptpDerivationImportError
+case class NoRefutationFound(message: String) extends TptpDerivationImportError
+case class NoConjectureFound(message: String) extends TptpDerivationImportError
+case class UnexpectedInput(message: String) extends TptpDerivationImportError
+
+/**
+* Represents all the information inside a TptpDerivation.
+* It guarantees that the parent relationship is acyclic.
+*/
+case class TptpDerivation private (private val map: Map[String, AnnotatedFormula]) {
+  def annotatedFormulas: Iterable[AnnotatedFormula] = map.values
+
+  def get(label: String): Option[AnnotatedFormula] = map.get(label)
+
+  def parentsOf(formulaName: String): Seq[AnnotatedFormula] = {
+    map(formulaName).parentLabels.map(p => map(p))
+  }
+
+  def subDerivationRootedAt(derivationEndLabel: String): Iterable[AnnotatedFormula] = {
+    import scala.collection.mutable
+    val visited = mutable.Set[String]()
+    val queue = mutable.Queue[String](derivationEndLabel)
+    val steps = mutable.Buffer[AnnotatedFormula]()
+    while queue.nonEmpty do {
+      val element = queue.dequeue()
+      if !visited.contains(element) then {
+        visited += element
+        steps += map(element)
+        queue ++= map(element).parentLabels
+      }
+    }
+    steps
+  }
 }
 
-enum TptpProofImportError {
-  case InputSyntaxError
-  case DifferentFormulasWithSameName
-  case InferenceCycle
-  case NegatedConjectureWithInvalidStatus
-  case NegatedConjectureWithNonConjectureParent
-  case NegatedConjectureWithoutParent
-  case PlainInferenceWithInvalidStatus
-  case PlainInferenceWithConjectureParent
-  case IncorrectNegatedConjectureInference
-  case IncorrectPlainInference
-  case CannotHandleInput(input: TptpInput)
+object TptpDerivation {
+
+  /** Loads a TptpDerivation from a given input file and performs the following checks, otherwise fails with an error:
+  * - input is syntactically correct TPTP
+  * - there are not steps with duplicate labels
+  * - the parent relation between inference steps forms an acyclic directed graph
+  *
+  * @param input
+  * @return the TptpDerivation or an Error if there was an issue
+  */
+  def fromInputFile(input: InputFile): Either[TptpDerivationImportError, TptpDerivation] = {
+    for
+      tptp <- loadAsTptpFile(input)
+      steps <- intoAnnotatedFormulaSteps(tptp)
+      m <- intoUniqueMap(steps)
+      dag <- intoDag(m)
+    yield dag
+  }
+
+  // ensures the input file is syntactically correct TPTP
+  private def loadAsTptpFile(input: InputFile): Either[InputSyntaxError, TptpFile] = {
+    try Right(TptpImporter.loadWithoutIncludes(input))
+    catch // In this case the input file was not valid TPTP
+      case e: IllegalArgumentException => Left(InputSyntaxError(e))
+  }
+
+  // ensures that there are only AnnotatedFormula inputs
+  private def intoAnnotatedFormulaSteps(tptpFile: TptpFile): Either[CannotHandleInput, Seq[AnnotatedFormula]] = boundary {
+    val formulas = tptpFile.inputs.map {
+      case i: IncludeDirective =>
+        break(Left(CannotHandleInput("cannot handle include directives", i)))
+      case a: AnnotatedFormula => a
+    }
+    Right(formulas)
+  }
+
+  // ensures there are no steps with duplicate labels
+  private def intoUniqueMap(steps: Seq[AnnotatedFormula]): Either[DifferentFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
+    val map = steps.foldLeft(Map.empty[String, AnnotatedFormula]) { (map, step) =>
+      map.updatedWith(step.name) {
+        case Some(formula) if step != formula =>
+          break(Left(DifferentFormulasWithSameName(
+            s"""formula $formula with name ${formula.name} is already present.
+               |Attempted to add another formula $step with the same name.""".stripMargin
+          )))
+        case _ => Some(step)
+      }
+    }
+
+    Right(map)
+  }
+
+  // ensures the map doesn't have any cycles with respect to the parent relation
+  private def intoDag(map: Map[String, AnnotatedFormula]): Either[InferenceCycle, TptpDerivation] = {
+    if isCyclic(map.keySet, n => map(n).parentLabels.toSet) then
+      Left(InferenceCycle(s"Cycle detected in proof starting from node ${map.keySet.head}"))
+    else Right(new TptpDerivation(map.toMap))
+  }
 }
 
-case class TptpRefutationSketch(
-    val refutationSketch: RefutationSketch,
-    // this is None if the negated conjecture is not used in the refutation sketch
-    val conjectureNegatedConjecturePair: Option[(Formula, Formula)]
-)
+/**
+* Checks if the given directed graph contains a cycle.
+*
+* @param nodes the set of nodes of the graph
+* @param successors a function that returns for a given node in the graph the set of the nodes it can via a single edge
+* @return true if the directed graph contains a cycle, false otherwise
+*/
+def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
+  val visited = scala.collection.mutable.Set[T]()
+  def isPartOfCycle(node: T, path: Seq[T] = Seq.empty): Boolean = {
+    if path.contains(node) then return true
+    if visited.contains(node) then return false
+    visited.add(node)
+    successors(node).exists(p => isPartOfCycle(p, path :+ node))
+  }
+
+  nodes.exists(n => isPartOfCycle(n))
+}
+
+/**
+* Represents a TptpDerivation with a designated root label which defines the
+* end derived formula. This could be a $false formula which would make
+* it a refutation, but coucld also be another formula. This allows picking
+* any subderivation as a derivation.
+*/
+case class RootedTptpDerivation private (
+    private val steps: Map[String, TptpDerivationStep],
+    private val rootLabel: String
+) {
+  def usedDerivationSteps: Iterable[TptpDerivationStep] = steps.values
+  def get(name: String): Option[TptpDerivationStep] = steps.get(name)
+  def root: TptpDerivationStep = steps(rootLabel)
+}
+
+object RootedTptpDerivation {
+  def fromDerivationAndRootLabel(derivation: TptpDerivation, rootLabel: String): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
+    val _ = derivation.get(rootLabel).getOrElse {
+      break(Left(UnexpectedInput("end derivation label does not exist in proof")))
+    }
+
+    val usedAnnotatedFormulas = derivation.subDerivationRootedAt(rootLabel)
+    val usedSteps = usedAnnotatedFormulas.map { a => a.name -> parseStep(a).getOrBreak }.toMap
+
+    val usedNegatedConjectures = usedSteps.values.collect { case s: TptpNegatedConjectureStep => s }
+    usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
+      break(Left(StepWithInvalidStatus(s"there is a negated conjecture with an ambiguous status. should be cth", s)))
+    }
+    if usedNegatedConjectures.exists(c => derivation.hasNonConjectureParent(c.name)) then {
+      break(Left(NegatedConjectureStepWithNonConjectureParent("there is a negated conjecture with a non-conjecture parent")))
+    }
+    if usedNegatedConjectures.exists(c => derivation.parentsOf(c.name).isEmpty) then {
+      break(Left(NegatedConjectureWithoutParent("there is a negated conjecture without a parent")))
+    }
+
+    if usedNegatedConjectures.size > 1 then
+      break(Left(UnexpectedInput("get more than one negated conjecture")))
+
+    val usedPlainInferences = usedSteps.values.collect { case a: TptpPlainInferenceStep => a }
+    usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
+      break(Left(StepWithInvalidStatus("there is a plain inference with an ambiguous status. should be either thm or esa", s)))
+    }
+    usedPlainInferences.find(s => derivation.hasConjectureParent(s.name)).map { s =>
+      break(Left(PlainInferenceWithConjectureParent("there is a plain inference with a conjecture parent", s)))
+    }
+
+    Right(RootedTptpDerivation(usedSteps, rootLabel))
+  }
+
+  def fromInputFileRefutation(file: InputFile): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
+    val derivation = TptpDerivation.fromInputFile(file).getOrBreak
+    val refutationStep = derivation.annotatedFormulas.filter(_.formula == Bottom()).singleOption.getOrElse {
+      break(Left(NoRefutationFound("no unique $false formula found in derivation")))
+    }
+    RootedTptpDerivation.fromDerivationAndRootLabel(derivation, refutationStep.name)
+  }
+
+  def fromInputFileAndRootLabel(file: InputFile, rootLabel: String): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
+    val tptpProofDag = TptpDerivation.fromInputFile(file).getOrBreak
+    fromDerivationAndRootLabel(tptpProofDag, rootLabel)
+  }
+
+  private def parseStep(annotatedFormula: AnnotatedFormula): Either[TptpDerivationImportError, TptpDerivationStep] = boundary {
+    val AnnotatedFormula(language, name, role, formula, annotations) = annotatedFormula
+    language match {
+      case "fof" | "cnf" => // we only support these languages for now
+      case language      => break(Left(UnexpectedInput(s"unsupported input language $language. used in input $annotatedFormula")))
+    }
+    role match {
+      case "axiom"              => parseAxiomStep(name, formula, annotations)
+      case "conjecture"         => parseConjectureStep(name, formula, annotations)
+      case "negated_conjecture" => parseNegatedConjectureStep(name, formula, annotations)
+      case "plain"              => parsePlainInferenceStep(name, formula, annotations)
+      case r                    => break(Left(UnexpectedInput(s"unsupported input role $r. used in input $annotatedFormula")))
+    }
+  }
+
+  private def parseFOLFormula(formula: Formula): Either[TptpDerivationImportError, FOLFormula] = {
+    if !(formula.isInstanceOf[FOLFormula]) then
+      Left(UnexpectedInput(s"expected FOL formula, got ${formula.getClass}"))
+    else
+      Right(formula.asInstanceOf[FOLFormula])
+  }
+
+  private def parseAxiomStep(
+      name: String,
+      formula: Formula,
+      annotations: Option[Annotations]
+  ): Either[TptpDerivationImportError, TptpAxiomStep] = boundary {
+    val fol = parseFOLFormula(formula).getOrBreak
+    Right(TptpAxiomStep(name, fol, annotations))
+  }
+
+  private def parseConjectureStep(
+      name: String,
+      formula: Formula,
+      annotations: Option[Annotations]
+  ): Either[TptpDerivationImportError, TptpConjectureStep] = boundary {
+    val fol = parseFOLFormula(formula).getOrBreak
+    Right(TptpConjectureStep(name, fol, annotations))
+  }
+
+  private def parseNegatedConjectureStep(
+      name: String,
+      formula: Formula,
+      annotations: Option[Annotations]
+  ): Either[TptpDerivationImportError, TptpNegatedConjectureStep] = boundary { l ?=>
+    val folFormula = parseFOLFormula(formula).getOrBreak(using l)
+    val ann = annotations.getOrElse { break(Left(UnexpectedInput("got negated conjecture without source"))) }
+    ann.source.parentLabels match {
+      case Seq()           => break(Left(NegatedConjectureWithoutParent("got negated conjecture without parents")))
+      case Seq(parent)     => Right(TptpNegatedConjectureStep(name, folFormula, parent, ann))
+      case Seq(parent, _*) => break(Left(UnexpectedInput("got negated conjecture with multiple parents")))
+    }
+  }
+
+  private def parsePlainInferenceStep(
+      name: String,
+      formula: Formula,
+      annotations: Option[Annotations]
+  ): Either[TptpDerivationImportError, TptpPlainInferenceStep] = boundary {
+    val folFormula = parseFOLFormula(formula).getOrBreak
+    val ann = annotations.getOrElse { break(Left(UnexpectedInput("got plain inference without source"))) }
+    Right(TptpPlainInferenceStep(name, folFormula, ann.source.parentLabels, ann))
+  }
+
+  extension (derivation: TptpDerivation) {
+    def hasNonConjectureParent(formulaName: String): Boolean = {
+      derivation.parentsOf(formulaName).exists(p => p.role != "conjecture")
+    }
+
+    def hasConjectureParent(formulaName: String): Boolean = {
+      derivation.parentsOf(formulaName).exists(p => p.role == "conjecture")
+    }
+  }
+}
 
 /**
  * Represents a malformed input file e.g. one that contains an unknown parent step
  */
 class MalformedInputFileException(s: String) extends IllegalArgumentException(s)
 
-case class TptpProofMap private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
-  export map.*
-}
-
-case class MultipleAnnotatedFormulasWithSameName(message: String)
-object TptpProofMap {
-  def apply(steps: Seq[AnnotatedFormula]): Either[MultipleAnnotatedFormulasWithSameName, TptpProofMap] = boundary {
-    val map = scala.collection.mutable.Map[String, AnnotatedFormula]()
-    for s <- steps do {
-      map.updateWith(s.name) {
-        case Some(formula) if s != formula =>
-          break(Left(MultipleAnnotatedFormulasWithSameName(
-            s"""formula $formula with name ${formula.name} is already present.
-               |Attempted to add another formula $s with the same name.""".stripMargin
-          )))
-        case _ => Some(s)
-      }
-    }
-
-    Right(new TptpProofMap(map.toMap))
-  }
-}
-
-case class TptpProofDag private (private val map: Map[String, AnnotatedFormula]) extends Map[String, AnnotatedFormula] {
-  export map.*
-
-  def parentsOf(formulaName: String): Set[AnnotatedFormula] = {
-    map(formulaName).parents.map(p => map(p))
-  }
-
-  def ancestorsOf(formulaName: String): Set[AnnotatedFormula] = {
-    val formula = map(formulaName)
-    val parents = formula.parents.map(p => map(p))
-    parents ++ parents.flatMap(p => ancestorsOf(p.name))
-  }
-
-  def isUsedInDerivationOf(used: String, derivationOf: String): Boolean = {
-    used == derivationOf || ancestorsOf(derivationOf).exists(_.name == used)
-  }
-
-  def hasNonConjectureParent(formulaName: String): Boolean = {
-    parentsOf(formulaName).exists(p => p.role != "conjecture")
-  }
-
-  def hasConjectureParent(formulaName: String): Boolean = {
-    parentsOf(formulaName).exists(p => p.role == "conjecture")
-  }
-}
-
-case class CycleError(message: String) extends IllegalArgumentException(message)
-object TptpProofDag {
-  def apply(map: TptpProofMap): Either[CycleError, TptpProofDag] = {
-    if isCyclic(map.keySet, n => map(n).parents) then
-      Left(CycleError(s"Cycle detected in proof starting from node ${map.keySet.head}"))
-    else Right(new TptpProofDag(map.toMap))
-  }
-}
-
-def isCyclic[T](nodes: Set[T], neighbors: T => Set[T]): Boolean = {
-  val visited = scala.collection.mutable.Set[T]()
-  def isPartOfCycle(node: T, path: Seq[T] = Seq.empty): Boolean = {
-    if path.contains(node) then return true
-    if visited.contains(node) then return false
-    visited.add(node)
-    neighbors(node).exists(p => isPartOfCycle(p, path :+ node))
-  }
-
-  nodes.exists(n => isPartOfCycle(n))
-}
-
 object TptpProofParser {
-  def parseTptpRefutationSketch(file: InputFile): Either[TptpProofImportError, TptpRefutationSketch] = boundary {
-    val tptpFile = {
-      try TptpImporter.loadWithoutIncludes(file)
-      catch
-        // In this case the input file was not valid TPTP
-        case _: IllegalArgumentException => break(Left(TptpProofImportError.InputSyntaxError))
-    }
-
-    val annotatedFormulaSteps = tptpFile.inputs.map {
-      case i: IncludeDirective =>
-        break(Left(TptpProofImportError.CannotHandleInput(i)))
-      case a: AnnotatedFormula => a
-    }
-
-    val tptpProofMap = TptpProofMap(annotatedFormulaSteps).getOrElse {
-      break(Left(TptpProofImportError.DifferentFormulasWithSameName))
-    }
-    val tptpProofDag = TptpProofDag(tptpProofMap).getOrElse {
-      break(Left(TptpProofImportError.InferenceCycle))
-    }
-
-    val claimedNegatedConjectures = tptpProofDag.values.collect {
-      case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _) => a
-    }
-    if claimedNegatedConjectures.exists(c => !c.hasUnambiguousStatusAmong(Set("cth"))) then {
-      break(Left(TptpProofImportError.NegatedConjectureWithInvalidStatus))
-    }
-    if claimedNegatedConjectures.exists(c => tptpProofDag.hasNonConjectureParent(c.name)) then {
-      break(Left(TptpProofImportError.NegatedConjectureWithNonConjectureParent))
-    }
-    if claimedNegatedConjectures.exists(c => tptpProofDag.parentsOf(c.name).isEmpty) then {
-      break(Left(TptpProofImportError.NegatedConjectureWithoutParent))
-    }
-
-    val plainInferences = tptpProofDag.values.collect {
-      case a @ AnnotatedFormula(_, _, "plain", _, _) => a
-    }
-    if plainInferences.exists(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))) then {
-      break(Left(TptpProofImportError.PlainInferenceWithInvalidStatus))
-    }
-    if plainInferences.exists(c => tptpProofDag.hasConjectureParent(c.name)) then {
-      break(Left(TptpProofImportError.PlainInferenceWithConjectureParent))
-    }
-
-    val (_, sketch) = parse(file)
-
-    val refutationHead = tptpProofDag.values.collect {
-      case a @ AnnotatedFormula(_, _, _, Bottom(), _) => a
-    }.single
-    val usedNegatedConjectures = tptpProofDag.values.collect {
-      case a @ AnnotatedFormula(_, _, "negated_conjecture", _, _)
-          if tptpProofDag.isUsedInDerivationOf(a.name, refutationHead.name) => a
-    }
-
-    if usedNegatedConjectures.isEmpty then
-      return Right(TptpRefutationSketch(sketch, None))
-
-    if usedNegatedConjectures.size > 1 then
-      throw new IllegalArgumentException(s"Expected exactly one negated conjecture used in the refutation sketch, got ${usedNegatedConjectures.size}")
-
-    val negatedConjecture = usedNegatedConjectures.head
-    val conjectures = tptpFile.inputs.collect {
-      case a @ AnnotatedFormula(_, _, "conjecture", _, _) => a
-    }
-    val conjecture = conjectures.head
-    Right(TptpRefutationSketch(sketch, Some((conjecture.formula, negatedConjecture.formula))))
-  }
-
   def parse(out: InputFile, labelledCNF: Map[String, Seq[FOLClause]]): RefutationSketch =
     parseSteps(TptpImporter.loadWithoutIncludes(out), labelledCNF)
 
@@ -503,24 +621,24 @@ extension (source: Source) {
 }
 
 extension (annotatedFormula: AnnotatedFormula) {
+  def parentLabels: Seq[String] = boundary {
+    val annotations = annotatedFormula.annotations.getOrElse { break(Seq.empty) }
+    annotations.source.parentLabels
+  }
+}
+
+extension (annotations: Option[Annotations]) {
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    val annotations = annotatedFormula.annotations.getOrElse {
-      break(false)
-    }
-    val inferenceSource = annotations.source.asInferenceOption.getOrElse {
-      break(false)
-    }
-    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse {
-      break(false)
-    }
+    val ann = annotations.getOrElse { break(false) }
+    val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
+    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse { break(false) }
 
     statuses.contains(inferenceStatus)
   }
+}
 
-  def parents: Set[String] = boundary {
-    val annotations = annotatedFormula.annotations.getOrElse {
-      break(Set.empty)
-    }
-    annotations.source.parentLabels.toSet
+extension (step: TptpDerivationStep) {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
+    step.annotationsOption.hasUnambiguousStatusAmong(statuses)
   }
 }

@@ -18,9 +18,12 @@ import gapt.expr.formula.Top
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
+import gapt.utils.getOrBreak
 
 import scala.util.{Failure, Success}
 import scala.util.Try
+import gapt.proofs.lk.LKProof
+import scala.util.boundary
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -244,6 +247,14 @@ object TptpImporter {
 
   def loadWithIncludes(file: InputFile): TptpFile =
     loadWithIncludes(file, pwd)
+
+  def loadAsTptpDerivation(file: InputFile): Either[TptpDerivationImportError, TptpDerivation] =
+    TptpDerivation.fromInputFile(file)
+
+  def loadAsLKRefutation(file: InputFile): Either[TptpDerivationImportError, LKProof] = boundary {
+    val rootedTptpDerivation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
+    rootedTptpDerivationToLKProof(rootedTptpDerivation)
+  }
 
   def main(args: Array[String]): Unit =
     print(loadWithIncludes(FilePath(args.head)))
