@@ -13,6 +13,12 @@ import gapt.provers.escargot.Escargot
 
 import scala.util.boundary
 import boundary.break
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.expr.formula.Ex
+import gapt.expr.{substitute, given}
+import gapt.expr.formula.All
+import gapt.proofs.lk.rules.macros.ForallLeftBlock
+import gapt.proofs.lk.rules.macros.ForallRightBlock
 
 type LabelledSequent = Sequent[(String, FOLFormula)]
 
@@ -49,8 +55,29 @@ def rootedTptpDerivationToLKProof(
         Sequent(parents.map(p => (p, derivation.get(p).get.formula)), Vector((name, formula)))
       case TptpNegatedConjectureStep(name, formula, parent, _) =>
         Sequent(Vector((parent, Neg(derivation.get(parent).get.formula))), Vector((name, formula)))
+      case TptpSkolemizationStep(name, formula, parent, _, _, _, _) =>
+        Sequent(Vector((parent, derivation.get(parent).get.formula)), Vector((name, formula)))
     }
-    val proof = prover.getLKProof(sequentToProve.map(_._2)) match {
+
+    val proofOption = s match {
+      case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, _) => {
+        val parentFormula = sequentToProve.antecedent.head._2
+        val All.Block(parentVars, mainFormula @ Ex(v, inner)) = parentFormula: @unchecked
+        val All.Block(formulaVars, innerFormula) = formula
+
+        val innerSubstituted = inner.substitute(v -> newSkolemSymbol(parentVars*))
+        val subProof = prover.getLKProof(Sequent(Vector(innerSubstituted), Vector(innerFormula)))
+        subProof.map { s =>
+          val existsSkLeft = ExistsSkLeftRule(s, Ant(0), mainFormula, newSkolemSymbol(parentVars*))
+          val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, parentVars)
+          val forallRight = ForallRightBlock(forallLeft, formula, formulaVars)
+          forallRight
+        }
+      }
+      case _ => prover.getLKProof(sequentToProve.map(_._2))
+    }
+
+    val proof = proofOption match {
       case None    => break(Left(IncorrectInference(s"inference with label ${s.name} is incorrect", s)))
       case Some(p) => p
     }

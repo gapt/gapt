@@ -9,8 +9,16 @@ import gapt.provers.escargot.Escargot
 import gapt.formats.InputFile
 import gapt.utils.withTimeout
 import gapt.formats.ClasspathInputFile
+import gapt.proofs.lk.rules.CutRule
+import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.proofs.SequentMatchers
+import gapt.proofs.lk.rules.ForallRightRule
+import gapt.proofs.lk.rules.ForallLeftRule
+import scala.util.boundary
+import boundary.break
+import gapt.proofs.lk.LKProof
 
-class rootedTptpDerivationIntoLKProofTest extends Specification {
+class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatchers {
   "rootedTptpDerivationIntoLKProof" should {
     "return proof with negated conjecture in antecedent" in {
       val input = InputFile.fromString("""
@@ -75,5 +83,66 @@ class rootedTptpDerivationIntoLKProofTest extends Specification {
     }
 
     "should fail on examples" in todo
+
+    "skolemization" in {
+      "output skolemization proof for correct skolemization step without context variables" in {
+        val input = InputFile.fromString("""
+          fof(a, axiom, ?[X]: p(X)).
+          fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
+        """)
+        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
+        rootedTptpDerivationToLKProof(derivation) must beRight.like {
+          case c @ CutRule(left, _, ExistsSkLeftRule(p, i, f, s), _) => {
+            (c.conclusion must beMultiSetEqual(fos"?X p(X) :- p(sK0)"))
+              .and(s must_=== foc"sK0")
+              .and(f must_=== fof"?X p(X)")
+          }
+        }
+      }
+
+      "output skolemization proof for correct skolemization step with a context variable" in {
+        val input = InputFile.fromString("""
+          fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
+          fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """)
+        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
+        rootedTptpDerivationToLKProof(derivation) must beRight[LKProof].like { r =>
+          boundary {
+            val rightCut = r match {
+              case CutRule(left, _, right, _) => right
+              case _                          => break(ko)
+            }
+            val innerForAllRight = rightCut match {
+              case ForallRightRule(p, _, _, _) => p
+              case _                           => break(ko)
+            }
+            val innerForAllLeft = innerForAllRight match {
+              case ForallLeftRule(p, _, _, _, _) => p
+              case _                             => break(ko)
+            }
+            val existsSkLeft = innerForAllLeft match {
+              case e: ExistsSkLeftRule => e
+              case _                   => break(ko)
+            }
+            val ExistsSkLeftRule(p, i, introducedFormula, skolemTerm) = existsSkLeft
+            (skolemTerm must_=== fot"sK0(X)")
+              .and(introducedFormula must_=== fof"?Y p(X,Y)")
+              .and(r.conclusion must beMultiSetEqual(fos"!X?Y p(X,Y) :- !X p(X, sK0(X))"))
+          }
+        }
+      }
+
+      "work on bound variables within nested forall / exists scopes" in todo
+
+      "fail on skolemization step that introduces a symbol that is already used elsewhere" in todo
+      "fail on skolemization step whose actual context variables don't match the claimed context variables" in todo
+      "fail on skolemization steps which introduce the same symbol name" in todo
+      "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in todo
+      "fail on skolemization step in which the bound variable does not occur in the parent formula" in todo
+      "do X on skolemization step whose parent formula contains multiple bound variables with the bound variable from the step" in todo
+      "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in todo
+      "fail on skolemization step if parent context variables don't match formula context variables" in todo
+
+    }
   }
 }
