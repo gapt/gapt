@@ -10,6 +10,7 @@ import org.specs2.specification.core.Fragments
 import gapt.formats.InputFile
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLFunctionConst
 
 class TptpProofParserTest extends Specification {
 
@@ -71,42 +72,180 @@ class TptpProofParserUnitTest extends Specification {
   }
 
   "RootedTptpDerivation" should {
+    def simpleSkolemConstantDerivation(skolemizationStep: String) = InputFile.fromString(
+      s"""
+      |fof(a, axiom, ![X]: p(X)).
+      |fof(c, conjecture, ![X]: p(X)).
+      |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+      |$skolemizationStep
+      |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
+      |fof(cont, plain, $$false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
+      """.stripMargin
+    )
+
     "parse skolemization step" in {
-      val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X)).
-        |fof(c, conjecture, ![X]: p(X)).
-        |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
-        |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
-        |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
-        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc]))."
+      )
       RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
         case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
-            case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, skolemizedSymbol, annotations) => {
+            case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
               (newSkolemSymbol must_=== FOLConst("sK0"))
+                .and(contextVariables must_=== Seq.empty)
                 .and(skolemizedSymbol must_=== FOLVar("X"))
             }
           }
       }
     }
+
     "fail on skolemization step without new_symbols(skolem, _)" in {
-      val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X)).
-        |fof(c, conjecture, ![X]: p(X)).
-        |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
-        |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
-        |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
-        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc]))."
+      )
       RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
     }
-    "fail on skolemization step with multiple new_symbols(skolem, _)" in todo
-    "fail on skolemization step without given symbol" in todo
-    "fail on skolemization step with no parents" in todo
-    "fail on skolemization step with multiple parents" in todo
-    "parse skolemization symbol with context symbols" in todo
-    "fail on skolemization step with differing new_symbols and skolemize terms" in todo
+
+    "fail on skolemization step with multiple new_symbols(skolem, _)" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), new_symbols(skolem, [sK1]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
+    }
+
+    "fail on skolemization with new_symbols that is not a constant" in todo
+
     // only for now. we don't handle multiple symbols yet
-    "fail on skolemization step with more than on given symbol" in todo
-    "fail on skolemization step without skolemize(_,_)" in todo
+    "fail on skolemization step with more than one given symbol" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0)], [nc]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft[TptpDerivationImportError].like {
+        case _: CannotHandleInput => ok
+      }
+    }
+
+    "fail on skolemization step without given symbol" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, []), skolemize(X, sK0)], [nc]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
+    }
+
+    "fail on skolemization step with no parents" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], []))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
+    }
+
+    "fail on skolemization step with multiple parents" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc, a]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
+    }
+
+    "fail on skolemization step with differing new_symbols and skolemize terms" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft {
+        (x: TptpDerivationImportError) => x must beAnInstanceOf[SkolemizationStepWithDifferingSkolemTerms]
+      }
+    }
+
+    "fail on skolemization step without skolemize(_,_)" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft {
+        (x: TptpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
+      }
+    }
+
+    "fail on skolemization step with multiple skolemize(_,_)" in {
+      val input = simpleSkolemConstantDerivation(
+        "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
+      )
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft {
+        (x: TptpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
+      }
+    }
+
+    "parse skolemization symbol with context symbols" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X, a)).
+        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y)).
+        |fof(nc, negated_conjecture, ![Y]: ?[X]: ~p(X, Y), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ![Y]: ~p(sK0(Y), Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [nc])).
+        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
+        """.stripMargin)
+      RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
+        case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
+            case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
+              (newSkolemSymbol must_=== FOLFunctionConst("sK0", 1))
+                .and(contextVariables must_=== Seq(FOLVar("Y")))
+                .and(skolemizedSymbol must_=== FOLVar("X"))
+            }
+          }
+      }
+    }
+
+    "parse skolemization symbol with multiple context symbols" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X, a, b)).
+        |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z)).
+        |fof(nc, negated_conjecture, ![Y, Z]: ?[X]: ~p(X, Y, Z), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ![Y, Z]: ~p(sK0(Y, Z), Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y, Z))], [nc])).
+        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
+        """.stripMargin)
+      RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
+        case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
+            case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
+              (newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
+                .and(contextVariables must_=== Seq(FOLVar("Y"), FOLVar("Z")))
+                .and(skolemizedSymbol must_=== FOLVar("X"))
+            }
+          }
+      }
+    }
+
+    "should parse skolemize step where order of context variables doesn't match, but they are equal as sets" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X, a, b)).
+        |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z)).
+        |fof(nc, negated_conjecture, ![Y, Z]: ?[X]: ~p(X, Y, Z), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ![Y, Z]: ~p(sK0(Y, Z), Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Z, Y))], [nc])).
+        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
+        """.stripMargin)
+      RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
+        case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
+            case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
+              (newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
+                .and(contextVariables must_=== Seq(FOLVar("Z"), FOLVar("Y")))
+                .and(skolemizedSymbol must_=== FOLVar("X"))
+            }
+          }
+      }
+    }
+
+    "fail on skolemize with skolem term that has non variable arguments" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X, a)).
+        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y)).
+        |fof(nc, negated_conjecture, ![Y]: ?[X]: ~p(X, Y), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ![Y]: ~p(sK0(Y), Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(a))], [nc])).
+        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
+        """.stripMargin)
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft {
+        (x: TptpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
+      }
+    }
+
     "fail import if given root label is not present" in todo
   }
 }
