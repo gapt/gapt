@@ -26,6 +26,9 @@ import boundary.break
 import scala.util.boundary.Label
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.fol.FOLFunction
+import gapt.expr.formula.fol.FOLTerm
+import gapt.expr.formula.fol.FOLFunctionConst
 
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
@@ -39,7 +42,8 @@ case class TptpSkolemizationStep(
     name: String,
     formula: FOLFormula,
     parent: String,
-    newSkolemSymbol: FOLConst,
+    newSkolemSymbol: FOLFunctionConst,
+    contextVariables: Seq[FOLVar],
     skolemizedSymbol: FOLVar,
     annotations: Annotations
 ) extends TptpDerivationStep
@@ -57,6 +61,8 @@ case class NegatedConjectureStepWithNonConjectureParent(message: String) extends
 case class NegatedConjectureWithoutParent(message: String) extends TptpDerivationImportError
 case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainInferenceStep) extends TptpDerivationImportError
 case class IncorrectInference(message: String, step: TptpDerivationStep) extends TptpDerivationImportError
+
+case class SkolemizationStepWithDifferingSkolemTerms(message: String, stepName: String) extends TptpDerivationImportError
 
 case class CannotHandleInput(message: String, stepName: String | TptpInput) extends TptpDerivationImportError
 case class NoRefutationFound(message: String) extends TptpDerivationImportError
@@ -315,16 +321,50 @@ object RootedTptpDerivation {
       inference: Source.Inference,
       optionalInfo: Seq[GeneralTerm]
   ): Either[TptpDerivationImportError, TptpSkolemizationStep] = boundary {
-    val parent = inference.parentLabels.head
-    val newSkolemSymbol = inference.usefulInfo.collect {
-      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) => term.asInstanceOf[FOLConst]
-    }.headOption.getOrElse {
-      break(Left(UnexpectedInput("expected at least one new_symbols(skolem,_) term")))
+    val parent = inference.parentLabels match {
+      case Seq()         => break(Left(UnexpectedInput("expected at least one parent label")))
+      case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one parent label")))
+      case Seq(label)    => label
     }
-    val (skolemizedSymbol, skolemTerm) = inference.usefulInfo.collect {
-      case TptpTerm("skolemize", boundVariable, skolemTerm) => (boundVariable.asInstanceOf[FOLVar], skolemTerm)
-    }.head
-    Right(TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, skolemizedSymbol, Annotations(inference, optionalInfo)))
+    val newSkolemSymbols = inference.usefulInfo.collect {
+      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) => term.asInstanceOf[FOLConst]
+      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(_, _)) =>
+        break(Left(CannotHandleInput("cannot handle multiple skolemizations in one step yet", name)))
+    }
+    val newSkolemSymbol = newSkolemSymbols match {
+      case Seq()         => break(Left(UnexpectedInput("expected at least one new_symbols(skolem,_) term")))
+      case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one new_symbols(skolem,_) term")))
+      case Seq(term)     => term.asInstanceOf[FOLConst]
+    }
+    val boundVariableSkolemTermPairs = inference.usefulInfo.collect {
+      case TptpTerm("skolemize", boundVariable, skolemTerm: FOLTerm) => (boundVariable.asInstanceOf[FOLVar], skolemTerm)
+    }
+    val (boundVariable, skolemTerm) = boundVariableSkolemTermPairs match {
+      case Seq()         => break(Left(UnexpectedInput("expected at least one skolemize(_,_) term")))
+      case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one skolemize(_,_) term")))
+      case Seq(pair)     => pair
+    }
+    val (skolemFunctionConst, args) = skolemTerm match {
+      case FOLFunction(h, args) => (FOLFunctionConst(h, args.size), args)
+      case _ =>
+        break(Left(UnexpectedInput("expected skolem term to be a FOL term")))
+    }
+    val contextVariables = args.map {
+      case x: FOLVar => x
+      case _         => break(Left(UnexpectedInput("expected skolem term arguments to be first-order variables")))
+    }
+    if newSkolemSymbol.name != skolemFunctionConst.name then {
+      break(Left(SkolemizationStepWithDifferingSkolemTerms(s"expected skolem term to be $newSkolemSymbol, got $skolemFunctionConst", name)))
+    }
+    Right(TptpSkolemizationStep(
+      name,
+      formula,
+      parent,
+      skolemFunctionConst,
+      contextVariables,
+      boundVariable,
+      Annotations(inference, optionalInfo)
+    ))
   }
 
   extension (derivation: TptpDerivation) {
@@ -680,7 +720,7 @@ extension (step: TptpDerivationStep) {
       Some(annotations)
     case TptpNegatedConjectureStep(_, _, _, annotations) =>
       Some(annotations)
-    case TptpSkolemizationStep(_, _, _, _, _, annotations) =>
+    case TptpSkolemizationStep(_, _, _, _, _, _, annotations) =>
       Some(annotations)
   }
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
