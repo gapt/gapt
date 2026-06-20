@@ -67,7 +67,7 @@ def rootedTptpDerivationToLKProof(
         val (actualBoundVariable, innerSkolemizationFormula) = mainSkolemizationFormula match {
           case Ex(actualBoundVariable, inner) => (actualBoundVariable, inner)
           case f => break(Left(IncorrectInference(
-              s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block",
+              s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block of parent formula $parentFormula",
               s
             )))
         }

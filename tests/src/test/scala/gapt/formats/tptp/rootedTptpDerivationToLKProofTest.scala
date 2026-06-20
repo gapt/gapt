@@ -159,6 +159,33 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
         rootedTptpDerivationToLKProof(derivation) must beLeft
       }
 
+      "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
+          |fof(s, plain, ![X]: p(X,Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0)], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step in which the variable is not bound to an existential quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X,Y)).
+          |fof(s, plain, ![X]: p(X,sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0)], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step in which the variable is bound to an universal quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, Y]: p(X,Y)).
+          |fof(s, plain, ![X]: p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
       "fail on skolemization step where the resulting formula is not the skolemization of the parent formula" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
@@ -195,13 +222,16 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
         rootedTptpDerivationToLKProof(derivation) must beLeft
       }
 
-      "succeed on bound variables within nested forall / exists scopes" in todo
       "fail on skolemization step that introduces a symbol that is already used elsewhere" in todo
       "fail on skolemization steps which introduce the same symbol name" in todo
       "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in todo
-      "do X on skolemization step whose parent formula contains multiple bound variables with the bound variable from the step" in todo
-      "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in todo
+
+      "do X on skolemization step whose parent formula contains multiple bound variables with the same name" in todo
+      "do X on skolemization step shose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in todo
+
       "fail on skolemization step if parent context variables don't match formula context variables" in todo
+      "succeed on bound variables within nested forall / exists scopes" in todo
+
     }
   }
 }
