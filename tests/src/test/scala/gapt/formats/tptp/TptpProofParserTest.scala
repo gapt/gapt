@@ -8,6 +8,8 @@ import gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
 import gapt.formats.InputFile
+import gapt.expr.formula.fol.FOLVar
+import gapt.expr.formula.fol.FOLConst
 
 class TptpProofParserTest extends Specification {
 
@@ -68,7 +70,43 @@ class TptpProofParserUnitTest extends Specification {
     "fail if given derivation which ends in a conjecture" in todo
   }
 
-  "RootedTptpDerivaiton" should {
+  "RootedTptpDerivation" should {
+    "parse skolemization step" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X)).
+        |fof(c, conjecture, ![X]: p(X)).
+        |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
+        |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
+      RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
+        case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
+            case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, skolemizedSymbol, annotations) => {
+              (newSkolemSymbol must_=== FOLConst("sK0"))
+                .and(skolemizedSymbol must_=== FOLVar("X"))
+            }
+          }
+      }
+    }
+    "fail on skolemization step without new_symbols(skolem, _)" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X)).
+        |fof(c, conjecture, ![X]: p(X)).
+        |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
+        |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
+      RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
+    }
+    "fail on skolemization step with multiple new_symbols(skolem, _)" in todo
+    "fail on skolemization step without given symbol" in todo
+    "fail on skolemization step with no parents" in todo
+    "fail on skolemization step with multiple parents" in todo
+    "parse skolemization symbol with context symbols" in todo
+    "fail on skolemization step with differing new_symbols and skolemize terms" in todo
+    // only for now. we don't handle multiple symbols yet
+    "fail on skolemization step with more than on given symbol" in todo
+    "fail on skolemization step without skolemize(_,_)" in todo
     "fail import if given root label is not present" in todo
   }
 }

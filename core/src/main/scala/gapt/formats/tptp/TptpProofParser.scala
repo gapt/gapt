@@ -24,21 +24,25 @@ import scala.collection.mutable
 import scala.util.boundary
 import boundary.break
 import scala.util.boundary.Label
+import gapt.expr.formula.fol.FOLConst
+import gapt.expr.formula.fol.FOLVar
 
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
   def name: String
-  def annotationsOption: Option[Annotations]
 }
-sealed trait NonConjectureStep extends TptpDerivationStep
 case class TptpConjectureStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep
-case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends NonConjectureStep
-sealed trait TptpInferenceStep extends NonConjectureStep {
-  def annotations: Annotations
-  override def annotationsOption: Option[Annotations] = Some(annotations)
-}
-case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpInferenceStep
-case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpInferenceStep
+case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep
+case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpDerivationStep
+case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpDerivationStep
+case class TptpSkolemizationStep(
+    name: String,
+    formula: FOLFormula,
+    parent: String,
+    newSkolemSymbol: FOLConst,
+    skolemizedSymbol: FOLVar,
+    annotations: Annotations
+) extends TptpDerivationStep
 
 sealed trait TptpDerivationImportError {
   def message: String
@@ -52,9 +56,9 @@ case class StepWithInvalidStatus(message: String, step: TptpDerivationStep) exte
 case class NegatedConjectureStepWithNonConjectureParent(message: String) extends TptpDerivationImportError
 case class NegatedConjectureWithoutParent(message: String) extends TptpDerivationImportError
 case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainInferenceStep) extends TptpDerivationImportError
-case class IncorrectInference(message: String, step: TptpInferenceStep) extends TptpDerivationImportError
+case class IncorrectInference(message: String, step: TptpDerivationStep) extends TptpDerivationImportError
 
-case class CannotHandleInput(message: String, input: TptpInput) extends TptpDerivationImportError
+case class CannotHandleInput(message: String, stepName: String | TptpInput) extends TptpDerivationImportError
 case class NoRefutationFound(message: String) extends TptpDerivationImportError
 case class NoConjectureFound(message: String) extends TptpDerivationImportError
 case class UnexpectedInput(message: String) extends TptpDerivationImportError
@@ -287,11 +291,40 @@ object RootedTptpDerivation {
   private def parsePlainInferenceStep(
       name: String,
       formula: Formula,
-      annotations: Option[Annotations]
-  ): Either[TptpDerivationImportError, TptpPlainInferenceStep] = boundary {
+      annotationsOption: Option[Annotations]
+  ): Either[TptpDerivationImportError, TptpSkolemizationStep | TptpPlainInferenceStep] = boundary {
     val folFormula = parseFOLFormula(formula).getOrBreak
-    val ann = annotations.getOrElse { break(Left(UnexpectedInput("got plain inference without source"))) }
-    Right(TptpPlainInferenceStep(name, folFormula, ann.source.parentLabels, ann))
+    val annotations = annotationsOption.getOrElse { break(Left(UnexpectedInput("got plain inference without source"))) }
+    val inference = annotations.source.asInferenceOption.getOrElse { break(Left(UnexpectedInput("got plain inference without inference record"))) }
+    val optionalInfo = annotations.optionalInfo
+    inference.rule match {
+      case "skolemize" => parseSkolemizationStep(name, folFormula, inference, optionalInfo)
+      case _ =>
+        Right(TptpPlainInferenceStep(
+          name,
+          folFormula,
+          annotations.source.parentLabels,
+          annotations
+        ))
+    }
+  }
+
+  private def parseSkolemizationStep(
+      name: String,
+      formula: FOLFormula,
+      inference: Source.Inference,
+      optionalInfo: Seq[GeneralTerm]
+  ): Either[TptpDerivationImportError, TptpSkolemizationStep] = boundary {
+    val parent = inference.parentLabels.head
+    val newSkolemSymbol = inference.usefulInfo.collect {
+      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) => term.asInstanceOf[FOLConst]
+    }.headOption.getOrElse {
+      break(Left(UnexpectedInput("expected at least one new_symbols(skolem,_) term")))
+    }
+    val (skolemizedSymbol, skolemTerm) = inference.usefulInfo.collect {
+      case TptpTerm("skolemize", boundVariable, skolemTerm) => (boundVariable.asInstanceOf[FOLVar], skolemTerm)
+    }.head
+    Right(TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, skolemizedSymbol, Annotations(inference, optionalInfo)))
   }
 
   extension (derivation: TptpDerivation) {
@@ -638,6 +671,18 @@ extension (annotations: Option[Annotations]) {
 }
 
 extension (step: TptpDerivationStep) {
+  def annotationsOption: Option[Annotations] = step match {
+    case TptpConjectureStep(_, _, annotationsOption) =>
+      annotationsOption
+    case TptpAxiomStep(_, _, annotationsOption) =>
+      annotationsOption
+    case TptpPlainInferenceStep(_, _, _, annotations) =>
+      Some(annotations)
+    case TptpNegatedConjectureStep(_, _, _, annotations) =>
+      Some(annotations)
+    case TptpSkolemizationStep(_, _, _, _, _, annotations) =>
+      Some(annotations)
+  }
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
     step.annotationsOption.hasUnambiguousStatusAmong(statuses)
   }

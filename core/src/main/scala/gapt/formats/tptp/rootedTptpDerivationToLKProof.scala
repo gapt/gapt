@@ -51,7 +51,7 @@ def rootedTptpDerivationToLKProof(
         Sequent(Vector((parent, Neg(derivation.get(parent).get.formula))), Vector((name, formula)))
     }
     val proof = prover.getLKProof(sequentToProve.map(_._2)) match {
-      case None    => break(Left(IncorrectInference(s"inference with label ${s.name} is incorrect", s.asInstanceOf[TptpInferenceStep])))
+      case None    => break(Left(IncorrectInference(s"inference with label ${s.name} is incorrect", s)))
       case Some(p) => p
     }
 
