@@ -60,19 +60,49 @@ def rootedTptpDerivationToLKProof(
     }
 
     val proofOption = s match {
-      case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, _) => {
-        val parentFormula = sequentToProve.antecedent.head._2
-        val All.Block(parentVars, mainFormula @ Ex(v, inner)) = parentFormula: @unchecked
-        val All.Block(formulaVars, innerFormula) = formula
+      case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
+        val parentFormula = derivation.get(parent).get.formula
+        val All.Block(actualContextVariables, mainSkolemizationFormula) = parentFormula
 
-        val innerSubstituted = inner.substitute(v -> newSkolemSymbol(parentVars*))
-        val subProof = prover.getLKProof(Sequent(Vector(innerSubstituted), Vector(innerFormula)))
-        subProof.map { s =>
-          val existsSkLeft = ExistsSkLeftRule(s, Ant(0), mainFormula, newSkolemSymbol(parentVars*))
-          val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, parentVars)
-          val forallRight = ForallRightBlock(forallLeft, formula, formulaVars)
-          forallRight
+        val (actualBoundVariable, innerSkolemizationFormula) = mainSkolemizationFormula match {
+          case Ex(actualBoundVariable, inner) => (actualBoundVariable, inner)
+          case f => break(Left(IncorrectInference(
+              s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block",
+              s
+            )))
         }
+
+        if claimedBoundVariable != actualBoundVariable then {
+          break(Left(IncorrectInference(
+            s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but the actual outer most existential variable in $parentFormula is $actualBoundVariable",
+            s
+          )))
+        }
+
+        if claimedContextVariables.toSet != actualContextVariables.toSet then {
+          break(Left(IncorrectInference(
+            s"skolemization step $name claims to have context variables $claimedContextVariables, but the actual context variables for $claimedBoundVariable are $actualContextVariables",
+            s
+          )))
+        }
+
+        val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
+        val innerSubstituted = innerSkolemizationFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)
+        val expectedSkolemizedFormula = All.Block(actualContextVariables, innerSubstituted)
+
+        val innerSequent = Sequent(Vector(innerSubstituted), Vector(innerSubstituted))
+        val subProof = prover.getLKProof(innerSequent).getOrElse {
+          throw AssertionError(s"could not proove $innerSequent")
+        }
+        val existsSkLeft = ExistsSkLeftRule(subProof, Ant(0), mainSkolemizationFormula, claimedSkolemTerm)
+        val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, actualContextVariables)
+        val forallRight = ForallRightBlock(forallLeft, expectedSkolemizedFormula, actualContextVariables)
+        if expectedSkolemizedFormula != claimedSkolemizedFormula then
+          break(Left(IncorrectInference(
+            s"skolemization step $name claims to skolemize formula $parentFormula by replacing $claimedBoundVariable with $claimedSkolemTerm which should result in $expectedSkolemizedFormula but the given formula is $claimedSkolemizedFormula",
+            s
+          )))
+        Some(forallRight)
       }
       case _ => prover.getLKProof(sequentToProve.map(_._2))
     }
