@@ -1,6 +1,9 @@
 package gapt.utils
 
-extension [T](x: T) {
+import sourcecode.Line
+import sourcecode.FileName
+
+extension [T](inline x: T) {
 
   /**
   * Pretty-prints out the value and returns it.
@@ -8,5 +11,11 @@ extension [T](x: T) {
   *
   * @return the value this method is called on
   */
-  def dbg = pprint.log(x)
+  inline def d: T = ${ dbgImpl('x) }
+}
+
+import scala.quoted.*
+private def dbgImpl[T: Type](x: Expr[T])(using Quotes): Expr[T] = {
+  val code = Expr(x.show)
+  '{ pprint.log(sourcecode.Text($x, $code)) }
 }
