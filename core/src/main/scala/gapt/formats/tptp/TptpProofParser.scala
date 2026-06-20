@@ -29,6 +29,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.proofs.context.Context
 
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
@@ -191,6 +192,12 @@ case class RootedTptpDerivation private (
   def usedDerivationSteps: Iterable[TptpDerivationStep] = steps.values
   def get(name: String): Option[TptpDerivationStep] = steps.get(name)
   def root: TptpDerivationStep = steps(rootLabel)
+  def context: Context = {
+    Context.guess(usedDerivationSteps.collect {
+      case TptpAxiomStep(_, formula, _)      => formula
+      case TptpConjectureStep(_, formula, _) => formula
+    })
+  }
 }
 
 object RootedTptpDerivation {
