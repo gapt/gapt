@@ -61,29 +61,26 @@ def rootedTptpDerivationToLKProof(
 
     val proofOption = s match {
       case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
+        def reportIncorrect(message: String): Nothing = break(Left(IncorrectInference(message, s)))
+
         val parentFormula = derivation.get(parent).get.formula
+        if parentFormula.contains(newSkolemSymbol) then {
+          reportIncorrect(s"skolemization step $name has skolemSymbol $newSkolemSymbol which is already used in $parentFormula")
+        }
         val All.Block(actualContextVariables, mainSkolemizationFormula) = parentFormula
 
         val (actualBoundVariable, innerSkolemizationFormula) = mainSkolemizationFormula match {
           case Ex(actualBoundVariable, inner) => (actualBoundVariable, inner)
-          case f => break(Left(IncorrectInference(
-              s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block of parent formula $parentFormula",
-              s
-            )))
+          case f =>
+            reportIncorrect(s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block of parent formula $parentFormula")
         }
 
         if claimedBoundVariable != actualBoundVariable then {
-          break(Left(IncorrectInference(
-            s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but the actual outer most existential variable in $parentFormula is $actualBoundVariable",
-            s
-          )))
+          reportIncorrect(s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but the actual outer most existential variable in $parentFormula is $actualBoundVariable")
         }
 
         if claimedContextVariables.toSet != actualContextVariables.toSet then {
-          break(Left(IncorrectInference(
-            s"skolemization step $name claims to have context variables $claimedContextVariables, but the actual context variables for $claimedBoundVariable are $actualContextVariables",
-            s
-          )))
+          reportIncorrect(s"skolemization step $name claims to have context variables $claimedContextVariables, but the actual context variables for $claimedBoundVariable are $actualContextVariables")
         }
 
         val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
@@ -92,16 +89,14 @@ def rootedTptpDerivationToLKProof(
 
         val innerSequent = Sequent(Vector(innerSubstituted), Vector(innerSubstituted))
         val subProof = prover.getLKProof(innerSequent).getOrElse {
-          throw AssertionError(s"could not proove $innerSequent")
+          throw AssertionError(s"could not prove $innerSequent")
         }
         val existsSkLeft = ExistsSkLeftRule(subProof, Ant(0), mainSkolemizationFormula, claimedSkolemTerm)
         val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, actualContextVariables)
         val forallRight = ForallRightBlock(forallLeft, expectedSkolemizedFormula, actualContextVariables)
-        if expectedSkolemizedFormula != claimedSkolemizedFormula then
-          break(Left(IncorrectInference(
-            s"skolemization step $name claims to skolemize formula $parentFormula by replacing $claimedBoundVariable with $claimedSkolemTerm which should result in $expectedSkolemizedFormula but the given formula is $claimedSkolemizedFormula",
-            s
-          )))
+        if expectedSkolemizedFormula != claimedSkolemizedFormula then {
+          reportIncorrect(s"skolemization step $name claims to skolemize formula $parentFormula by replacing $claimedBoundVariable with $claimedSkolemTerm which should result in $expectedSkolemizedFormula but the given formula is $claimedSkolemizedFormula")
+        }
         Some(forallRight)
       }
       case _ => prover.getLKProof(sequentToProve.map(_._2))
