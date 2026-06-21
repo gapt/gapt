@@ -222,7 +222,26 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
         rootedTptpDerivationToLKProof(derivation) must beLeft
       }
 
-      "fail on skolemization step that introduces a symbol that is already used elsewhere" in todo
+      "fail on skolemization step that introduces a symbol that is already used in parent" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
+          |fof(s, plain, ![X]: p(X, a(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "do X on skolemization step that introduces a symbol that is used in derivation in other non-parent formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
+          |fof(b, axiom, ![X]: q(X, b(X))).
+          |fof(s, plain, ![X]: p(X, b(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [b]), skolemize(Y, b(X))], [a])).
+          |fof(i, plain, q(c, b(c)) & p(c, b(c), a(c)), inference(and, [status(thm)], [a, b])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        todo
+      }
+
       "fail on skolemization steps which introduce the same symbol name" in todo
       "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in todo
 
