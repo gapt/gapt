@@ -30,6 +30,7 @@ import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.proofs.context.Context
+import gapt.utils.linearizeStrictPartialOrder
 
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
@@ -168,15 +169,7 @@ object TptpDerivation {
 * @return true if the directed graph contains a cycle, false otherwise
 */
 def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
-  val visited = scala.collection.mutable.Set[T]()
-  def isPartOfCycle(node: T, path: Seq[T] = Seq.empty): Boolean = {
-    if path.contains(node) then return true
-    if visited.contains(node) then return false
-    visited.add(node)
-    successors(node).exists(p => isPartOfCycle(p, path :+ node))
-  }
-
-  nodes.exists(n => isPartOfCycle(n))
+  linearizeStrictPartialOrder(nodes, successors).isLeft
 }
 
 /**
