@@ -75,6 +75,8 @@ case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainIn
 case class IncorrectInference(message: String, step: TptpDerivationStep) extends TptpDerivationImportError
 
 case class SkolemizationStepWithDifferingSkolemTerms(message: String, stepName: String) extends TptpDerivationImportError
+case class SkolemizationStepWithoutNewSymbols(message: String, stepName: String) extends TptpDerivationImportError
+case class SkolemizationStepWithoutBinding(message: String, stepName: String) extends TptpDerivationImportError
 case class InconsistentConstants(message: String) extends TptpDerivationImportError
 
 case class CannotHandleInput(message: String, stepName: String | TptpInput) extends TptpDerivationImportError
@@ -219,8 +221,9 @@ object RootedTptpDerivation {
       break(Left(NegatedConjectureWithoutParent("there is a negated conjecture without a parent")))
     }
 
-    if usedNegatedConjectures.size > 1 then
-      break(Left(UnexpectedInput("get more than one negated conjecture")))
+    if usedNegatedConjectures.size > 1 then {
+      break(Left(UnexpectedInput("got more than one negated conjecture")))
+    }
 
     val usedPlainInferences = usedSteps.values.collect { case a: TptpPlainInferenceStep => a }
     usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
@@ -228,6 +231,11 @@ object RootedTptpDerivation {
     }
     usedPlainInferences.find(s => derivation.hasConjectureParent(s.name)).map { s =>
       break(Left(PlainInferenceWithConjectureParent("there is a plain inference with a conjecture parent", s)))
+    }
+
+    val usedSkolemizationSteps = usedSteps.values.collect { case s: TptpSkolemizationStep => s }
+    usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
+      break(Left(StepWithInvalidStatus("there is a skolemization step with an ambiguous status. should be esa", s)))
     }
 
     val context = Context.guess(usedSteps.values.collect {
@@ -343,7 +351,7 @@ object RootedTptpDerivation {
         break(Left(CannotHandleInput("cannot handle multiple skolemizations in one step yet", name)))
     }
     val newSkolemSymbol = newSkolemSymbols match {
-      case Seq()         => break(Left(UnexpectedInput("expected at least one new_symbols(skolem,_) term")))
+      case Seq()         => break(Left(SkolemizationStepWithoutNewSymbols("expected at least one new_symbols(skolem,_) term", name)))
       case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one new_symbols(skolem,_) term")))
       case Seq(term)     => term.asInstanceOf[FOLConst]
     }
@@ -351,7 +359,7 @@ object RootedTptpDerivation {
       case TptpTerm("skolemize", boundVariable, skolemTerm: FOLTerm) => (boundVariable.asInstanceOf[FOLVar], skolemTerm)
     }
     val (boundVariable, skolemTerm) = boundVariableSkolemTermPairs match {
-      case Seq()         => break(Left(UnexpectedInput("expected at least one skolemize(_,_) term")))
+      case Seq()         => break(Left(SkolemizationStepWithoutBinding("expected at least one skolemize(_,_) term", name)))
       case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one skolemize(_,_) term")))
       case Seq(pair)     => pair
     }
