@@ -55,8 +55,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should fail on negated conjecture if conclusion is not implied by negation of conjecture" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, p(a)).
-        |fof(a2, axiom, ~p(a)).
+        |fof(a1, axiom, p(a), file('Problems/test1.p', a1)).
+        |fof(a2, axiom, ~p(a), file('Problems/test1.p', a1)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
@@ -67,8 +67,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should verify a proof that contains unused incorrect conjecture to negated_conjecture inference but is otherwise correct" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, p(a)).
-        |fof(a2, axiom, ~p(a)).
+        |fof(a1, axiom, p(a), file('Problems/test1.p', a1)).
+        |fof(a2, axiom, ~p(a), file('Problems/test1.p', a1)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, a2])).""".stripMargin)
@@ -110,8 +110,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should verify negated conjecture inference with more than one equal cth statuses" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, p).
-        |fof(c, conjecture, p).
+        |fof(a1, axiom, p, file('Problems/test2.p', a)).
+        |fof(c, conjecture, p, file('Problems/test2.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.Verified
@@ -177,12 +177,14 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should verify on plain inference with esa status" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, p).
-        |fof(c, conjecture, p).
+        |fof(a1, axiom, p, file('Problems/test2.p', a)).
+        |fof(c, conjecture, p, file('Problems/test2.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(esa)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.Verified
       }
+
+      "should fail on plain inference with esa status if not equi-satisfiable" in todo
 
       "should fail on plain inference with cth status" in {
         val input = InputFile.fromString("""
@@ -209,8 +211,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should verify plain inference with nested inference sources" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, p).
-        |fof(c, conjecture, p).
+        |fof(a1, axiom, p, file('Problems/test2.p', a)).
+        |fof(c, conjecture, p, file('Problems/test2.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
@@ -226,8 +228,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should verify input that contains inferences with strong quantifiers if inference is easy" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, ?[X]: p(X)).
-        |fof(c, conjecture, ?[X]: p(X)).
+        |fof(a1, axiom, ?[X]: p(X), file('Problems/test3.p', a)).
+        |fof(c, conjecture, ?[X]: p(X), file('Problems/test3.p', c)).
         |fof(nc, negated_conjecture, ~(?[X]: p(X)), inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must_=== SzsStatus.Verified
@@ -283,8 +285,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should fail on proof with incorrect skolemization step" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: p(X)).
-          |fof(c, conjecture, ![X]: p(X)).
+          |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+          |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
           |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
           |fof(nc_skolem, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
@@ -305,14 +307,27 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should fail on axiom step without file directive" in todo
+      "should fail on axiom step without file directive" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p).
+          |fof(c, conjecture, p).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+          """.stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomSourceMissing) => reason.stepName must_== "a"
+        }
+      }
+
       "should fail on axiom step with file directive, but without label to a formula" in todo
       "should fail on axiom step with file directive that points to non-existent file" in todo
       "should fail on axiom step with file directive that points to non-parsable problem file" in todo
       "should fail on axiom step with file directive that points to file that doesn't contain the label" in todo
       "should fail on axiom step with file directive that points to formula which is not alpha-equivalent to formula in step" in todo
-      "should verifiy an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in todo
-      "should verify axiom step verify if label in problem file differs from label in proof file" in todo
+      "should fail on axiom step with file directive that points to formula which is not an axiom" in todo
+      "should verify an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in todo
+      "should verify axiom step even if label in problem file differs from label in proof file" in todo
+      "should do X on unused axiom step with incorrect file directive?" in todo
 
       "should fail on proof with two steps with the same name if proof steps are different" in {
         val input = InputFile.fromString("""
@@ -328,8 +343,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "should verify proof with two steps with the same name if proof steps are equal" in {
         val input = InputFile.fromString("""
-        |fof(a1, axiom, p).
-        |fof(a1, axiom, p).
+        |fof(a1, axiom, p, file('Problems/test2.p', a)).
+        |fof(a1, axiom, p, file('Problems/test2.p', a)).
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
