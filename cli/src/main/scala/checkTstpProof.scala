@@ -32,6 +32,7 @@ def checkTstpProof(args: String*): Unit = {
     return
   }
 
+  given Cwd = Cwd(os.pwd)
   val szsStatus = checkProof(OnDiskInputFile(path))
   Console.out.println(szsStatus.statusLine)
 }

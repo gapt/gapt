@@ -20,6 +20,7 @@ enum OtherFailureReason {
   case AxiomSourceMissing(stepName: String)
   case AxiomFileDirectiveMissing(stepName: String)
   case AxiomFileDirectiveLabelMissing(stepName: String)
+  case AxiomFileDirectiveFileNotFound(stepName: String, fileName: String)
 }
 import OtherFailureReason._
 
@@ -49,7 +50,9 @@ object SzsStatus {
   def noRefutationFound(message: String): SzsStatus.NotVerified = unexpectedInput(message)
 }
 
-def checkProof(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
+case class Cwd(path: os.Path)
+
+def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd): SzsStatus = {
   try
     withTimeout(timeout) {
       val result = boundary {
@@ -61,7 +64,12 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
             case Some(a) => a.source match {
                 case Source.File(_, None) =>
                   break(Left(AxiomFileDirectiveLabelMissing(s.name)))
-                case Source.File(fileName, Some(label)) => (s, a)
+                case Source.File(fileName, Some(label)) => {
+                  if !os.exists(cwd.path / os.RelPath(fileName)) then {
+                    break(Left(AxiomFileDirectiveFileNotFound(s.name, fileName)))
+                  }
+                  (s, a)
+                }
                 case _ =>
                   break(Left(AxiomFileDirectiveMissing(s.name)))
               }
