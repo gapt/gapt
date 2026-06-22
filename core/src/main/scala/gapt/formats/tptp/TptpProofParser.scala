@@ -212,10 +212,10 @@ object RootedTptpDerivation {
 
     val usedNegatedConjectures = usedSteps.values.collect { case s: TptpNegatedConjectureStep => s }
     usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
-      break(Left(StepWithInvalidStatus(s"there is a negated conjecture with an ambiguous status. should be cth", s.name)))
+      break(Left(StepWithInvalidStatus(s"there is a negated conjecture step with no status or an ambiguous status. should be cth", s.name)))
     }
     if usedNegatedConjectures.exists(c => derivation.hasNonConjectureParent(c.name)) then {
-      break(Left(NegatedConjectureStepWithNonConjectureParent("there is a negated conjecture with a non-conjecture parent")))
+      break(Left(NegatedConjectureStepWithNonConjectureParent("there is a negated conjecture step with a non-conjecture parent")))
     }
     if usedNegatedConjectures.exists(c => derivation.parentsOf(c.name).isEmpty) then {
       break(Left(NegatedConjectureWithoutParent("there is a negated conjecture without a parent")))
@@ -227,7 +227,7 @@ object RootedTptpDerivation {
 
     val usedPlainInferences = usedSteps.values.collect { case a: TptpPlainInferenceStep => a }
     usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
-      break(Left(StepWithInvalidStatus("there is a plain inference with an ambiguous status. should be either thm or esa", s.name)))
+      break(Left(StepWithInvalidStatus("there is a plain inference with no status or an ambiguous status. should be either thm or esa", s.name)))
     }
     usedPlainInferences.find(s => derivation.hasConjectureParent(s.name)).map { s =>
       break(Left(PlainInferenceWithConjectureParent("there is a plain inference with a conjecture parent", s)))
@@ -235,7 +235,7 @@ object RootedTptpDerivation {
 
     val usedSkolemizationSteps = usedSteps.values.collect { case s: TptpSkolemizationStep => s }
     usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
-      break(Left(StepWithInvalidStatus("there is a skolemization step with an ambiguous status. should be esa", s.name)))
+      break(Left(StepWithInvalidStatus("there is a skolemization step with no status or an ambiguous status. should be esa", s.name)))
     }
 
     val context = Context.guess(usedSteps.values.collect {

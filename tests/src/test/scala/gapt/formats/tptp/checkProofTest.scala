@@ -20,9 +20,12 @@ import gapt.formats.tptp.InferenceCycle
 import gapt.formats.tptp.StepWithInvalidStatus
 import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
 import gapt.formats.tptp.SkolemizationStepWithoutBinding
+import org.specs2.execute.PendingException
 
 class checkProofUnitTest extends mutable.Specification {
-  def todo(message: String): Pending = Pending(s"TODO: $message")
+  def todo(message: String): Pending = {
+    throw new PendingException(Pending(s"TODO: $message"))
+  }
   def spec(check: sourcecode.Text[InputFile => SzsStatus]) = {
     val checkProof = check.value
     s"${check.source}" should {
@@ -290,7 +293,18 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should fail on axiom step without thm status" in todo
+      "should fail on axiom step without thm status" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p).
+          |fof(c, conjecture, $true).
+          |fof(nc, negated_conjecture, $false, inference(negated_conjecture, [status(cth)], [c])).
+          """.stripMargin)
+        todo("not clear how to enforce this since axiom should also have file directive which doesn't allow setting status")
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: StepWithInvalidStatus) => reason.stepName must_== "a"
+        }
+      }
+
       "should fail on axiom step without file directive" in todo
       "should fail on axiom step with file directive, but without label to a formula" in todo
       "should fail on axiom step with file directive that points to non-existent file" in todo
