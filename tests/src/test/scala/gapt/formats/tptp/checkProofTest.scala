@@ -428,8 +428,26 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should verify axiom step even if label in problem file differs from label in proof file" in todo
-      "should verify axiom step even if there are steps with same label, if they are equal in role and have alpha-equivalent formulas" in todo
+      "should verify axiom step even if label in problem file differs from label in proof file" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test2.p', a)).
+          |fof(c1, conjecture, p, file('Problems/test2.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
+        """.stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
+      "should verify axiom step even if there are steps with same label, if they are equal in role and have alpha-equivalent formulas" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test8.p', a)).
+          |fof(c1, conjecture, p, file('Problems/test8.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
+        """.stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
       "should do X on unused axiom step with incorrect file directive?" in todo
 
       "should fail on proof with two steps with the same name if proof steps are different" in {
