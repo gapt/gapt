@@ -108,9 +108,9 @@ class checkTstpProofTest extends Specification with BeforeAll {
       val (exitCode, stdout, _) =
         proofCheckerProcess(example.toString).!!!
 
-      (exitCode must_== 0).and(
-        stdout must startWith("%SZS status FailedVerified")
-      )
+      (exitCode must_== 0)
+        .and(stdout must startWith("%SZS status FailedVerified"))
+        .and(stdout.linesIterator.take(2).size must_== 1)
     }
 
     def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {
