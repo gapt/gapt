@@ -14,6 +14,7 @@ import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.Const
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
+import gapt.expr.stringInterpolationForExpressions
 
 class TptpProofParserTest extends Specification {
 
@@ -272,29 +273,180 @@ class TptpProofParserUnitTest extends Specification {
         context.constant("b") must beNone
       }
 
-      "should not include introduced skolem symbols as constants" in {
+      "should include introduced skolem symbols as constants and skolem functions" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
           |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
+        todo
         val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        val skolemConst = Const("sK0", Ti ->: Ti)
         val context = derivation.context
-        context.constant("sK0") must beNone
+        (context.constant("sK0") must beSome(skolemConst))
+          .and(context.skolemDef(skolemConst) must beSome(le"^X ?Y p(X,Y)"))
       }
 
-      "should include or exclude constant that is not used in axiom, but as instance in plain inference?" in {
+      "should include constant that is not used in axiom, but as instance in plain inference" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
           |fof(s, plain, ?[Y]: p(a, Y), inference(instance, [status(thm)], [a])).
         """.stripMargin)
-        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
         todo
+        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beRight.like { derivation =>
+          derivation.context.constant("a") must_=== Some(FOLConst("a"))
+        }
       }
+    }
+
+    "skolemization" in {
+      "fail on skolemization step in which the bound variable does not occur in the parent formula" in {
+        val input = InputFile.fromString("""
+            |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
+            |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
+          """.stripMargin)
+        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step in which the bound variable occurs in an inner existential quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y, Z]: p(X, Y, Z)).
+          |fof(s, plain, ![X]: ?[Y]: p(X, Y, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
+        """.stripMargin)
+        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step that has no outermost existential quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ~(![Y]: p(X,Y))).
+          |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
+          |fof(s, plain, ![X]: p(X,Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0)], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step in which the variable is not bound to an existential quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X,Y)).
+          |fof(s, plain, ![X]: p(X,sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0)], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step in which the variable is bound to an universal quantifier" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, Y]: p(X,Y)).
+          |fof(s, plain, ![X]: p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step where the resulting formula is not the skolemization of the parent formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
+          |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step whose actual context variables don't match the claimed context variables" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: ![Z]: p(X,Y,Z)).
+          |fof(s, plain, ![X, Z]: p(X,sK0(X,Z), Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X,Z))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "succeed on skolemization step which claims the same context variables as the parent formula, but in a different order" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
+          |fof(s, plain, ![X, Y]: p(X,Y,sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beRight
+      }
+
+      "fail on skolemization step which contains a context variable that does not occur in the parent formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
+          |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,W))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft
+      }
+
+      "fail on skolemization step that introduces a symbol that is already used in parent" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
+          |fof(s, plain, ![X]: p(X, a(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
+        """.stripMargin)
+        todo
+        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beLeft.like {
+          d => d must beAnInstanceOf[InconsistentConstants]
+        }
+      }
+
+      "fail on skolemization steps which introduce the same symbol name, even if not used in parent" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ?[X]: p(X)).
+          |fof(b, axiom, ?[X]: q(X)).
+          |fof(s1, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
+          |fof(s2, plain, q(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [b])).
+          |fof(s, plain, p(sK0) & q(sK0), inference(and, [status(thm)], [s1, s2])).
+        """.stripMargin)
+        todo
+        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beLeft.like {
+          d => d must beAnInstanceOf[InconsistentConstants]
+        }
+      }
+
+      "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in todo
+
+      "fail on skolemization step that introduces a symbol that is used in derivation in other non-parent formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
+          |fof(b, axiom, ![X]: q(X, b(X))).
+          |fof(s, plain, ![X]: p(X, b(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [b]), skolemize(Y, b(X))], [a])).
+          |fof(i, plain, q(c, b(c)) & p(c, b(c), a(c)), inference(and, [status(thm)], [a, s])).
+        """.stripMargin)
+        todo
+
+        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beLeft.like {
+          d => d must beAnInstanceOf[InconsistentConstants]
+        }
+      }
+
+      "do X if two skolemizations happen on the same formula with the same skolem constant" in todo
+
+      "do X on skolemization step whose parent formula contains multiple bound variables with the same name" in todo
+      "do X on skolemization step shose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in todo
+
+      "fail on skolemization step if parent context variables don't match formula context variables" in todo
+
+      "succeed on skolemization step that skolemizes an inner quantifier inside the outer-most existential block" in todo
+
+      "succeed on bound variables within nested forall / exists scopes" in todo
+
     }
 
     "fail import if given root label is not present" in todo
     "do X if given root label is an axiom" in todo
     "do X if given root label is a conjecture" in todo
+    "fail if derivation contains constants with different arities" in todo
   }
 }
 

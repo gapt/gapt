@@ -75,6 +75,7 @@ case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainIn
 case class IncorrectInference(message: String, step: TptpDerivationStep) extends TptpDerivationImportError
 
 case class SkolemizationStepWithDifferingSkolemTerms(message: String, stepName: String) extends TptpDerivationImportError
+case class InconsistentConstants(message: String) extends TptpDerivationImportError
 
 case class CannotHandleInput(message: String, stepName: String | TptpInput) extends TptpDerivationImportError
 case class NoRefutationFound(message: String) extends TptpDerivationImportError
