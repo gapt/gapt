@@ -29,6 +29,7 @@ enum OtherFailureReason {
       absolutePath: os.Path,
       label: String
   )
+  case AxiomFileDirectiveStepIsNotAnAxiom(stepName: String, absolutePath: os.Path, label: String)
   case AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
       stepName: String,
       absolutePath: os.Path,
@@ -97,6 +98,9 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
                     case Seq()         => break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
                     case Seq(_, _, _*) => break(Left(AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel(s.name, absolutePath, label)))
                     case Seq(a)        => a
+                  }
+                  if fileDirectiveFormula.role != "axiom" then {
+                    break(Left(AxiomFileDirectiveStepIsNotAnAxiom(s.name, absolutePath, label)))
                   }
                   if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
                     break(Left(AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(s.name, absolutePath, label, fileDirectiveFormula.formula, s.formula)))
