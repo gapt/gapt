@@ -162,7 +162,7 @@ class TptpProofParserUnitTest extends Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc]))."
         )
         RootedTptpDerivation.fromInputFileRefutation(input) must beLeft {
-          (x: TptpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
+          (x: TptpDerivationImportError) => x must beAnInstanceOf[SkolemizationStepWithoutBinding]
         }
       }
 
