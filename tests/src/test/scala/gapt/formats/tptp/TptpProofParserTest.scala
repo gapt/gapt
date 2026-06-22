@@ -202,7 +202,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z)).
         |fof(nc, negated_conjecture, ![Y, Z]: ?[X]: ~p(X, Y, Z), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ![Y, Z]: ~p(sK0(Y, Z), Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y, Z))], [nc])).
-        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(axiom_instance, plain, p(sK0(a, b), a, b), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
         RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
@@ -222,7 +222,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z)).
         |fof(nc, negated_conjecture, ![Y, Z]: ?[X]: ~p(X, Y, Z), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ![Y, Z]: ~p(sK0(Y, Z), Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Z, Y))], [nc])).
-        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(axiom_instance, plain, p(sK0(b, a), a, b), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
         RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
