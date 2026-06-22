@@ -163,8 +163,6 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should do X on negated conjecture step with inference record parent" in todo
-
       "should fail on plain inference without parents if formula is not valid" in {
         val input = InputFile.fromString("""
           |fof(a1, axiom, p).
@@ -228,8 +226,6 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should fail on plain inference with esa status if not equi-satisfiable" in todo
-
       "should fail on plain inference with cth status" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p).
@@ -262,8 +258,6 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.Verified
       }
-
-      "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
 
       "should verify input that contains inferences with strong quantifiers if inference is easy" in {
         val input = InputFile.fromString("""
@@ -321,8 +315,6 @@ class checkProofUnitTest extends mutable.Specification {
           case SzsStatus.FailedVerified(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
         }
       }
-
-      "should do X on proof which uses skolem constant that is only introduced in later step" in todo("specify")
 
       "should fail on proof with incorrect skolemization step" in {
         val input = InputFile.fromString("""
@@ -486,8 +478,15 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should do X on axiom step file directive with absolute path" in todo
-      "should do X on unused axiom step with incorrect file directive?" in todo
+      "should verify axiom step if given correct absolute path" in {
+        val input = InputFile.fromString(s"""
+          |fof(a1, axiom, p, file('${summon[Cwd].path}/Problems/test8.p', a)).
+          |fof(c1, conjecture, p, file('Problems/test8.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
+          |fof(cont, plain, $$false, inference(falsum, [status(thm)], [a1, nc])).
+        """.stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
 
       "should fail on proof with two steps with the same name if proof steps are different" in {
         val input = InputFile.fromString("""
@@ -547,6 +546,13 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must_== SzsStatus.cannotHandleInput
       }
+
+      "should do X on unused axiom step with incorrect file directive?" in todo
+      "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
+
+      "should fail on plain inference with esa status if not equi-satisfiable" in todo
+
+      "should do X on negated conjecture step with inference record parent" in todo
 
       "should do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
       "should do X if input has no negated conjecture" in todo("specify")
