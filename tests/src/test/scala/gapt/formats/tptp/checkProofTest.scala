@@ -448,6 +448,7 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
+      "should do X on axiom step file directive with absolute path" in todo
       "should do X on unused axiom step with incorrect file directive?" in todo
 
       "should fail on proof with two steps with the same name if proof steps are different" in {
