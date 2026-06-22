@@ -9,6 +9,7 @@ import scala.concurrent.duration.*
 import scala.util.boundary
 import boundary.break
 import gapt.expr.formula.Formula
+import gapt.utils.TimeOutException
 
 enum NotVerifiedReason {
   case UnexpectedInput(message: String)
@@ -69,62 +70,73 @@ object SzsStatus {
 case class Cwd(path: os.Path)
 
 def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd): SzsStatus = {
-  try
-    withTimeout(timeout) {
-      val result = boundary {
-        val refutation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
-        val usedAxioms = refutation.usedDerivationSteps.collect { case step: TptpAxiomStep => step }
-        usedAxioms.map { s =>
-          s.annotationsOption match {
-            case None => break(Left(AxiomSourceMissing(s.name)))
-            case Some(a) => a.source match {
-                case Source.File(_, None) =>
-                  break(Left(AxiomFileDirectiveLabelMissing(s.name)))
-                case Source.File(fileName, Some(label)) => {
-                  val absolutePath = cwd.path / os.RelPath(fileName)
-                  if !os.exists(absolutePath) then {
-                    break(Left(AxiomFileDirectiveFileNotFound(s.name, absolutePath)))
-                  }
-                  val tptpFile =
-                    try { TptpImporter.loadWithIncludes(absolutePath, cwd.path) }
-                    catch {
-                      case _: IllegalArgumentException =>
-                        break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
-                    }
-                  val fileDirectiveFormulas = tptpFile.inputs.collect {
-                    case a: AnnotatedFormula if a.name == label => a
-                  }
-                  val fileDirectiveFormula = fileDirectiveFormulas.distinct match {
-                    case Seq()         => break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
-                    case Seq(_, _, _*) => break(Left(AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel(s.name, absolutePath, label)))
-                    case Seq(a)        => a
-                  }
-                  if fileDirectiveFormula.role != "axiom" then {
-                    break(Left(AxiomFileDirectiveStepIsNotAnAxiom(s.name, absolutePath, label)))
-                  }
-                  if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
-                    break(Left(AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(s.name, absolutePath, label, fileDirectiveFormula.formula, s.formula)))
-                  }
-                  (s, a)
-                }
-                case _ =>
-                  break(Left(AxiomFileDirectiveMissing(s.name)))
-              }
-          }
+  val result = {
+    try withTimeout(timeout) {
+        boundary {
+          val refutation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
+          val usedAxioms = refutation.usedDerivationSteps.collect { case step: TptpAxiomStep => step }
+          usedAxioms.foreach { s => checkAxiomStep(s, cwd.path).getOrBreak }
+
+          TptpImporter.loadAsLKRefutation(file)
         }
-
-        TptpImporter.loadAsLKRefutation(file)
       }
+    catch e => Left(e)
+  }
 
-      result match {
-        case Left(reason) => reason match {
-            case CannotHandleInput(_, _)    => SzsStatus.cannotHandleInput
-            case NoConjectureFound(message) => SzsStatus.noConjectureFound(message)
-            case NoRefutationFound(message) => SzsStatus.noRefutationFound(message)
-            case _                          => SzsStatus.failed(reason)
-          }
-        case Right(_) => SzsStatus.Verified
+  result match {
+    case Left(reason) => reason match {
+        case _: TimeOutException          => SzsStatus.timeout
+        case t: Throwable                 => SzsStatus.unexpectedException(t)
+        case CannotHandleInput(_, _)      => SzsStatus.cannotHandleInput
+        case NoConjectureFound(message)   => SzsStatus.noConjectureFound(message)
+        case NoRefutationFound(message)   => SzsStatus.noRefutationFound(message)
+        case reason: FailedVerifiedReason => SzsStatus.failed(reason)
       }
+    case Right(_) => SzsStatus.Verified
+  }
+}
+
+private def checkAxiomStep(s: TptpAxiomStep, fileDirectiveRoot: os.Path): Either[FailedVerifiedReason, Unit] = boundary {
+  val annotations = s.annotationsOption.getOrElse {
+    break(Left(AxiomSourceMissing(s.name)))
+  }
+  val (fileName, label) = annotations.source match {
+    case Source.File(fileName, Some(label)) => (fileName, label)
+    case Source.File(_, None) =>
+      break(Left(AxiomFileDirectiveLabelMissing(s.name)))
+    case _ =>
+      break(Left(AxiomFileDirectiveMissing(s.name)))
+  }
+
+  val absolutePath = fileDirectiveRoot / os.RelPath(fileName)
+  if !os.exists(absolutePath) then {
+    break(Left(AxiomFileDirectiveFileNotFound(s.name, absolutePath)))
+  }
+  val tptpFile = {
+    try TptpImporter.loadWithIncludes(absolutePath, fileDirectiveRoot)
+    catch {
+      case _: IllegalArgumentException =>
+        break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
     }
-  catch e => SzsStatus.unexpectedException(e)
+  }
+  val fileDirectiveFormulas = tptpFile.inputs.collect {
+    case a: AnnotatedFormula if a.name == label => a
+  }
+  val fileDirectiveFormula = fileDirectiveFormulas.distinct match {
+    case Seq() =>
+      break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
+    case Seq(_, _, _*) =>
+      break(Left(AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel(s.name, absolutePath, label)))
+    case Seq(a) => a
+  }
+
+  if fileDirectiveFormula.role != "axiom" then {
+    break(Left(AxiomFileDirectiveStepIsNotAnAxiom(s.name, absolutePath, label)))
+  }
+
+  if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
+    break(Left(AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(s.name, absolutePath, label, fileDirectiveFormula.formula, s.formula)))
+  }
+
+  Right(())
 }
