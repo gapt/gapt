@@ -556,7 +556,6 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
       }
 
-      "should not verify proof that contains inference parents which are not simple names" in todo
       "should not verify if input has include directives (we do not support this yet)" in {
         val input = InputFile.fromString("""
         |include('filename', [a]).
