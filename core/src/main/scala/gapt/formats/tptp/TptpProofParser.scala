@@ -31,6 +31,7 @@ import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.proofs.context.Context
 import gapt.utils.linearizeStrictPartialOrder
+import gapt.proofs.context.immutable.ImmutableContext
 
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
@@ -180,17 +181,12 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
 */
 case class RootedTptpDerivation private (
     private val steps: Map[String, TptpDerivationStep],
-    private val rootLabel: String
+    private val rootLabel: String,
+    val context: ImmutableContext
 ) {
   def usedDerivationSteps: Iterable[TptpDerivationStep] = steps.values
   def get(name: String): Option[TptpDerivationStep] = steps.get(name)
   def root: TptpDerivationStep = steps(rootLabel)
-  def context: Context = {
-    Context.guess(usedDerivationSteps.collect {
-      case TptpAxiomStep(_, formula, _)      => formula
-      case TptpConjectureStep(_, formula, _) => formula
-    })
-  }
 }
 
 object RootedTptpDerivation {
@@ -224,7 +220,12 @@ object RootedTptpDerivation {
       break(Left(PlainInferenceWithConjectureParent("there is a plain inference with a conjecture parent", s)))
     }
 
-    Right(RootedTptpDerivation(usedSteps, rootLabel))
+    val context = Context.guess(usedSteps.values.collect {
+      case TptpAxiomStep(_, formula, _)      => formula
+      case TptpConjectureStep(_, formula, _) => formula
+    })
+
+    Right(RootedTptpDerivation(usedSteps, rootLabel, context))
   }
 
   def fromInputFileRefutation(file: InputFile): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
