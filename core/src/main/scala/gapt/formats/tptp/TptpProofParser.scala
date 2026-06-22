@@ -105,7 +105,7 @@ object TptpDerivation {
 
   /** Loads a TptpDerivation from a given input file and performs the following checks, otherwise fails with an error:
   * - input is syntactically correct TPTP
-  * - there are not steps with duplicate labels
+  * - there are no steps with duplicate labels
   * - the parent relation between inference steps forms an acyclic directed graph
   *
   * @param input
