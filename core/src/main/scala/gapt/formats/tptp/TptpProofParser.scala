@@ -67,7 +67,12 @@ case class InputSyntaxError(cause: IllegalArgumentException) extends TptpDerivat
   override def message: String = cause.getMessage
 }
 case class DifferentFormulasWithSameName(message: String) extends TptpDerivationImportError
-case class InferenceCycle(message: String) extends TptpDerivationImportError
+case class InferenceCycle() extends TptpDerivationImportError {
+  def message: String = "inference cycle detected"
+}
+case class StepWithMissingParents(stepName: String) extends TptpDerivationImportError {
+  def message = s"$stepName has parent labels that are not in the derivation"
+}
 case class StepWithInvalidStatus(message: String, stepName: String) extends TptpDerivationImportError
 case class NegatedConjectureStepWithNonConjectureParent(message: String) extends TptpDerivationImportError
 case class NegatedConjectureWithoutParent(message: String) extends TptpDerivationImportError
@@ -100,20 +105,30 @@ case class TptpDerivation private (private val map: Map[String, AnnotatedFormula
     map(formulaName).parentLabels.map(p => map(p))
   }
 
-  def subDerivationRootedAt(derivationEndLabel: String): Iterable[AnnotatedFormula] = {
+  def subDerivationRootedAt(
+      derivationEndLabel: String
+  ): Either[StepWithMissingParents | InferenceCycle, Iterable[AnnotatedFormula]] = boundary {
     import scala.collection.mutable
+
     val visited = mutable.Set[String]()
-    val queue = mutable.Queue[String](derivationEndLabel)
-    val steps = mutable.Buffer[AnnotatedFormula]()
-    while queue.nonEmpty do {
-      val element = queue.dequeue()
-      if !visited.contains(element) then {
-        visited += element
-        steps += map(element)
-        queue ++= map(element).parentLabels
+    val reachableSteps = mutable.Buffer[AnnotatedFormula]()
+    def walk(label: String): Unit = {
+      if !visited.contains(label) then {
+        visited += label
+        val formula = map.get(label).getOrElse {
+          break(Left(StepWithMissingParents(label)))
+        }
+        reachableSteps += formula
+        formula.parentLabels.foreach(walk)
       }
     }
-    steps
+    walk(derivationEndLabel)
+
+    val usedSteps = linearizeStrictPartialOrder(reachableSteps.toSet, x => parentsOf(x.name)).getOrElse {
+      break(Left(InferenceCycle()))
+    }
+
+    Right(usedSteps)
   }
 }
 
@@ -131,9 +146,8 @@ object TptpDerivation {
     for
       tptp <- loadAsTptpFile(input)
       steps <- intoAnnotatedFormulaSteps(tptp)
-      m <- intoUniqueMap(steps)
-      dag <- intoDag(m)
-    yield dag
+      map <- intoUniqueMap(steps)
+    yield new TptpDerivation(map)
   }
 
   // ensures the input file is syntactically correct TPTP
@@ -167,13 +181,6 @@ object TptpDerivation {
     }
 
     Right(map)
-  }
-
-  // ensures the map doesn't have any cycles with respect to the parent relation
-  private def intoDag(map: Map[String, AnnotatedFormula]): Either[InferenceCycle, TptpDerivation] = {
-    if isCyclic(map.keySet, n => map(n).parentLabels.toSet) then
-      Left(InferenceCycle(s"Cycle detected in proof starting from node ${map.keySet.head}"))
-    else Right(new TptpDerivation(map.toMap))
   }
 }
 
@@ -210,7 +217,7 @@ object RootedTptpDerivation {
       break(Left(UnexpectedInput("end derivation label does not exist in proof")))
     }
 
-    val usedAnnotatedFormulas = derivation.subDerivationRootedAt(rootLabel)
+    val usedAnnotatedFormulas = derivation.subDerivationRootedAt(rootLabel).getOrBreak
     val usedSteps = usedAnnotatedFormulas.map { a => a.name -> parseStep(a).getOrBreak }.toMap
 
     val usedNegatedConjectures = usedSteps.values.collect { case s: TptpNegatedConjectureStep => s }

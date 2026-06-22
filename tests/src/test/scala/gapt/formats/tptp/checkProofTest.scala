@@ -22,6 +22,7 @@ import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
 import gapt.formats.tptp.SkolemizationStepWithoutBinding
 import org.specs2.execute.PendingException
 import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
+import gapt.formats.tptp.StepWithMissingParents
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 given Cwd = Cwd(testResourcesRoot / "proover_competition")
@@ -533,7 +534,17 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should fail on proof with named parents that don't exist in proof" in todo
+      "should fail on proof with inference parents that does not exist in proof" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test2.p', a)).
+          |fof(c, conjecture, p, file('Problems/test2.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont2, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithMissingParents]
+        }
+      }
+
       "should throw exception on proof with invalid tptp syntax" in todo
 
       "should not verify proof that contains inference parents which are not simple names" in todo

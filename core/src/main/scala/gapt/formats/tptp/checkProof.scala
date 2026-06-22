@@ -17,6 +17,12 @@ enum NotVerifiedReason {
   case CannotHandleInput
   case UnexpectedException(throwable: Throwable)
   case Timeout
+
+  override def toString(): String = this match
+    case UnexpectedInput(message)       => message
+    case CannotHandleInput              => "CannotHandleInput"
+    case UnexpectedException(throwable) => s"unexpected exception: ${throwable.printStackTrace()}"
+    case Timeout                        => "Timeout"
 }
 
 enum OtherFailureReason {
