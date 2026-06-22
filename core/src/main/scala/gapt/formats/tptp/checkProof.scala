@@ -22,6 +22,7 @@ enum OtherFailureReason {
   case AxiomFileDirectiveLabelMissing(stepName: String)
   case AxiomFileDirectiveFileNotFound(stepName: String, absolutePath: os.Path)
   case AxiomFileDirectiveInvalidSyntax(stepName: String, absolutePath: os.Path)
+  case AxiomFileDirectiveFileDoesNotHaveLabel(stepName: String, absolutePath: os.Path, label: String)
 }
 import OtherFailureReason._
 
@@ -70,10 +71,17 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
                   if !os.exists(absolutePath) then {
                     break(Left(AxiomFileDirectiveFileNotFound(s.name, absolutePath)))
                   }
-                  try TptpImporter.loadWithIncludes(absolutePath, cwd.path)
-                  catch
-                    case _: IllegalArgumentException =>
-                      break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
+                  val tptpFile =
+                    try { TptpImporter.loadWithIncludes(absolutePath, cwd.path) }
+                    catch {
+                      case _: IllegalArgumentException =>
+                        break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
+                    }
+                  tptpFile.inputs.collect {
+                    case a: AnnotatedFormula if a.name == label => a
+                  }.headOption.getOrElse {
+                    break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
+                  }
                   (s, a)
                 }
                 case _ =>
