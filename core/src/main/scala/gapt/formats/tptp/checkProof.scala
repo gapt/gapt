@@ -4,8 +4,13 @@ import gapt.formats.InputFile
 import gapt.formats.tptp.*
 import gapt.formats.tptp.check.NotVerifiedReason.UnexpectedException
 import gapt.utils.withTimeout
+import gapt.utils.getOrBreak
 
 import scala.concurrent.duration.*
+import scala.util.boundary
+import boundary.break
+import gapt.formats.tptp.check.OtherFailureReason.FileDirectiveMissing
+import gapt.formats.tptp.check.OtherFailureReason.AxiomSourceMissing
 
 enum NotVerifiedReason {
   case UnexpectedInput(message: String)
@@ -14,9 +19,17 @@ enum NotVerifiedReason {
   case Timeout
 }
 
+enum OtherFailureReason {
+  case AxiomSourceMissing(stepName: String)
+  case FileDirectiveMissing(stepName: String)
+}
+
+type FailedVerifiedReason =
+  TptpDerivationImportError | OtherFailureReason
+
 enum SzsStatus {
   case Verified
-  case FailedVerified(reason: TptpDerivationImportError)
+  case FailedVerified(reason: FailedVerifiedReason)
   case NotVerified(reason: NotVerifiedReason)
 
   def status: String = this match {
@@ -28,7 +41,7 @@ enum SzsStatus {
 }
 
 object SzsStatus {
-  def failed(reason: TptpDerivationImportError): SzsStatus.FailedVerified = FailedVerified(reason)
+  def failed(reason: FailedVerifiedReason): SzsStatus.FailedVerified = FailedVerified(reason)
   def timeout: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.Timeout)
   def unexpectedInput(message: String): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedInput(message))
   def cannotHandleInput: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.CannotHandleInput)
@@ -40,7 +53,20 @@ object SzsStatus {
 def checkProof(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
   try
     withTimeout(timeout) {
-      TptpImporter.loadAsLKRefutation(file) match {
+      val result = boundary {
+        val refutation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
+        val usedAxioms = refutation.usedDerivationSteps.collect { case step: TptpAxiomStep => step }
+        usedAxioms.map { s =>
+          s.annotationsOption match {
+            case None    => break(Left(AxiomSourceMissing(s.name)))
+            case Some(a) => (s, a)
+          }
+        }
+
+        TptpImporter.loadAsLKRefutation(file)
+      }
+
+      result match {
         case Left(reason) => reason match {
             case CannotHandleInput(_, _)    => SzsStatus.cannotHandleInput
             case NoConjectureFound(message) => SzsStatus.noConjectureFound(message)
