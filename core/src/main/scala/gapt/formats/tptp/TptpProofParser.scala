@@ -36,11 +36,18 @@ import gapt.proofs.context.immutable.ImmutableContext
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
   def name: String
+  def parents: Seq[String]
 }
-case class TptpConjectureStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep
-case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep
+case class TptpConjectureStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep {
+  def parents: Seq[String] = Seq.empty
+}
+case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep {
+  def parents: Seq[String] = Seq.empty
+}
 case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpDerivationStep
-case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpDerivationStep
+case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpDerivationStep {
+  def parents: Seq[String] = Seq(parent)
+}
 case class TptpSkolemizationStep(
     name: String,
     formula: FOLFormula,
@@ -49,7 +56,9 @@ case class TptpSkolemizationStep(
     contextVariables: Seq[FOLVar],
     skolemizedSymbol: FOLVar,
     annotations: Annotations
-) extends TptpDerivationStep
+) extends TptpDerivationStep {
+  def parents: Seq[String] = Seq(parent)
+}
 
 sealed trait TptpDerivationImportError {
   def message: String
