@@ -10,6 +10,7 @@ import scala.util.boundary
 import boundary.break
 import gapt.expr.formula.Formula
 import gapt.utils.TimeOutException
+import java.nio.file.Paths
 
 enum NotVerifiedReason {
   case UnexpectedInput(message: String)
@@ -108,7 +109,10 @@ private def checkAxiomStep(s: TptpAxiomStep, fileDirectiveRoot: os.Path): Either
       break(Left(AxiomFileDirectiveMissing(s.name)))
   }
 
-  val absolutePath = fileDirectiveRoot / os.RelPath(fileName)
+  val absolutePath =
+    if Paths.get(fileName).isAbsolute() then os.Path(fileName)
+    else fileDirectiveRoot / os.RelPath(fileName)
+
   if !os.exists(absolutePath) then {
     break(Left(AxiomFileDirectiveFileNotFound(s.name, absolutePath)))
   }
