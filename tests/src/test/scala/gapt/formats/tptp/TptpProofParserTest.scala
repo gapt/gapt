@@ -77,16 +77,14 @@ class TptpProofParserUnitTest extends Specification {
 
   "RootedTptpDerivation" should {
     "parse skolemization steps" in {
-      def simpleSkolemConstantDerivation(skolemizationStep: String) = InputFile.fromString(
-        s"""
+      def simpleSkolemConstantDerivation(skolemizationStep: String) = InputFile.fromString(s"""
       |fof(a, axiom, ![X]: p(X)).
       |fof(c, conjecture, ![X]: p(X)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |$skolemizationStep
       |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
       |fof(cont, plain, $$false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
-      """.stripMargin
-      )
+      """.stripMargin)
 
       "parse skolemization step" in {
         val input = simpleSkolemConstantDerivation(

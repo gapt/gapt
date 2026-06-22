@@ -18,6 +18,8 @@ import gapt.formats.tptp.PlainInferenceWithConjectureParent
 import gapt.formats.tptp.DifferentFormulasWithSameName
 import gapt.formats.tptp.InferenceCycle
 import gapt.formats.tptp.StepWithInvalidStatus
+import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
+import gapt.formats.tptp.SkolemizationStepWithoutBinding
 
 class checkProofUnitTest extends mutable.Specification {
   def todo(message: String): Pending = Pending(s"TODO: $message")
@@ -228,11 +230,53 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_=== SzsStatus.Verified
       }
 
-      "should fail on skolemization step without esa status" in todo
-      "should fail on skolemization step without new_symbols" in todo
-      "should throw exception on skolemization step with more than one new symbol" in todo
-      "should fail on skolemization step that doesn't specify variable to be skolemized" in todo
-      "should do X on proof the uses skolem constant that is only introduced in later step" in todo("specify")
+      "should fail on skolemization step without esa status" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X)).
+          |fof(c, conjecture, ![X]: p(X)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+        }
+      }
+
+      "should fail on skolemization step without new_symbols" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X)).
+          |fof(c, conjecture, ![X]: p(X)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
+        }
+      }
+
+      "should not verify skolemization step with more than one new symbol" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, Y]: p(X, Y)).
+          |fof(c, conjecture, ![X]: p(X, a)).
+          |fof(nc, negated_conjecture, ?[X, Y]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(sK0, sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0), skolemize(Y, sK1)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.NotVerified(NotVerifiedReason.CannotHandleInput) => ok
+        }
+      }
+      "should fail on skolemization step that doesn't specify variable to be skolemized" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X)).
+          |fof(c, conjecture, ![X]: p(X)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
+        }
+      }
+      "should do X on proof which uses skolem constant that is only introduced in later step" in todo("specify")
       "should fail on proof with incorrect skolemization step" in todo("figure out possible failure scenarios skolemization")
 
       "should fail on axiom step without thm status" in todo
