@@ -71,6 +71,9 @@ case class InferenceCycle(message: String) extends TptpDerivationImportError
 case class StepWithInvalidStatus(message: String, stepName: String) extends TptpDerivationImportError
 case class NegatedConjectureStepWithNonConjectureParent(message: String) extends TptpDerivationImportError
 case class NegatedConjectureWithoutParent(message: String) extends TptpDerivationImportError
+case class NegatedConjectureWithMultipleDistinctParents() extends TptpDerivationImportError {
+  def message: String = "got negated conjecture with multiple distinct parents"
+}
 case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainInferenceStep) extends TptpDerivationImportError
 case class IncorrectInference(message: String, stepName: String) extends TptpDerivationImportError
 
@@ -306,10 +309,10 @@ object RootedTptpDerivation {
   ): Either[TptpDerivationImportError, TptpNegatedConjectureStep] = boundary { l ?=>
     val folFormula = parseFOLFormula(formula).getOrBreak(using l)
     val ann = annotations.getOrElse { break(Left(UnexpectedInput("got negated conjecture without source"))) }
-    ann.source.parentLabels match {
+    ann.source.parentLabels.distinct match {
       case Seq()           => break(Left(NegatedConjectureWithoutParent("got negated conjecture without parents")))
       case Seq(parent)     => Right(TptpNegatedConjectureStep(name, folFormula, parent, ann))
-      case Seq(parent, _*) => break(Left(UnexpectedInput("got negated conjecture with multiple parents")))
+      case Seq(parent, _*) => break(Left(NegatedConjectureWithMultipleDistinctParents()))
     }
   }
 
