@@ -319,6 +319,18 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
+      "should fail on axiom step with a non-file source" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p, unknown).
+          |fof(c, conjecture, p, unknown).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+        """.stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveMissing) => reason.stepName must_== "a"
+        }
+      }
+
       "should fail on axiom step with file directive, but without label to a formula" in todo
       "should fail on axiom step with file directive that points to non-existent file" in todo
       "should fail on axiom step with file directive that points to non-parsable problem file" in todo

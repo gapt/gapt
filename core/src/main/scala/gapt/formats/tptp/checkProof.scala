@@ -2,15 +2,12 @@ package gapt.formats.tptp.check
 
 import gapt.formats.InputFile
 import gapt.formats.tptp.*
-import gapt.formats.tptp.check.NotVerifiedReason.UnexpectedException
 import gapt.utils.withTimeout
 import gapt.utils.getOrBreak
 
 import scala.concurrent.duration.*
 import scala.util.boundary
 import boundary.break
-import gapt.formats.tptp.check.OtherFailureReason.FileDirectiveMissing
-import gapt.formats.tptp.check.OtherFailureReason.AxiomSourceMissing
 
 enum NotVerifiedReason {
   case UnexpectedInput(message: String)
@@ -21,8 +18,9 @@ enum NotVerifiedReason {
 
 enum OtherFailureReason {
   case AxiomSourceMissing(stepName: String)
-  case FileDirectiveMissing(stepName: String)
+  case AxiomFileDirectiveMissing(stepName: String)
 }
+import OtherFailureReason._
 
 type FailedVerifiedReason =
   TptpDerivationImportError | OtherFailureReason
@@ -58,8 +56,12 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
         val usedAxioms = refutation.usedDerivationSteps.collect { case step: TptpAxiomStep => step }
         usedAxioms.map { s =>
           s.annotationsOption match {
-            case None    => break(Left(AxiomSourceMissing(s.name)))
-            case Some(a) => (s, a)
+            case None => break(Left(AxiomSourceMissing(s.name)))
+            case Some(a) => a.source match {
+                case Source.File(_, _) => (s, a)
+                case _ =>
+                  break(Left(AxiomFileDirectiveMissing(s.name)))
+              }
           }
         }
 
