@@ -19,6 +19,7 @@ enum NotVerifiedReason {
 enum OtherFailureReason {
   case AxiomSourceMissing(stepName: String)
   case AxiomFileDirectiveMissing(stepName: String)
+  case AxiomFileDirectiveLabelMissing(stepName: String)
 }
 import OtherFailureReason._
 
@@ -58,7 +59,9 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds): SzsStatus = {
           s.annotationsOption match {
             case None => break(Left(AxiomSourceMissing(s.name)))
             case Some(a) => a.source match {
-                case Source.File(_, _) => (s, a)
+                case Source.File(_, None) =>
+                  break(Left(AxiomFileDirectiveLabelMissing(s.name)))
+                case Source.File(fileName, Some(label)) => (s, a)
                 case _ =>
                   break(Left(AxiomFileDirectiveMissing(s.name)))
               }
