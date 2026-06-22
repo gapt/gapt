@@ -277,7 +277,18 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
       "should do X on proof which uses skolem constant that is only introduced in later step" in todo("specify")
-      "should fail on proof with incorrect skolemization step" in todo("figure out possible failure scenarios skolemization")
+
+      "should fail on proof with incorrect skolemization step" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X)).
+          |fof(c, conjecture, ![X]: p(X)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
+        }
+      }
 
       "should fail on axiom step without thm status" in todo
       "should fail on axiom step without file directive" in todo

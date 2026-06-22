@@ -61,7 +61,7 @@ def rootedTptpDerivationToLKProof(
 
     val proofOption = s match {
       case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
-        def reportIncorrect(message: String): Nothing = break(Left(IncorrectInference(message, s)))
+        def reportIncorrect(message: String): Nothing = break(Left(IncorrectInference(message, s.name)))
 
         val parentFormula = derivation.get(parent).get.formula
         if parentFormula.contains(newSkolemSymbol) then {
@@ -103,7 +103,7 @@ def rootedTptpDerivationToLKProof(
     }
 
     val proof = proofOption match {
-      case None    => break(Left(IncorrectInference(s"inference with label ${s.name} is incorrect", s)))
+      case None    => break(Left(IncorrectInference(s"inference with label ${s.name} is incorrect", s.name)))
       case Some(p) => p
     }
 
