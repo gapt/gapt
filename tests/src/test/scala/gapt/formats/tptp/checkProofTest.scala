@@ -418,7 +418,16 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should verify an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in todo
+      "should verify an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p, file('Problems/test2.p', a)).
+          |fof(c, conjecture, p, file('Problems/test2.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+        """.stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
       "should verify axiom step even if label in problem file differs from label in proof file" in todo
       "should verify axiom step even if there are steps with same label, if they are equal in role and have alpha-equivalent formulas" in todo
       "should do X on unused axiom step with incorrect file directive?" in todo
