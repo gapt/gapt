@@ -394,11 +394,22 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should fail on axiom step with file directive that points to a file that has multiple equal formula labels" in todo
+      "should fail on axiom step with file directive that points to a label which is not unique and some of the labels have different formulas" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p, file('Problems/test6.p', a)).
+          |fof(c, conjecture, p, file('Problems/test6.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+        """.stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "a"
+        }
+      }
 
       "should fail on axiom step with file directive that points to formula which is not an axiom" in todo
       "should verify an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in todo
       "should verify axiom step even if label in problem file differs from label in proof file" in todo
+      "should verify axiom step even if there are steps with same label, if they are equal in role and have alpha-equivalent formulas" in todo
       "should do X on unused axiom step with incorrect file directive?" in todo
 
       "should fail on proof with two steps with the same name if proof steps are different" in {
