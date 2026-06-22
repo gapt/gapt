@@ -545,7 +545,16 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should throw exception on proof with invalid tptp syntax" in todo
+      "should not verify proof with invalid tptp syntax" in {
+        // in the following, the dots at the end of lines are missing to get an
+        // invalid tptp syntax file
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test2.p', a))
+          |fof(c, conjecture, p, file('Problems/test2.p', c))
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c]))
+          |fof(cont2, plain, $false, inference(falsum, [status(thm)], [nc, a]))""".stripMargin)
+        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
+      }
 
       "should not verify proof that contains inference parents which are not simple names" in todo
       "should not verify if input has include directives (we do not support this yet)" in {

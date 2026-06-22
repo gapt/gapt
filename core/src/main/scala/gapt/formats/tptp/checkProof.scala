@@ -94,6 +94,7 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
     case Left(reason) => reason match {
         case _: TimeOutException          => SzsStatus.timeout
         case t: Throwable                 => SzsStatus.unexpectedException(t)
+        case InputSyntaxError(cause)      => SzsStatus.unexpectedInput(s"syntax error: $cause")
         case CannotHandleInput(_, _)      => SzsStatus.cannotHandleInput
         case NoConjectureFound(message)   => SzsStatus.noConjectureFound(message)
         case NoRefutationFound(message)   => SzsStatus.noRefutationFound(message)
