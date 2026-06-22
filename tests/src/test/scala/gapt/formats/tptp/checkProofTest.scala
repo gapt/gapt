@@ -21,6 +21,7 @@ import gapt.formats.tptp.StepWithInvalidStatus
 import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
 import gapt.formats.tptp.SkolemizationStepWithoutBinding
 import org.specs2.execute.PendingException
+import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 given Cwd = Cwd(testResourcesRoot / "proover_competition")
@@ -141,8 +142,28 @@ class checkProofUnitTest extends mutable.Specification {
           case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureWithoutParent]
         }
       }
-      "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
-      "should do X on negated conjecture step with multiple conjecture parents" in todo
+
+      "fail on negated conjecture step which has multiple distinct parents" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test2.p', a)).
+          |fof(c, conjecture, p, file('Problems/test2.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c, a1])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureWithMultipleDistinctParents]
+        }
+      }
+
+      "should succeed on negated conjecture step with multiple equal conjecture parents" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test2.p', a)).
+          |fof(c, conjecture, p, file('Problems/test2.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c, c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
+      "should do X on negated conjecture step with inference record parent" in todo
 
       "should fail on plain inference without parents if formula is not valid" in {
         val input = InputFile.fromString("""
