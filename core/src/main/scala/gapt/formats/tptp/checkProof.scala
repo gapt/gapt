@@ -20,7 +20,8 @@ enum OtherFailureReason {
   case AxiomSourceMissing(stepName: String)
   case AxiomFileDirectiveMissing(stepName: String)
   case AxiomFileDirectiveLabelMissing(stepName: String)
-  case AxiomFileDirectiveFileNotFound(stepName: String, fileName: String)
+  case AxiomFileDirectiveFileNotFound(stepName: String, absolutePath: os.Path)
+  case AxiomFileDirectiveInvalidSyntax(stepName: String, absolutePath: os.Path)
 }
 import OtherFailureReason._
 
@@ -65,9 +66,14 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
                 case Source.File(_, None) =>
                   break(Left(AxiomFileDirectiveLabelMissing(s.name)))
                 case Source.File(fileName, Some(label)) => {
-                  if !os.exists(cwd.path / os.RelPath(fileName)) then {
-                    break(Left(AxiomFileDirectiveFileNotFound(s.name, fileName)))
+                  val absolutePath = cwd.path / os.RelPath(fileName)
+                  if !os.exists(absolutePath) then {
+                    break(Left(AxiomFileDirectiveFileNotFound(s.name, absolutePath)))
                   }
+                  try TptpImporter.loadWithIncludes(absolutePath, cwd.path)
+                  catch
+                    case _: IllegalArgumentException =>
+                      break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
                   (s, a)
                 }
                 case _ =>
