@@ -144,7 +144,27 @@ class checkProofUnitTest extends mutable.Specification {
       "should do X on negated conjecture step which has conjecture and non-conjecture parents" in todo
       "should do X on negated conjecture step with multiple conjecture parents" in todo
 
-      "should do X on plain inference without parents" in todo
+      "should fail on plain inference without parents if formula is not valid" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p).
+          |fof(c, conjecture, p).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(i: IncorrectInference) => i.stepName must_== "cont"
+        }
+      }
+
+      "should succeed on plain inference without parents if formula is valid" in {
+        val input = InputFile.fromString("""
+          |fof(a1, axiom, p, file('Problems/test2.p', a)).
+          |fof(c, conjecture, p, file('Problems/test2.p', a)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(i, plain, q | ~q, inference(tautology, [status(thm)], [])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc, i])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
       "should fail on plain inference without status" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p).
@@ -222,11 +242,6 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
-      "should fail on input where formula doesn't match formula from import" in todo
-      "should fail on file source, if claimed formula doesn't match formula from file" in todo
-      "should do X on a file source, if the file doesn't exist" in todo("specify")
-
-      "should fail if an axiom is used that doesn't occur in the input problem" in todo
       "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
 
       "should verify input that contains inferences with strong quantifiers if inference is easy" in {
@@ -273,6 +288,7 @@ class checkProofUnitTest extends mutable.Specification {
           case SzsStatus.NotVerified(NotVerifiedReason.CannotHandleInput) => ok
         }
       }
+
       "should fail on skolemization step that doesn't specify variable to be skolemized" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: p(X)).
@@ -284,6 +300,7 @@ class checkProofUnitTest extends mutable.Specification {
           case SzsStatus.FailedVerified(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
         }
       }
+
       "should do X on proof which uses skolem constant that is only introduced in later step" in todo("specify")
 
       "should fail on proof with incorrect skolemization step" in {
@@ -511,7 +528,6 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "should do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
-      "should do X on a proof that doesn't use negated conjecture" in todo("specify")
       "should do X if input has no negated conjecture" in todo("specify")
 
       "should do X if an inference has two distinct statuses" in todo("specify")
