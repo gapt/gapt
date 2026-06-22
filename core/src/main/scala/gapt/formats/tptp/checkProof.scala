@@ -24,6 +24,11 @@ enum OtherFailureReason {
   case AxiomFileDirectiveFileNotFound(stepName: String, absolutePath: os.Path)
   case AxiomFileDirectiveInvalidSyntax(stepName: String, absolutePath: os.Path)
   case AxiomFileDirectiveFileDoesNotHaveLabel(stepName: String, absolutePath: os.Path, label: String)
+  case AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel(
+      stepName: String,
+      absolutePath: os.Path,
+      label: String
+  )
   case AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
       stepName: String,
       absolutePath: os.Path,
@@ -85,10 +90,13 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
                       case _: IllegalArgumentException =>
                         break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
                     }
-                  val fileDirectiveFormula = tptpFile.inputs.collect {
+                  val fileDirectiveFormulas = tptpFile.inputs.collect {
                     case a: AnnotatedFormula if a.name == label => a
-                  }.headOption.getOrElse {
-                    break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
+                  }
+                  val fileDirectiveFormula = fileDirectiveFormulas match {
+                    case Seq()         => break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
+                    case Seq(_, _, _*) => break(Left(AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel(s.name, absolutePath, label)))
+                    case Seq(a)        => a
                   }
                   if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
                     break(Left(AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(s.name, absolutePath, label, fileDirectiveFormula.formula, s.formula)))
