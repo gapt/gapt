@@ -59,7 +59,7 @@ class checkProofUnitTest extends mutable.Specification {
       "should fail on negated conjecture if conclusion is not implied by negation of conjecture" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p(a), file('Problems/test1.p', a1)).
-        |fof(a2, axiom, ~p(a), file('Problems/test1.p', a1)).
+        |fof(a2, axiom, ~p(a), file('Problems/test1.p', a2)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
@@ -71,7 +71,7 @@ class checkProofUnitTest extends mutable.Specification {
       "should verify a proof that contains unused incorrect conjecture to negated_conjecture inference but is otherwise correct" in {
         val input = InputFile.fromString("""
         |fof(a1, axiom, p(a), file('Problems/test1.p', a1)).
-        |fof(a2, axiom, ~p(a), file('Problems/test1.p', a1)).
+        |fof(a2, axiom, ~p(a), file('Problems/test1.p', a2)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, a2])).""".stripMargin)
@@ -382,7 +382,20 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "should fail on axiom step with file directive that points to formula which is not alpha-equivalent to formula in step" in todo
+      "should fail on axiom step with file directive that points to formula which is not alpha-equivalent to formula in step" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p, file('Problems/test5.p', a)).
+          |fof(c, conjecture, p, file('Problems/test5.p', c)).
+          |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+          |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+        """.stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
+        }
+      }
+
+      "should fail on axiom step with file directive that points to a file that has multiple equal formula labels" in todo
+
       "should fail on axiom step with file directive that points to formula which is not an axiom" in todo
       "should verify an axiom step with correct file directive, existent label in problem file and step formula and referred to formula are alpha-equivalent" in todo
       "should verify axiom step even if label in problem file differs from label in proof file" in todo

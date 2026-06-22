@@ -8,6 +8,7 @@ import gapt.utils.getOrBreak
 import scala.concurrent.duration.*
 import scala.util.boundary
 import boundary.break
+import gapt.expr.formula.Formula
 
 enum NotVerifiedReason {
   case UnexpectedInput(message: String)
@@ -23,6 +24,13 @@ enum OtherFailureReason {
   case AxiomFileDirectiveFileNotFound(stepName: String, absolutePath: os.Path)
   case AxiomFileDirectiveInvalidSyntax(stepName: String, absolutePath: os.Path)
   case AxiomFileDirectiveFileDoesNotHaveLabel(stepName: String, absolutePath: os.Path, label: String)
+  case AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
+      stepName: String,
+      absolutePath: os.Path,
+      label: String,
+      expected: Formula,
+      actual: Formula
+  )
 }
 import OtherFailureReason._
 
@@ -77,10 +85,13 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
                       case _: IllegalArgumentException =>
                         break(Left(AxiomFileDirectiveInvalidSyntax(s.name, absolutePath)))
                     }
-                  tptpFile.inputs.collect {
+                  val fileDirectiveFormula = tptpFile.inputs.collect {
                     case a: AnnotatedFormula if a.name == label => a
                   }.headOption.getOrElse {
                     break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
+                  }
+                  if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
+                    break(Left(AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(s.name, absolutePath, label, fileDirectiveFormula.formula, s.formula)))
                   }
                   (s, a)
                 }
