@@ -94,7 +94,7 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
                   val fileDirectiveFormulas = tptpFile.inputs.collect {
                     case a: AnnotatedFormula if a.name == label => a
                   }
-                  val fileDirectiveFormula = fileDirectiveFormulas match {
+                  val fileDirectiveFormula = fileDirectiveFormulas.distinct match {
                     case Seq()         => break(Left(AxiomFileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
                     case Seq(_, _, _*) => break(Left(AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel(s.name, absolutePath, label)))
                     case Seq(a)        => a
