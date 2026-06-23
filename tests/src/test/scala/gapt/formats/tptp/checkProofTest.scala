@@ -301,7 +301,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(sK0, sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0), skolemize(Y, sK1)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.NotVerified(NotVerifiedReason.CannotHandleInput) => ok
+          case SzsStatus.NotVerified(_: NotVerifiedReason.CannotHandleInput) => ok
         }
       }
 
@@ -557,6 +557,7 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "should not verify if input has include directives (we do not support this yet)" in {
+        todo
         val input = InputFile.fromString("""
         |include('filename', [a]).
         |fof(a1, axiom, p).
@@ -566,23 +567,28 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.cannotHandleInput
       }
 
-      "should do X on unused axiom step with incorrect file directive?" in todo
+      "verify if an unused axiom step has missing file directive if derivation is otherwise correct" in {
+        val input = InputFile.fromString("""
+        |fof(a1, axiom, p, file('Problems/test2.p', a)).
+        |fof(unused, axiom, q).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
+
       "should do X on an axiom with a source that only refers to another axiom" in todo("specify")
-
-      "should fail on plain inference with esa status if not equi-satisfiable" in todo
-
       "should do X on negated conjecture step with inference record parent" in todo
-
       "should do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
       "should do X if input has no negated conjecture" in todo("specify")
-
       "should do X if an inference has two distinct statuses" in todo("specify")
       "should do X if input has no conjecture" in todo("specify")
       "should do X if input has no $false proof step" in todo("specify")
       "should do X if input has more than one conjecture" in todo("specify")
       "should do X if input has more than one $false proof step" in todo("specify")
-
       "should do X on inputs with higher-order formulas" in todo("specify")
+
+      "should fail on plain inference with esa status if not equi-satisfiable" in todo
     }
   }
 
