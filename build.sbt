@@ -107,6 +107,7 @@ lazy val root = project.in(file("."))
       baseDirectory.value.getAbsolutePath,
       "-skip-by-id:ammonite:ammonite.ops:scala"
     ),
+    dependencyOverrides ++= dependencyConflictResolutions,
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq(
         "-cp",
@@ -215,7 +216,7 @@ lazy val root = project.in(file("."))
       else
         throw new Exception(s"evalUserManual failed with exit code ${exitVal}")
     },
-    dependencyOverrides ++= dependencyConflictResolutions
+    prooVerDist := (cli / CheckProofCLI / prooVerDist).value
   )
 
 val dependencyConflictResolutions = Seq("com.lihaoyi" %% "geny" % "1.0.0")
@@ -300,7 +301,40 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
     inConfig(CheckProofCLI)(baseAssemblySettings ++ Seq(
       assembly / mainClass := Some("gapt.cli.checkTstpProof"),
       assembly / assemblyOutputPath := target.value / "check-tstp-proof.jar",
-      Test / test := (Test / test).dependsOn(assembly).value
+      Test / test := (Test / test).dependsOn(prooVerDist).value,
+      prooVerDist := {
+        val log = streams.value.log
+
+        val jar = assembly.value
+        val baseDir = file(".") / "target"
+        val out = baseDir / "ProoVerDist"
+        val jarName = s"gapt.jar"
+        val appName = s"gapt-check"
+        val gaptCheckResources = file(".") / "cli" / "gapt-check"
+
+        IO.delete(out)
+        IO.copyDirectory(gaptCheckResources, out)
+        IO.copyFile(jar, out / jarName)
+        IO.write(
+          out / appName,
+          s"""|#!/usr/bin/env sh
+              |DIR="$$(cd "$$(dirname "$$0")" && pwd)"
+              |exec java -jar "$$DIR/$jarName" "$$@"
+        """.stripMargin.strip
+        )
+        (out / appName).setExecutable(true)
+
+        log.info(s"Created ProoVer distribution folder: ${out.getAbsolutePath}")
+
+        val zip = baseDir / s"${appName}.zip"
+
+        IO.delete(zip)
+        zipDist(out, zip)
+
+        log.info(s"Created zip: ${zip.getAbsolutePath}")
+
+        zip
+      }
     )),
     Compile / scalacOptions += "-Werror",
     libraryDependencies ++= Seq(
@@ -337,8 +371,39 @@ lazy val evalUserManual = TaskKey[Unit](
 )
 
 lazy val scripts = TaskKey[Unit]("scripts", "Creates scripts in target/")
+lazy val prooVerDist = TaskKey[File]("prooVerDist", "Creates the zip archive for the prooVer competition")
 
 def recursiveListFiles(f: File): Seq[File] =
   if (f.getName == "target") Seq()
   else if (f.isDirectory) IO.listFiles(f).flatMap(recursiveListFiles)
   else Seq(f)
+
+def zipDist(sourceDir: File, zipFile: File): Unit = {
+  import java.io._
+  import java.nio.file.Files
+  import org.apache.commons.compress.archivers.zip._
+  val zos = new ZipArchiveOutputStream(zipFile)
+  try {
+    Path
+      .allSubpaths(sourceDir)
+      .foreach {
+        case (file, relativePath) =>
+          val entry = new ZipArchiveEntry(file, relativePath)
+
+          if (file.isFile) {
+            // preserve executable bit
+            if (Files.isExecutable(file.toPath))
+              entry.setUnixMode(0x1ed) // 0755
+
+            zos.putArchiveEntry(entry)
+            val in = new BufferedInputStream(new FileInputStream(file))
+            try in.transferTo(zos)
+            finally in.close()
+            zos.closeArchiveEntry()
+          }
+      }
+    zos.finish()
+  } finally {
+    zos.close()
+  }
+}
