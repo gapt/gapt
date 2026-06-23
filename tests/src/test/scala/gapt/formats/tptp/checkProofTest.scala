@@ -26,7 +26,7 @@ import gapt.formats.tptp.StepWithMissingParents
 import gapt.formats.tptp.DeskolemizationFailed
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
-given Cwd = Cwd(testResourcesRoot / "proover_competition")
+val fileDirectiveRoot = testResourcesRoot / "proover_competition" / "Proofs"
 
 class checkProofUnitTest extends mutable.Specification {
   def todo(message: String): Pending = {
@@ -519,7 +519,7 @@ class checkProofUnitTest extends mutable.Specification {
 
       "verify axiom step if given correct absolute path" in {
         val input = InputFile.fromString(s"""
-          |fof(a1, axiom, p, file('${summon[Cwd].path}/Problems/test8.p', a)).
+          |fof(a1, axiom, p, file('${fileDirectiveRoot}/Problems/test8.p', a)).
           |fof(c1, conjecture, p, file('Problems/test8.p', c)).
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
           |fof(cont, plain, $$false, inference(falsum, [status(thm)], [a1, nc])).
@@ -634,7 +634,7 @@ class checkProofUnitTest extends mutable.Specification {
   }
 
   val timeout = 1.second
-  spec(i => checkProof(i, timeout = timeout))
+  spec(i => checkProof(i, fileDirectiveRoot, timeout = timeout))
 }
 
 class checkProofExampleTest extends Specification {
@@ -669,7 +669,7 @@ class checkProofExampleTest extends Specification {
     val timeout = 25.seconds
     s2"""
     |checkProof1
-    |${spec(i => checkProof(i, timeout = timeout))}
+    |${spec(i => checkProof(i, fileDirectiveRoot, timeout = timeout))}
   """.stripMargin
   }
 }
