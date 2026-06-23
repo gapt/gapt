@@ -74,15 +74,13 @@ object SzsStatus {
   def noRefutationFound(message: String): SzsStatus.NotVerified = unexpectedInput(message)
 }
 
-case class Cwd(path: os.Path)
-
-def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd): SzsStatus = {
+def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 25.seconds): SzsStatus = {
   val result = {
     try withTimeout(timeout) {
         boundary {
           val refutation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
           val usedAxioms = refutation.usedDerivationSteps.collect { case step: TptpAxiomStep => step }
-          usedAxioms.foreach { s => checkAxiomStep(s, cwd.path).getOrBreak }
+          usedAxioms.foreach { s => checkAxiomStep(s, fileDirectiveRoot).getOrBreak }
 
           TptpImporter.loadAsLKRefutation(file)
         }

@@ -32,7 +32,8 @@ def checkTstpProof(args: String*): Unit = {
     return
   }
 
-  given Cwd = Cwd(os.pwd)
-  val szsStatus = checkProof(OnDiskInputFile(path))
+  // directory of the input file defines where we resolve file directives
+  val fileDirectiveRoot = path / os.up
+  val szsStatus = checkProof(OnDiskInputFile(path), fileDirectiveRoot)
   Console.out.println(szsStatus.statusLine)
 }
