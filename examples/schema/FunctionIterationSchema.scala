@@ -1,4 +1,4 @@
-package gapt.examples
+//package gapt.examples
 
 import gapt.expr._
 import gapt.proofs.Sequent
@@ -8,6 +8,7 @@ import gapt.proofs.context.update.ProofDefinitionDeclaration
 import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
 import gapt.proofs.gaptic._
+import gapt.proofs.lk.util.instantiateProof
 
 object FunctionIterationSchema extends TacticsProof {
   ctx += InductiveType("nat", hoc"0 : nat", hoc"s : nat>nat")
@@ -69,5 +70,9 @@ object FunctionIterationSchema extends TacticsProof {
     trivial
   }
   ctx += ProofDefinitionDeclaration(le"phi 0", phiBc)
+
+  val FullProof_2 = instantiateProof.Instantiate(le"phi(s(s(0)))")
+  val FullProof_3 = instantiateProof.Instantiate(le"phi(s(s(s(0))))")
+  val FullProof_4 = instantiateProof.Instantiate(le"phi(s(s(s( s ( 0)))))")
 
 }
