@@ -369,13 +369,13 @@ class TptpProofParserUnitTest extends Specification {
         rootedTptpDerivationToLKProof(derivation) must beLeft
       }
 
-      "succeed on skolemization step which claims the same context variables as the parent formula, but in a different order" in {
+      "fail on skolemization step which claims the same context variables as the parent formula, but in a different order" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTptpDerivationToLKProof(derivation) must beRight
+        rootedTptpDerivationToLKProof(derivation) must beLeft
       }
 
       "fail on skolemization step which contains a context variable that does not occur in the parent formula" in {
@@ -414,18 +414,28 @@ class TptpProofParserUnitTest extends Specification {
 
       "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in todo
 
-      "fail on skolemization step that introduces a symbol that is used in derivation in other non-parent formula" in {
+      "suceed on skolemization step that introduces a symbol that is used in derivation in an unused axiom" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
           |fof(b, axiom, ![X]: q(X, b(X))).
           |fof(s, plain, ![X]: p(X, b(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [b]), skolemize(Y, b(X))], [a])).
           |fof(i, plain, q(c, b(c)) & p(c, b(c), a(c)), inference(and, [status(thm)], [a, s])).
         """.stripMargin)
-        todo
 
-        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beLeft.like {
-          d => d must beAnInstanceOf[InconsistentConstants]
-        }
+        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beRight
+      }
+
+      "suceed on correct skolemization step with context variables" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ?[X]: ![Y, Z]: p(X,Y,Z)).
+          |fof(c, conjecture, ?[X]: ![Y]: p(X,Y,Y)).
+          |fof(nc, negated_conjecture, ![X]: ?[Z]: ~p(X,Z,Z), inference(negation, [status(cth)], [c])).
+          |fof(ncs, plain, ![X]: ~p(X, sK0(X), sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [nc])).
+          |fof(as, plain, ![Y,Z]: p(sK1, Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemize(X, sK1)], [a])).
+          |fof(i, plain, $false, inference(and, [status(thm)], [as, ncs])).
+        """.stripMargin)
+
+        RootedTptpDerivation.fromInputFileRefutation(input) must beRight
       }
 
       "do X if two skolemizations happen on the same formula with the same skolem constant" in todo

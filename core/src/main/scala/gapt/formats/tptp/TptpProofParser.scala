@@ -32,6 +32,7 @@ import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.proofs.context.Context
 import gapt.utils.linearizeStrictPartialOrder
 import gapt.proofs.context.immutable.ImmutableContext
+import gapt.proofs.lk.LKProof
 
 sealed trait TptpDerivationStep {
   def formula: FOLFormula
@@ -81,6 +82,12 @@ case class NegatedConjectureWithMultipleDistinctParents() extends TptpDerivation
 }
 case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainInferenceStep) extends TptpDerivationImportError
 case class IncorrectInference(message: String, stepName: String) extends TptpDerivationImportError
+case class DeskolemizationFailed(skolemizedProof: LKProof, cause: Option[Throwable]) extends TptpDerivationImportError {
+  def message: String = cause match {
+    case Some(t) => s"deskolemization failed: ${t.getMessage}"
+    case None    => "deskolemization failed"
+  }
+}
 
 case class SkolemizationStepWithDifferingSkolemTerms(message: String, stepName: String) extends TptpDerivationImportError
 case class SkolemizationStepWithoutNewSymbols(message: String, stepName: String) extends TptpDerivationImportError

@@ -23,6 +23,7 @@ import gapt.formats.tptp.SkolemizationStepWithoutBinding
 import org.specs2.execute.PendingException
 import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
 import gapt.formats.tptp.StepWithMissingParents
+import gapt.formats.tptp.DeskolemizationFailed
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 given Cwd = Cwd(testResourcesRoot / "proover_competition")
@@ -307,8 +308,8 @@ class checkProofUnitTest extends mutable.Specification {
 
       "fail on skolemization step that doesn't specify variable to be skolemized" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: p(X)).
-          |fof(c, conjecture, ![X]: p(X)).
+          |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+          |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
           |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
           |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
@@ -342,6 +343,29 @@ class checkProofUnitTest extends mutable.Specification {
       }
 
       "allow outer skolemization deeply nested inside the formula" in todo
+
+      "fail on proof where skolemization step introduces a symbol already used in non-parent resulting in incorrect derivation" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, p(a), file('Problems/test10.p', a)).
+          |fof(c, conjecture, ![X]: p(X), file('Problems/test10.p', c)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(r) => r must beAnInstanceOf[DeskolemizationFailed]
+        }
+      }
+
+      "verify proof with skolemization where axiom is instantiated by skolem term" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+          |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(i, plain, p(a), inference(instance, [status(thm)], [a])).
+          |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [i, nc_skolem])).""".stripMargin)
+        checkProof(input) must_== SzsStatus.Verified
+      }
 
       "fail on axiom step without thm status" in {
         val input = InputFile.fromString("""
@@ -591,6 +615,8 @@ class checkProofUnitTest extends mutable.Specification {
         checkProof(input) must_== SzsStatus.Verified
       }
 
+      "do fail if a skolem symbol has a symbol occurring in the conjecture" in todo
+      "do X on axiom and conjecture steps that import different files" in todo("specify")
       "do X on an axiom with a source that only refers to another axiom" in todo("specify")
       "do X on negated conjecture step with inference record parent" in todo("specify")
       "do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
