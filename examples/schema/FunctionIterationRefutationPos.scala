@@ -1,4 +1,4 @@
-package gapt.examples
+//package gapt.examples
 
 import gapt.expr._
 import gapt.proofs.Sequent
@@ -11,6 +11,7 @@ import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.gaptic.TacticsProof
 import gapt.proofs.gaptic._
 import gapt.proofs.lk.LKProof
+import gapt.examples._
 
 object FunctionIterationRefutationPos extends TacticsProof(FunctionIterationSchema.ctx) {
   val SCS: Map[CLS, (Struct, Set[Var])] = SchematicStruct("phi").getOrElse(Map())
