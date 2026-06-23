@@ -19,6 +19,12 @@ import gapt.expr.{substitute, given}
 import gapt.expr.formula.All
 import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.ForallRightBlock
+import gapt.proofs.lk.rules.LogicalAxiom
+import gapt.proofs.expansion.deskolemizeET
+import gapt.proofs.lk.transformations.LKToExpansionProof
+import gapt.proofs.context.mutable.MutableContext
+import gapt.utils.Maybe
+import gapt.proofs.expansion.ExpansionProofToLK
 
 type LabelledSequent = Sequent[(String, FOLFormula)]
 
@@ -44,7 +50,8 @@ type LabelledSequent = Sequent[(String, FOLFormula)]
 def rootedTptpDerivationToLKProof(
     derivation: RootedTptpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference, LKProof] = boundary {
+): Either[IncorrectInference | DeskolemizationFailed, LKProof] = boundary {
+  given Maybe[MutableContext] = (MutableContext.guess(derivation.usedDerivationSteps.map(_.formula))).newMutable
   val stepProofsByName: Map[String, (LabelledSequent, LKProof)] = derivation.usedDerivationSteps.map { s =>
     val sequentToProve: LabelledSequent = s match {
       case TptpAxiomStep(name, formula, _) =>
@@ -60,6 +67,8 @@ def rootedTptpDerivationToLKProof(
     }
 
     val proofOption = s match {
+      case TptpAxiomStep(name, formula, annotationsOption)      => Some(LogicalAxiom(formula))
+      case TptpConjectureStep(name, formula, annotationsOption) => Some(LogicalAxiom(Neg(formula)))
       case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
         def reportIncorrect(message: String): Nothing = break(Left(IncorrectInference(message, s.name)))
 
@@ -87,11 +96,8 @@ def rootedTptpDerivationToLKProof(
         val innerSubstituted = innerSkolemizationFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)
         val expectedSkolemizedFormula = All.Block(actualContextVariables, innerSubstituted)
 
-        val innerSequent = Sequent(Vector(innerSubstituted), Vector(innerSubstituted))
-        val subProof = prover.getLKProof(innerSequent).getOrElse {
-          throw AssertionError(s"could not prove $innerSequent")
-        }
-        val existsSkLeft = ExistsSkLeftRule(subProof, Ant(0), mainSkolemizationFormula, claimedSkolemTerm)
+        val axiom = LogicalAxiom(innerSubstituted)
+        val existsSkLeft = ExistsSkLeftRule(axiom, Ant(0), mainSkolemizationFormula, claimedSkolemTerm)
         val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, actualContextVariables)
         val forallRight = ForallRightBlock(forallLeft, expectedSkolemizedFormula, actualContextVariables)
         if expectedSkolemizedFormula != claimedSkolemizedFormula then {
@@ -137,7 +143,17 @@ def rootedTptpDerivationToLKProof(
     }
   }
 
-  Right(cutProofsStartingFrom(derivation.root.name)._2)
+  val (_, proof) = cutProofsStartingFrom(derivation.root.name)
+  val deskolemizedExpansionProof = {
+    try deskolemizeET(LKToExpansionProof(proof))
+    catch
+      case e: IllegalArgumentException =>
+        break(Left(DeskolemizationFailed(proof, Some(e))))
+  }
+  val deskolemizedLKProof = ExpansionProofToLK(deskolemizedExpansionProof).getOrElse {
+    break(Left(DeskolemizationFailed(proof, None)))
+  }
+  Right(deskolemizedLKProof)
 }
 
 // Escargot.getLKProof does not guarantee that the conclusion of the output proof

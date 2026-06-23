@@ -1,22 +1,17 @@
 package gapt.formats.tptp
 
-import org.specs2.mutable.Specification
-import gapt.expr.stringInterpolationForExpressions
-import gapt.formats.tptp.RootedTptpDerivation
-import scala.concurrent.duration._
 import gapt.expr.formula.Bottom
-import gapt.provers.escargot.Escargot
-import gapt.formats.InputFile
-import gapt.utils.withTimeout
+import gapt.expr.stringInterpolationForExpressions
 import gapt.formats.ClasspathInputFile
-import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.ExistsSkLeftRule
+import gapt.formats.InputFile
+import gapt.formats.tptp.RootedTptpDerivation
 import gapt.proofs.SequentMatchers
-import gapt.proofs.lk.rules.ForallRightRule
-import gapt.proofs.lk.rules.ForallLeftRule
-import scala.util.boundary
-import boundary.break
-import gapt.proofs.lk.LKProof
+import gapt.provers.escargot.Escargot
+import gapt.utils.EitherHelpers.RichEither
+import gapt.utils.withTimeout
+import org.specs2.mutable.Specification
+
+import scala.concurrent.duration.*
 
 class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatchers {
   "rootedTptpDerivationIntoLKProof" should {
@@ -88,15 +83,24 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
       "returns skolemization proof for correct skolemization step without context variables" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ?[X]: p(X)).
+          |fof(c, conjecture, ?[X]: p(X)).
+          |fof(nc, negated_conjecture, ![X]: ~p(X), inference(negation, [status(cth)], [c])).
+          |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
+          |fof(i, plain, ~p(sK0), inference(instance, [status(thm)], [nc])).
+          |fof(f, plain, $false, inference(falsum, [status(thm)], [s, i])).
+        """.stripMargin)
+        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "f").get
+        rootedTptpDerivationToLKProof(derivation) must beRight
+      }
+
+      "fails on incorrect proof that ends in a formula containing a skolem symbol" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ?[X]: p(X)).
           |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
         """.stripMargin)
         val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTptpDerivationToLKProof(derivation) must beRight.like {
-          case c @ CutRule(left, _, ExistsSkLeftRule(p, i, f, s), _) => {
-            (c.conclusion must beMultiSetEqual(fos"?X p(X) :- p(sK0)"))
-              .and(s must_=== foc"sK0")
-              .and(f must_=== fof"?X p(X)")
-          }
+        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+          case d => d must beAnInstanceOf[DeskolemizationFailed]
         }
       }
 
@@ -106,29 +110,8 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
           |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTptpDerivationToLKProof(derivation) must beRight[LKProof].like { r =>
-          boundary {
-            val rightCut = r match {
-              case CutRule(left, _, right, _) => right
-              case _                          => break(ko)
-            }
-            val innerForAllRight = rightCut match {
-              case ForallRightRule(p, _, _, _) => p
-              case _                           => break(ko)
-            }
-            val innerForAllLeft = innerForAllRight match {
-              case ForallLeftRule(p, _, _, _, _) => p
-              case _                             => break(ko)
-            }
-            val existsSkLeft = innerForAllLeft match {
-              case e: ExistsSkLeftRule => e
-              case _                   => break(ko)
-            }
-            val ExistsSkLeftRule(p, i, introducedFormula, skolemTerm) = existsSkLeft
-            (skolemTerm must_=== fot"sK0(X)")
-              .and(introducedFormula must_=== fof"?Y p(X,Y)")
-              .and(r.conclusion must beMultiSetEqual(fos"!X?Y p(X,Y) :- !X p(X, sK0(X))"))
-          }
+        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+          case d => d must beAnInstanceOf[DeskolemizationFailed]
         }
       }
     }
