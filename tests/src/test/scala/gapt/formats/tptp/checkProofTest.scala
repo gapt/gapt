@@ -317,7 +317,7 @@ class checkProofUnitTest extends mutable.Specification {
         }
       }
 
-      "fail on proof with incorrect skolemization step" in {
+      "fail on proof where claimed formula is not the skolemization of the parent given the binding" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
           |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
@@ -328,6 +328,20 @@ class checkProofUnitTest extends mutable.Specification {
           case SzsStatus.FailedVerified(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
         }
       }
+
+      "fail on proof where skolemization step introduces a symbol that is already present in parent formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X, a), file('Problems/test9.p', a)).
+          |fof(c, conjecture, ![X]: p(X, a), file('Problems/test9.p', c)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X, a), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(nc_skolem, plain, ~p(a, a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
+          |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
+        checkProof(input) must beLike {
+          case SzsStatus.FailedVerified(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
+        }
+      }
+
+      "allow outer skolemization deeply nested inside the formula" in todo
 
       "fail on axiom step without thm status" in {
         val input = InputFile.fromString("""
@@ -583,6 +597,7 @@ class checkProofUnitTest extends mutable.Specification {
       "do X if input has no conjecture" in todo("specify")
       "do X if input has more than one conjecture" in todo("specify")
       "do X if input has no negated conjecture" in todo("specify")
+      "do X on conjecture with incorrect file directive" in todo("specify")
       "do X if input has more than one negated conjecture" in todo("specify")
       "do X if input has no $false proof step" in todo("specify")
       "do X if input has more than one $false proof step" in todo("specify")
