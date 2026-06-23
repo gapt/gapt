@@ -14,15 +14,15 @@ import java.nio.file.Paths
 
 enum NotVerifiedReason {
   case UnexpectedInput(message: String)
-  case CannotHandleInput
+  case CannotHandleInput(message: String, stepName: String | TptpInput)
   case UnexpectedException(throwable: Throwable)
   case Timeout
 
   override def toString(): String = this match
-    case UnexpectedInput(message)       => message
-    case CannotHandleInput              => "CannotHandleInput"
-    case UnexpectedException(throwable) => s"unexpected exception: ${throwable.printStackTrace()}"
-    case Timeout                        => "Timeout"
+    case UnexpectedInput(message)             => message
+    case CannotHandleInput(message, stepName) => s"CannotHandleInput: $message (step: $stepName)"
+    case UnexpectedException(throwable)       => s"unexpected exception: ${throwable.printStackTrace()}"
+    case Timeout                              => "Timeout"
 }
 
 enum OtherFailureReason {
@@ -68,7 +68,7 @@ object SzsStatus {
   def failed(reason: FailedVerifiedReason): SzsStatus.FailedVerified = FailedVerified(reason)
   def timeout: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.Timeout)
   def unexpectedInput(message: String): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedInput(message))
-  def cannotHandleInput: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.CannotHandleInput)
+  def cannotHandleInput(message: String, stepName: String | TptpInput): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.CannotHandleInput(message, stepName))
   def unexpectedException(throwable: Throwable): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedException(throwable))
   def noConjectureFound(message: String): SzsStatus.NotVerified = unexpectedInput(message)
   def noRefutationFound(message: String): SzsStatus.NotVerified = unexpectedInput(message)
@@ -92,13 +92,13 @@ def checkProof(file: InputFile, timeout: Duration = 25.seconds)(using cwd: Cwd):
 
   result match {
     case Left(reason) => reason match {
-        case _: TimeOutException          => SzsStatus.timeout
-        case t: Throwable                 => SzsStatus.unexpectedException(t)
-        case InputSyntaxError(cause)      => SzsStatus.unexpectedInput(s"syntax error: $cause")
-        case CannotHandleInput(_, _)      => SzsStatus.cannotHandleInput
-        case NoConjectureFound(message)   => SzsStatus.noConjectureFound(message)
-        case NoRefutationFound(message)   => SzsStatus.noRefutationFound(message)
-        case reason: FailedVerifiedReason => SzsStatus.failed(reason)
+        case _: TimeOutException                  => SzsStatus.timeout
+        case t: Throwable                         => SzsStatus.unexpectedException(t)
+        case InputSyntaxError(cause)              => SzsStatus.unexpectedInput(s"syntax error: $cause")
+        case CannotHandleInput(message, stepName) => SzsStatus.cannotHandleInput(message, stepName)
+        case NoConjectureFound(message)           => SzsStatus.noConjectureFound(message)
+        case NoRefutationFound(message)           => SzsStatus.noRefutationFound(message)
+        case reason: FailedVerifiedReason         => SzsStatus.failed(reason)
       }
     case Right(_) => SzsStatus.Verified
   }
