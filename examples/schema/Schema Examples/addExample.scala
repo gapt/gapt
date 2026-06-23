@@ -368,7 +368,7 @@ object addExample extends TacticsProof {
   ctx += ProofDefinitionDeclaration(le"phi 0 y z", PhiNeg) 
 
   val FullProof_2_3_2 = instantiateProof(le"phi (s ( s 0)) (s (s (s 0)))   (s (s 0))  ")
-  val redCut_2_3_2    = cutNormal(FullProof_2_3_2)
+  val redCut_2_3_2    = cutNormal(FullProof_2_3_2) // reductive cut-elimination
   val thestruct_2_3_2 = StructCreators.extract(FullProof_2_3_2)
   val cs_2_3_2        = CharacteristicClauseSet(thestruct_2_3_2)
 
