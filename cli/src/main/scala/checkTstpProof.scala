@@ -4,7 +4,7 @@ import gapt.formats.tptp.check._
 import gapt.formats.OnDiskInputFile
 
 val usage = """
-|check-proof <PROOF>
+|./gapt-check <PROOF>
 |
 |Checks the correctness of a given proof.
 |PROOF is a path to a TSTP proof file""".stripMargin.strip

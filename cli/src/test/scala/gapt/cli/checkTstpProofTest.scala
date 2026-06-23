@@ -14,7 +14,7 @@ import scala.sys.process._
 class checkTstpProofTest extends Specification with BeforeAll {
   private val usageText =
     """
-      |check-proof <PROOF>
+      |./gapt-check <PROOF>
       |
       |Checks the correctness of a given proof.
       |PROOF is a path to a TSTP proof file""".stripMargin.strip
@@ -24,17 +24,25 @@ class checkTstpProofTest extends Specification with BeforeAll {
   object ProoverCompetitionRoot extends Cwd {
     def path: Path = RepoRoot.path / "tests" / "src" / "test" / "resources" / "proover_competition"
   }
+
   val checkTstpProofJarPath = RepoRoot.path / "cli" / "target" / "check-tstp-proof.jar"
+  val checkGaptZip = RepoRoot.path / "target" / "gapt-check.zip"
+  val checkGaptZipUnpackDirectory = RepoRoot.path / "target" / "gapt-check"
+  val checkGaptScript = RepoRoot.path / "target" / "gapt-check" / "gapt-check"
+  val checkGaptExamples = RepoRoot.path / "target" / "gapt-check" / "examples"
+  val testExamples = ProoverCompetitionRoot.path / "Proofs"
 
   private def assertExistsProofChecker(): Unit = {
-    assert(os.exists(checkTstpProofJarPath))
+    println(s"checkGaptZip: $checkGaptZip")
+    assert(os.exists(checkGaptZip))
+    os.remove.all(checkGaptZipUnpackDirectory)
+    val exitCode = Process(Seq("unzip", checkGaptZip.toString, "-d", checkGaptZipUnpackDirectory.toString)).!
+    assert(exitCode == 0)
+    assert(os.exists(checkGaptScript))
   }
 
   private def proofCheckerProcess(args: String*)(using cwd: Cwd): ProcessBuilder =
-    Process(
-      Seq("java", "-jar", checkTstpProofJarPath.toString) ++ args,
-      cwd.path.toIO
-    )
+    Process(Seq("sh", checkGaptScript.toString) ++ args, cwd.path.toIO)
 
   private def runWithExitCodeStdoutStderr(pb: ProcessBuilder): (Int, String, String) = {
     val stdout = scala.collection.mutable.ListBuffer[String]()
@@ -116,7 +124,7 @@ class checkTstpProofTest extends Specification with BeforeAll {
     def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {
       Fragments.foreach(paths) { path =>
         val fragment = f(path)
-        val relativePath = path.relativeTo(ProoverCompetitionRoot.path)
+        val relativePath = path.relativeTo(testExamples)
         val pathFragment =
           if path.last.startsWith("skip") then
             fragment.setExecution(Execution.result(skipped(s"not testing $relativePath as it is marked skipped")))
@@ -126,7 +134,7 @@ class checkTstpProofTest extends Specification with BeforeAll {
     }
 
     val correctProofs =
-      val correctProofPaths = os.walk(ProoverCompetitionRoot.path / "Proofs")
+      val correctProofPaths = os.walk(testExamples)
         .filter(_.baseName.startsWith("correct_"))
       foreachPath(correctProofPaths) { example =>
         val relativePath = example.relativeTo(ProoverCompetitionRoot.path)
@@ -134,7 +142,7 @@ class checkTstpProofTest extends Specification with BeforeAll {
       }
 
     val incorrectProofs =
-      val incorrectProofPaths = os.walk(ProoverCompetitionRoot.path / "Proofs")
+      val incorrectProofPaths = os.walk(testExamples)
         .filter(_.baseName.startsWith("incorrect_"))
       foreachPath(incorrectProofPaths) { example =>
         val relativePath = example.relativeTo(ProoverCompetitionRoot.path)
@@ -154,6 +162,13 @@ class checkTstpProofTest extends Specification with BeforeAll {
       |$correctProofs
       |fail incorrect proofs
       |$incorrectProofs
+      |
+      |smoke test package example correct
+      |${verifyCorrect(checkGaptExamples / "correct_example1_c_proof.p")}
+      |
+      |smoke test package example incorrect
+      |${failVerification(checkGaptExamples / "incorrect_example1_e_proof.p")}
+      |
     """.stripMargin
   }
 }
