@@ -164,14 +164,18 @@ object TptpDerivation {
   }
 
   // ensures the input file is syntactically correct TPTP
-  private def loadAsTptpFile(input: InputFile): Either[InputSyntaxError, TptpFile] = {
+  private def loadAsTptpFile(
+      input: InputFile
+  ): Either[InputSyntaxError, TptpFile] = {
     try Right(TptpImporter.loadWithoutIncludes(input))
     catch // In this case the input file was not valid TPTP
       case e: IllegalArgumentException => Left(InputSyntaxError(e))
   }
 
   // ensures that there are only AnnotatedFormula inputs
-  private def intoAnnotatedFormulaSteps(tptpFile: TptpFile): Either[CannotHandleInput, Seq[AnnotatedFormula]] = boundary {
+  private def intoAnnotatedFormulaSteps(
+      tptpFile: TptpFile
+  ): Either[CannotHandleInput, Seq[AnnotatedFormula]] = boundary {
     val formulas = tptpFile.inputs.map {
       case i: IncludeDirective =>
         break(Left(CannotHandleInput("cannot handle include directives", i)))
@@ -181,7 +185,9 @@ object TptpDerivation {
   }
 
   // ensures there are no steps with duplicate labels
-  private def intoUniqueMap(steps: Seq[AnnotatedFormula]): Either[DifferentFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
+  private def intoUniqueMap(
+      steps: Seq[AnnotatedFormula]
+  ): Either[DifferentFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
     val map = steps.foldLeft(Map.empty[String, AnnotatedFormula]) { (map, step) =>
       map.updatedWith(step.name) {
         case Some(formula) if step != formula =>
@@ -224,13 +230,18 @@ case class RootedTptpDerivation private (
 }
 
 object RootedTptpDerivation {
-  def fromDerivationAndRootLabel(derivation: TptpDerivation, rootLabel: String): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
+  def fromDerivationAndRootLabel(
+      derivation: TptpDerivation,
+      rootLabel: String
+  ): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
     val _ = derivation.get(rootLabel).getOrElse {
       break(Left(UnexpectedInput("end derivation label does not exist in proof")))
     }
 
     val usedAnnotatedFormulas = derivation.subDerivationRootedAt(rootLabel).getOrBreak
-    val usedSteps = usedAnnotatedFormulas.map { a => a.name -> parseStep(a).getOrBreak }.toMap
+    val usedSteps = usedAnnotatedFormulas.map {
+      a => a.name -> parseStep(a).getOrBreak
+    }.toMap
 
     val usedNegatedConjectures = usedSteps.values.collect { case s: TptpNegatedConjectureStep => s }
     if usedNegatedConjectures.exists(c => derivation.hasNonConjectureParent(c.name)) then {
@@ -256,7 +267,9 @@ object RootedTptpDerivation {
     Right(RootedTptpDerivation(usedSteps, rootLabel, context))
   }
 
-  def fromInputFileRefutation(file: InputFile): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
+  def fromInputFileRefutation(
+      file: InputFile
+  ): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
     val derivation = TptpDerivation.fromInputFile(file).getOrBreak
     val refutationStep = derivation.annotatedFormulas.filter(_.formula == Bottom()).singleOption.getOrElse {
       break(Left(NoRefutationFound("no unique $false formula found in derivation")))
@@ -264,7 +277,10 @@ object RootedTptpDerivation {
     RootedTptpDerivation.fromDerivationAndRootLabel(derivation, refutationStep.name)
   }
 
-  def fromInputFileAndRootLabel(file: InputFile, rootLabel: String): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
+  def fromInputFileAndRootLabel(
+      file: InputFile,
+      rootLabel: String
+  ): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
     val tptpProofDag = TptpDerivation.fromInputFile(file).getOrBreak
     fromDerivationAndRootLabel(tptpProofDag, rootLabel)
   }
@@ -273,14 +289,20 @@ object RootedTptpDerivation {
     val AnnotatedFormula(language, name, role, formula, annotations) = annotatedFormula
     language match {
       case "fof" | "cnf" => // we only support these languages for now
-      case language      => break(Left(UnexpectedInput(s"unsupported input language $language. used in input $annotatedFormula")))
+      case language =>
+        break(Left(UnexpectedInput(s"unsupported input language $language. used in input $annotatedFormula")))
     }
     role match {
-      case "axiom"              => parseAxiomStep(name, formula, annotations)
-      case "conjecture"         => parseConjectureStep(name, formula, annotations)
-      case "negated_conjecture" => parseNegatedConjectureStep(name, formula, annotations)
-      case "plain"              => parsePlainInferenceStep(name, formula, annotations)
-      case r                    => break(Left(UnexpectedInput(s"unsupported input role $r. used in input $annotatedFormula")))
+      case "axiom" =>
+        parseAxiomStep(name, formula, annotations)
+      case "conjecture" =>
+        parseConjectureStep(name, formula, annotations)
+      case "negated_conjecture" =>
+        parseNegatedConjectureStep(name, formula, annotations)
+      case "plain" =>
+        parsePlainInferenceStep(name, formula, annotations)
+      case r =>
+        break(Left(UnexpectedInput(s"unsupported input role $r. used in input $annotatedFormula")))
     }
   }
 
@@ -312,14 +334,19 @@ object RootedTptpDerivation {
   private def parseNegatedConjectureStep(
       name: String,
       formula: Formula,
-      annotations: Option[Annotations]
+      annotationsOption: Option[Annotations]
   ): Either[TptpDerivationImportError, TptpNegatedConjectureStep] = boundary { l ?=>
     val folFormula = parseFOLFormula(formula).getOrBreak(using l)
-    val ann = annotations.getOrElse { break(Left(UnexpectedInput("got negated conjecture without source"))) }
-    ann.source.parentLabels.distinct match {
-      case Seq()           => break(Left(NegatedConjectureWithoutParent("got negated conjecture without parents")))
-      case Seq(parent)     => Right(TptpNegatedConjectureStep(name, folFormula, parent, ann))
-      case Seq(parent, _*) => break(Left(NegatedConjectureWithMultipleDistinctParents()))
+    val annotations = annotationsOption.getOrElse {
+      break(Left(UnexpectedInput("got negated conjecture without source")))
+    }
+    annotations.source.parentLabels.distinct match {
+      case Seq() =>
+        break(Left(NegatedConjectureWithoutParent("got negated conjecture without parents")))
+      case Seq(parent) =>
+        Right(TptpNegatedConjectureStep(name, folFormula, parent, annotations))
+      case Seq(parent, _*) =>
+        break(Left(NegatedConjectureWithMultipleDistinctParents()))
     }
   }
 
@@ -329,12 +356,16 @@ object RootedTptpDerivation {
       annotationsOption: Option[Annotations]
   ): Either[TptpDerivationImportError, TptpSkolemizationStep | TptpPlainInferenceStep] = boundary {
     val folFormula = parseFOLFormula(formula).getOrBreak
-    val annotations = annotationsOption.getOrElse { break(Left(UnexpectedInput(s"got plain inference without source: $name"))) }
+    val annotations = annotationsOption.getOrElse {
+      break(Left(UnexpectedInput(s"got plain inference without source: $name")))
+    }
     annotations.source match {
       case s: Source.Internal => break(Left(CannotHandleInput("cannot handle internal sources", name)))
       case _                  =>
     }
-    val inference = annotations.source.asInferenceOption.getOrElse { break(Left(UnexpectedInput(s"got plain inference without inference record: $name"))) }
+    val inference = annotations.source.asInferenceOption.getOrElse {
+      break(Left(UnexpectedInput(s"got plain inference without inference record: $name")))
+    }
     val optionalInfo = annotations.optionalInfo
     inference.rule match {
       case "skolemize" => parseSkolemizationStep(name, folFormula, inference, optionalInfo)
