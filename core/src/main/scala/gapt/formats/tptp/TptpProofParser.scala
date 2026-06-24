@@ -166,7 +166,6 @@ case class SkolemizationStepWithoutBinding(
 ) extends TptpDerivationImportError {
   def message: String = s"skolemization step with name $stepName has no skolemize(_,_) binding"
 }
-
 case class CannotHandleIncludeDirectives() extends TptpDerivationImportError {
   def message: String = "cannot handle include directives"
 }
@@ -180,6 +179,9 @@ case class NoConjectureFound() extends TptpDerivationImportError {
   def message: String = s"no conjecture found: $message"
 }
 case class UnexpectedInput(message: String) extends TptpDerivationImportError
+case class ProofReconstructionError(stepName: String) extends TptpDerivationImportError {
+  def message: String = s"there was an error during proof reconstruction of step $stepName. this could mean a skolem symbol was not bound with a different type"
+}
 
 /**
 * Represents all the information inside a TptpDerivation.
@@ -460,14 +462,16 @@ object RootedTptpDerivation {
       optionalInfo: Seq[GeneralTerm]
   ): Either[TptpDerivationImportError, TptpSkolemizationStep] = boundary {
     val parent = inference.parentLabels match {
-      case Seq()         => break(Left(UnexpectedInput("expected at least one parent label")))
-      case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one parent label")))
+      case Seq()         => break(Left(CannotHandleInput(name, s"step $name: cannot handle skolemization step without parents")))
+      case Seq(_, _, _*) => break(Left(CannotHandleInput(name, s"step $name: cannot handle skolemization step with multiple parent labels")))
       case Seq(label)    => label
     }
     val newSkolemSymbols = inference.usefulInfo.collect {
-      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) => term.asInstanceOf[FOLConst]
-      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(_, _)) =>
-        break(Left(CannotHandleInput(name, "cannot handle multiple skolemizations in one step yet")))
+      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term: FOLConst)) => term
+      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) =>
+        break(Left(CannotHandleInput(name, s"step $name: cannot handle new_symbols(skolem, term) if the term is complex. got term $term")))
+      case TptpTerm("new_symbols", TptpTerm("skolem"), terms @ GeneralList(_, _*)) =>
+        break(Left(CannotHandleInput(name, s"step $name: cannot handle multiple skolemizations in one step yet. got $terms")))
     }
     val newSkolemSymbol = newSkolemSymbols match {
       case Seq()         => break(Left(SkolemizationStepWithoutNewSymbols(name)))

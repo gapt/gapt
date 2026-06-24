@@ -50,7 +50,10 @@ type LabelledSequent = Sequent[(String, FOLFormula)]
 def rootedTptpDerivationToLKProof(
     derivation: RootedTptpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization | DeskolemizationFailed, LKProof] = boundary {
+): Either[
+  IncorrectInference | IncorrectSkolemization | DeskolemizationFailed | ProofReconstructionError,
+  LKProof
+] = boundary {
   given Maybe[MutableContext] = (MutableContext.guess(derivation.usedDerivationSteps.map(_.formula))).newMutable
   val stepProofsByName: Map[String, (LabelledSequent, LKProof)] = derivation.usedDerivationSteps.map { s =>
     val sequentToProve: LabelledSequent = s match {
@@ -106,7 +109,15 @@ def rootedTptpDerivationToLKProof(
         }
         Some(forallRight)
       }
-      case _ => prover.getLKProof(sequentToProve.map(_._2))
+      case _ =>
+        try {
+          prover.getLKProof(sequentToProve.map(_._2))
+        } catch
+          case e: IllegalArgumentException =>
+            // this means there was an issue with adding to context in prover
+            // which likely means a skolem constant got bound with different
+            // types which is incorrect
+            break(Left(ProofReconstructionError(s.name)))
     }
 
     val proof = proofOption match {
