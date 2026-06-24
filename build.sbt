@@ -333,6 +333,8 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
 
         log.info(s"Created zip: ${zip.getAbsolutePath}")
 
+        IO.delete(out)
+
         zip
       }
     )),
