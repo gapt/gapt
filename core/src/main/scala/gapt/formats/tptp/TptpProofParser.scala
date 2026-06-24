@@ -40,18 +40,38 @@ sealed trait TptpDerivationStep {
   def formula: FOLFormula
   def parents: Seq[String]
 }
-case class TptpConjectureStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep {
+case class TptpConjectureStep(
+    name: String,
+    formula: FOLFormula,
+    annotationsOption: Option[Annotations]
+) extends TptpDerivationStep {
   def parents: Seq[String] = Seq.empty
   def role: String = "conjecture"
 }
-case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep {
+case class TptpAxiomStep(
+    name: String,
+    formula: FOLFormula,
+    annotationsOption: Option[Annotations]
+) extends TptpDerivationStep {
   def parents: Seq[String] = Seq.empty
   def role: String = "axiom"
 }
-case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpDerivationStep {
+case class TptpPlainInferenceStep(
+    name: String,
+    formula: FOLFormula,
+    parents: Seq[String],
+    annotations: Annotations,
+    source: Source.Inference
+) extends TptpDerivationStep {
   def role: String = "plain"
 }
-case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpDerivationStep {
+case class TptpNegatedConjectureStep(
+    name: String,
+    formula: FOLFormula,
+    parent: String,
+    annotations: Annotations,
+    source: Source.Inference
+) extends TptpDerivationStep {
   def role: String = "negated_conjecture"
   def parents: Seq[String] = Seq(parent)
 }
@@ -59,6 +79,7 @@ case class TptpSkolemizationStep(
     name: String,
     formula: FOLFormula,
     parent: String,
+    source: Source.Inference,
     newSkolemSymbol: FOLFunctionConst,
     contextVariables: Seq[FOLVar],
     skolemizedSymbol: FOLVar,
@@ -71,25 +92,52 @@ case class TptpSkolemizationStep(
 sealed trait TptpDerivationImportError {
   def message: String
 }
-case class InputSyntaxError(cause: IllegalArgumentException) extends TptpDerivationImportError {
+case class InputSyntaxError(
+    cause: IllegalArgumentException
+) extends TptpDerivationImportError {
   override def message: String = cause.getMessage
 }
-case class DifferentFormulasWithSameName(message: String) extends TptpDerivationImportError
+case class DistinctFormulasWithSameName(
+    label: String
+) extends TptpDerivationImportError {
+  override def message: String = s"there are multiple distinct formulas with the same name: $label"
+}
 case class InferenceCycle() extends TptpDerivationImportError {
   def message: String = "inference cycle detected"
 }
-case class StepWithMissingParents(stepName: String) extends TptpDerivationImportError {
+case class StepWithMissingParents(
+    stepName: String
+) extends TptpDerivationImportError {
   def message = s"$stepName has parent labels that are not in the derivation"
 }
-case class StepWithInvalidStatus(message: String, stepName: String) extends TptpDerivationImportError
-case class NegatedConjectureStepWithNonConjectureParent(message: String) extends TptpDerivationImportError
-case class NegatedConjectureWithoutParent(message: String) extends TptpDerivationImportError
+case class StepWithInvalidStatus(
+    stepName: String,
+    actualStatuses: Iterable[String],
+    validStatuses: Iterable[String]
+) extends TptpDerivationImportError {
+  override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
+}
+case class NegatedConjectureStepWithNonConjectureParent(
+    message: String
+) extends TptpDerivationImportError
+case class NegatedConjectureWithoutParent(
+    message: String
+) extends TptpDerivationImportError
 case class NegatedConjectureWithMultipleDistinctParents() extends TptpDerivationImportError {
   def message: String = "got negated conjecture with multiple distinct parents"
 }
-case class PlainInferenceWithConjectureParent(message: String, step: TptpPlainInferenceStep) extends TptpDerivationImportError
-case class IncorrectInference(message: String, stepName: String) extends TptpDerivationImportError
-case class DeskolemizationFailed(skolemizedProof: LKProof, cause: Option[Throwable]) extends TptpDerivationImportError {
+case class PlainInferenceWithConjectureParent(
+    message: String,
+    step: TptpPlainInferenceStep
+) extends TptpDerivationImportError
+case class IncorrectInference(
+    message: String,
+    stepName: String
+) extends TptpDerivationImportError
+case class DeskolemizationFailed(
+    skolemizedProof: LKProof,
+    cause: Option[Throwable]
+) extends TptpDerivationImportError {
   def message: String = cause match {
     case Some(t) => s"deskolemization failed: ${t.getMessage}"
     case None    => "deskolemization failed"
@@ -187,13 +235,12 @@ object TptpDerivation {
   // ensures there are no steps with duplicate labels
   private def intoUniqueMap(
       steps: Seq[AnnotatedFormula]
-  ): Either[DifferentFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
+  ): Either[DistinctFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
     val map = steps.foldLeft(Map.empty[String, AnnotatedFormula]) { (map, step) =>
       map.updatedWith(step.name) {
         case Some(formula) if step != formula =>
-          break(Left(DifferentFormulasWithSameName(
-            s"""formula $formula with name ${formula.name} is already present. Attempted to add another formula $step with the same name.""".stripMargin
-          )))
+          break(Left(DistinctFormulasWithSameName(formula.name)))
+
         case _ => Some(step)
       }
     }
@@ -340,11 +387,15 @@ object RootedTptpDerivation {
     val annotations = annotationsOption.getOrElse {
       break(Left(UnexpectedInput("got negated conjecture without source")))
     }
+    val inference = annotations.source match {
+      case s: Source.Inference => s
+      case _                   => break(Left(UnexpectedInput(s"got negated conjecture inference without inference record: $name")))
+    }
     annotations.source.parentLabels.distinct match {
       case Seq() =>
         break(Left(NegatedConjectureWithoutParent("got negated conjecture without parents")))
       case Seq(parent) =>
-        Right(TptpNegatedConjectureStep(name, folFormula, parent, annotations))
+        Right(TptpNegatedConjectureStep(name, folFormula, parent, annotations, inference))
       case Seq(parent, _*) =>
         break(Left(NegatedConjectureWithMultipleDistinctParents()))
     }
@@ -359,13 +410,12 @@ object RootedTptpDerivation {
     val annotations = annotationsOption.getOrElse {
       break(Left(UnexpectedInput(s"got plain inference without source: $name")))
     }
-    annotations.source match {
-      case s: Source.Internal => break(Left(CannotHandleInput("cannot handle internal sources", name)))
-      case _                  =>
+    val inference = annotations.source match {
+      case s: Source.Inference => s
+      case s: Source.Internal  => break(Left(CannotHandleInput("cannot handle internal sources", name)))
+      case _                   => break(Left(UnexpectedInput(s"got plain inference without inference record: $name")))
     }
-    val inference = annotations.source.asInferenceOption.getOrElse {
-      break(Left(UnexpectedInput(s"got plain inference without inference record: $name")))
-    }
+
     val optionalInfo = annotations.optionalInfo
     inference.rule match {
       case "skolemize" => parseSkolemizationStep(name, folFormula, inference, optionalInfo)
@@ -374,7 +424,8 @@ object RootedTptpDerivation {
           name,
           folFormula,
           annotations.source.parentLabels,
-          annotations
+          annotations,
+          inference
         ))
     }
   }
@@ -424,6 +475,7 @@ object RootedTptpDerivation {
       name,
       formula,
       parent,
+      inference,
       skolemFunctionConst,
       contextVariables,
       boundVariable,
@@ -749,15 +801,15 @@ extension (annotatedFormula: AnnotatedFormula) {
 
 extension (step: TptpDerivationStep) {
   def annotationsOption: Option[Annotations] = step match {
-    case TptpConjectureStep(_, _, annotationsOption) =>
-      annotationsOption
-    case TptpAxiomStep(_, _, annotationsOption) =>
-      annotationsOption
-    case TptpPlainInferenceStep(_, _, _, annotations) =>
-      Some(annotations)
-    case TptpNegatedConjectureStep(_, _, _, annotations) =>
-      Some(annotations)
-    case TptpSkolemizationStep(_, _, _, _, _, _, annotations) =>
-      Some(annotations)
+    case s: TptpConjectureStep =>
+      s.annotationsOption
+    case s: TptpAxiomStep =>
+      s.annotationsOption
+    case s: TptpPlainInferenceStep =>
+      Some(s.annotations)
+    case s: TptpNegatedConjectureStep =>
+      Some(s.annotations)
+    case s: TptpSkolemizationStep =>
+      Some(s.annotations)
   }
 }

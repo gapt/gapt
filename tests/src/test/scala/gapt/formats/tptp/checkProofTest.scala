@@ -15,7 +15,7 @@ import gapt.formats.tptp.IncorrectInference
 import gapt.formats.tptp.NegatedConjectureStepWithNonConjectureParent
 import gapt.formats.tptp.NegatedConjectureWithoutParent
 import gapt.formats.tptp.PlainInferenceWithConjectureParent
-import gapt.formats.tptp.DifferentFormulasWithSameName
+import gapt.formats.tptp.DistinctFormulasWithSameName
 import gapt.formats.tptp.InferenceCycle
 import gapt.formats.tptp.StepWithInvalidStatus
 import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
@@ -658,7 +658,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DifferentFormulasWithSameName]
+            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DistinctFormulasWithSameName]
           }
         }
 
