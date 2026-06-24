@@ -71,6 +71,10 @@ enum SzsStatus {
     case VerifiedBad(reason) => s"VerifiedBad : $reason"
     case Unknown(_)          => "Unknown"
   }
+  def isGood: Boolean = this == VerifiedGood
+  def isBad: Boolean = this.isInstanceOf[VerifiedBad]
+  def isUnknown: Boolean = this.isInstanceOf[Unknown]
+
   def statusLine: String = s"%SZS status $status"
 }
 
