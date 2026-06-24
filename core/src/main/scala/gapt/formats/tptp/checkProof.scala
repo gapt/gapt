@@ -12,19 +12,6 @@ import gapt.expr.formula.Formula
 import gapt.utils.TimeOutException
 import java.nio.file.Paths
 
-enum NotVerifiedReason {
-  case UnexpectedInput(message: String)
-  case CannotHandleInput(message: String, stepName: String | TptpInput)
-  case UnexpectedException(throwable: Throwable)
-  case Timeout
-
-  override def toString(): String = this match
-    case UnexpectedInput(message)             => message
-    case CannotHandleInput(message, stepName) => s"CannotHandleInput: $message (step: $stepName)"
-    case UnexpectedException(throwable)       => s"unexpected exception: ${throwable.printStackTrace()}"
-    case Timeout                              => "Timeout"
-}
-
 enum OtherFailureReason {
   case SourceMissing(stepName: String)
   case FileDirectiveMissing(stepName: String)
@@ -55,37 +42,74 @@ enum OtherFailureReason {
       expected: Formula,
       actual: Formula
   )
+
+  def message: String = this match
+    case s: SourceMissing =>
+      s"step ${s.stepName} is missing a source"
+    case s: FileDirectiveMissing =>
+      s"step ${s.stepName} is missing a file directive"
+    case s: FileDirectiveLabelMissing =>
+      s"step ${s.stepName} is missing a file directive label"
+    case s: FileDirectiveFileNotFound =>
+      s"step ${s.stepName} has a file source (${s.absolutePath}) that could not be found"
+    case s: FileDirectiveInvalidSyntax =>
+      s"step ${s.stepName} has a file source (${s.absolutePath}) with invalid TPTP syntax"
+    case s: FileDirectiveFileDoesNotHaveLabel =>
+      s"step ${s.stepName} has a file source (${s.absolutePath}) that does not have the label '${s.label}' referred to in the file directive"
+    case s: FileDirectiveFileHasMultipleDistinctFormulasWithLabel =>
+      s"step ${s.stepName} has a file source (${s.absolutePath}) that has multiple distinct formulas with the same label '${s.label}'"
+    case s: FileDirectiveStepDoesNotMatchRole =>
+      s"step ${s.stepName} has a file source (${s.absolutePath}) that points to a formula with name ${s.label} that does not have the same role as the step. expected: ${s.expectedRole}, actual: ${s.actualRole}"
+    case s: FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula =>
+      s"step ${s.stepName} has a file source (${s.absolutePath}) that points to a formula with name ${s.label} that is not alpha-equivalent to the claimed formula. expected: ${s.expected}, actual: ${s.actual}"
+
 }
 import OtherFailureReason._
 
-type FailedVerifiedReason =
-  TptpDerivationImportError | OtherFailureReason
+type VerifiedBadReason =
+  IncorrectInference
+    | IncorrectSkolemization
+    | DeskolemizationFailed
+    | InferenceCycle
+    | OtherFailureReason
+    | StepWithInvalidStatus
+    | StepWithMissingParents
+    | NegatedConjectureStepWithNonConjectureParent
+    | NegatedConjectureWithoutParent
+    | PlainInferenceWithConjectureParent
+    | NegatedConjectureWithMultipleDistinctParents
+    | DistinctFormulasWithSameName
+
+type UnknownReason =
+  Throwable
+    | InputSyntaxError
+    | CannotHandleInput
+    | NoConjectureFound
+    | NoRefutationFound
+    | SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm
+    | SkolemizationStepWithoutBinding
+    | SkolemizationStepWithoutNewSymbols
+    | UnexpectedInput
+    | CannotHandleIncludeDirectives
 
 enum SzsStatus {
   case VerifiedGood
-  case VerifiedBad(reason: FailedVerifiedReason)
-  case Unknown(reason: NotVerifiedReason)
+  case VerifiedBad(reason: VerifiedBadReason)
+  case Unknown(reason: UnknownReason)
+  case Timeout
 
   def status: String = this match {
-    case VerifiedGood        => "VerifiedGood"
-    case VerifiedBad(reason) => s"VerifiedBad : $reason"
-    case Unknown(_)          => "Unknown"
+    case VerifiedGood                                   => "VerifiedGood"
+    case VerifiedBad(reason: TptpDerivationImportError) => s"VerifiedBad : ${reason.message}"
+    case VerifiedBad(reason: OtherFailureReason)        => s"VerifiedBad : ${reason.toString}"
+    case Unknown(_)                                     => "Unknown"
+    case Timeout                                        => "Timeout"
   }
   def isGood: Boolean = this == VerifiedGood
   def isBad: Boolean = this.isInstanceOf[VerifiedBad]
   def isUnknown: Boolean = this.isInstanceOf[Unknown]
 
   def statusLine: String = s"%SZS status $status"
-}
-
-object SzsStatus {
-  def failed(reason: FailedVerifiedReason): SzsStatus.VerifiedBad = VerifiedBad(reason)
-  def timeout: SzsStatus.Unknown = Unknown(NotVerifiedReason.Timeout)
-  def unexpectedInput(message: String): SzsStatus.Unknown = Unknown(NotVerifiedReason.UnexpectedInput(message))
-  def cannotHandleInput(message: String, stepName: String | TptpInput): SzsStatus.Unknown = Unknown(NotVerifiedReason.CannotHandleInput(message, stepName))
-  def unexpectedException(throwable: Throwable): SzsStatus.Unknown = Unknown(NotVerifiedReason.UnexpectedException(throwable))
-  def noConjectureFound(message: String): SzsStatus.Unknown = unexpectedInput(message)
-  def noRefutationFound(message: String): SzsStatus.Unknown = unexpectedInput(message)
 }
 
 def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 25.seconds): SzsStatus = {
@@ -122,13 +146,9 @@ def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 
 
   result match {
     case Left(reason) => reason match {
-        case _: TimeOutException                  => SzsStatus.timeout
-        case t: Throwable                         => SzsStatus.unexpectedException(t)
-        case InputSyntaxError(cause)              => SzsStatus.unexpectedInput(s"syntax error: $cause")
-        case CannotHandleInput(message, stepName) => SzsStatus.cannotHandleInput(message, stepName)
-        case NoConjectureFound(message)           => SzsStatus.noConjectureFound(message)
-        case NoRefutationFound(message)           => SzsStatus.noRefutationFound(message)
-        case reason: FailedVerifiedReason         => SzsStatus.failed(reason)
+        case _: TimeOutException       => SzsStatus.Timeout
+        case r: UnknownReason          => SzsStatus.Unknown(r)
+        case reason: VerifiedBadReason => SzsStatus.VerifiedBad(reason)
       }
     case Right(_) => SzsStatus.VerifiedGood
   }
@@ -137,7 +157,7 @@ def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 
 private def checkStepHasCorrectFileDirective(
     s: TptpAxiomStep | TptpConjectureStep,
     fileDirectiveRoot: os.Path
-): Either[FailedVerifiedReason, Unit] = boundary {
+): Either[VerifiedBadReason, Unit] = boundary {
   val annotations = s.annotationsOption.getOrElse {
     break(Left(SourceMissing(s.name)))
   }

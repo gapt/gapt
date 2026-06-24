@@ -24,6 +24,8 @@ import org.specs2.execute.PendingException
 import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
 import gapt.formats.tptp.StepWithMissingParents
 import gapt.formats.tptp.DeskolemizationFailed
+import gapt.formats.tptp.IncorrectSkolemization
+import gapt.formats.tptp.CannotHandleInput
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = testResourcesRoot / "proover_competition" / "Proofs"
@@ -270,7 +272,7 @@ class checkProofUnitTest extends mutable.Specification {
           }
         }
 
-        "fail on skolemization step without new_symbols" in {
+        "return unknown on skolemization step without new_symbols" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
             |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
@@ -278,11 +280,11 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.Unknown(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
           }
         }
 
-        "not verify skolemization step with more than one new symbol" in {
+        "return unknown on skolemization step with more than one new symbol" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, ![X, Y]: p(X, Y)).
             |fof(c, conjecture, ![X]: p(X, a)).
@@ -290,11 +292,11 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK0, sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0), skolemize(Y, sK1)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.Unknown(_: NotVerifiedReason.CannotHandleInput) => ok
+            case SzsStatus.Unknown(_: CannotHandleInput) => ok
           }
         }
 
-        "fail on skolemization step that doesn't specify variable to be skolemized" in {
+        "return unknown on skolemization step that doesn't specify variable to be skolemized" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
             |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
@@ -302,7 +304,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.Unknown(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
           }
         }
 
@@ -314,7 +316,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(reason: IncorrectSkolemization) => reason.stepName must_== "nc_skolem"
           }
         }
 
@@ -326,7 +328,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(a, a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DeskolemizationFailed]
           }
         }
 
@@ -746,7 +748,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(c, conjecture, p).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-          checkProof(input) must_== SzsStatus.cannotHandleInput
+          checkProof(input) must beAnInstanceOf[SzsStatus.Unknown]
         }
       }
 
