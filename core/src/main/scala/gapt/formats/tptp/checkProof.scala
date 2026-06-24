@@ -99,6 +99,21 @@ def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 
             case _ =>
           }
 
+          val usedNegatedConjectures = refutation.usedDerivationSteps.collect { case s: TptpNegatedConjectureStep => s }
+          usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
+            break(Left(StepWithInvalidStatus(s"there is a negated conjecture step with no status or an ambiguous status. should be cth", s.name)))
+          }
+
+          val usedPlainInferences = refutation.usedDerivationSteps.collect { case a: TptpPlainInferenceStep => a }
+          usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
+            break(Left(StepWithInvalidStatus("there is a plain inference with no status or an ambiguous status. should be either thm or esa", s.name)))
+          }
+
+          val usedSkolemizationSteps = refutation.usedDerivationSteps.collect { case s: TptpSkolemizationStep => s }
+          usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
+            break(Left(StepWithInvalidStatus("there is a skolemization step with no status or an ambiguous status. should be esa", s.name)))
+          }
+
           TptpImporter.loadAsLKRefutation(file)
         }
       }
@@ -174,4 +189,37 @@ private def checkStepHasCorrectFileDirective(
   }
 
   Right(())
+}
+
+extension (annotations: Option[Annotations]) {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
+    val ann = annotations.getOrElse { break(false) }
+    val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
+    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse { break(false) }
+
+    statuses.contains(inferenceStatus)
+  }
+}
+
+extension (step: TptpDerivationStep) {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
+    step.annotationsOption.hasUnambiguousStatusAmong(statuses)
+  }
+}
+
+extension (gt: GeneralTerm) {
+  def asStatus: Option[String] = gt match {
+    case TptpTerm("status", TptpTerm(value)) => Some(value)
+    case _                                   => None
+  }
+}
+
+extension (usefulInfo: Seq[GeneralTerm]) {
+  def statusSet: Set[String] =
+    usefulInfo.flatMap(_.asStatus).toSet
+}
+
+extension (inference: Source.Inference) {
+  def statuses: Set[String] =
+    inference.usefulInfo.statusSet
 }
