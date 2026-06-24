@@ -13,7 +13,7 @@ fof(marriage, axiom,
     in_love(Groom, Bride)).
 
 %----Conjecture: someone is in love
-fof(c, conjecture,
+fof(conjecture, conjecture,
     ? [X] :
     ? [Y] :
     in_love(X, Y)).
