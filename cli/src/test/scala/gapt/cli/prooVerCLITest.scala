@@ -105,7 +105,7 @@ class prooVerCLITest extends Specification with BeforeAll {
         proofCheckerProcess(example.toString).!!!
 
       (exitCode must_== 0).and(
-        stdout must_== "%SZS status Verified"
+        stdout must_== "%SZS status VerifiedGood"
       )
     }
 
@@ -114,7 +114,7 @@ class prooVerCLITest extends Specification with BeforeAll {
         proofCheckerProcess(example.toString).!!!
 
       (exitCode must_== 0)
-        .and(stdout must startWith("%SZS status FailedVerified"))
+        .and(stdout must startWith("%SZS status VerifiedBad"))
         .and(stdout.linesIterator.take(2).size must_== 1)
     }
 

@@ -39,16 +39,16 @@ class checkProofUnitTest extends mutable.Specification {
         val input = InputFile.fromString("""
         |fof(c, conjecture, $true).
         |fof(nc, negated_conjecture, $false, inference(nc, [status(cth)], [c])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "not verify an empty input file" in {
-        checkProof(InputFile.fromString("")) must beAnInstanceOf[SzsStatus.NotVerified]
+        checkProof(InputFile.fromString("")) must beAnInstanceOf[SzsStatus.Unknown]
       }
 
       "not verify an input file without a conjecture" in {
         val input = InputFile.fromString("fof(a1, axiom, p(a) & ~p(b), file('example1_c.p',a1)).")
-        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
+        checkProof(input) must beAnInstanceOf[SzsStatus.Unknown]
       }
 
       "not verify an input file without a $false inference" in {
@@ -56,7 +56,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(a, axiom, p(a)).
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, ~p(a), inference(negated_conjecture, [status(cth)], [c])).""".stripMargin)
-        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
+        checkProof(input) must beAnInstanceOf[SzsStatus.Unknown]
       }
 
       "fail on negated conjecture if conclusion is not implied by negation of conjecture" in {
@@ -67,7 +67,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[IncorrectInference]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[IncorrectInference]
         }
       }
 
@@ -78,7 +78,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p(a)).
         |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, a2])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on negated conjecture step with thm status" in {
@@ -88,7 +88,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -99,7 +99,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -110,7 +110,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -120,7 +120,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p, file('Problems/test2.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on negated conjecture step whose parent is not a conjecture" in {
@@ -130,7 +130,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [a1])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureStepWithNonConjectureParent]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[NegatedConjectureStepWithNonConjectureParent]
         }
       }
 
@@ -141,7 +141,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureWithoutParent]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[NegatedConjectureWithoutParent]
         }
       }
 
@@ -152,7 +152,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c, a1])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[NegatedConjectureWithMultipleDistinctParents]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[NegatedConjectureWithMultipleDistinctParents]
         }
       }
 
@@ -162,7 +162,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(c, conjecture, p, file('Problems/test2.p', c)).
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c, c])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on plain inference without parents if formula is not valid" in {
@@ -172,7 +172,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(i: IncorrectInference) => i.stepName must_== "cont"
+          case SzsStatus.VerifiedBad(i: IncorrectInference) => i.stepName must_== "cont"
         }
       }
 
@@ -183,7 +183,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
           |fof(i, plain, q | ~q, inference(tautology, [status(thm)], [])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc, i])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on plain inference without status" in {
@@ -193,7 +193,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -204,7 +204,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm),status(esa)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -215,7 +215,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -225,7 +225,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p, file('Problems/test2.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(esa)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on plain inference with cth status" in {
@@ -235,7 +235,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -247,7 +247,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(inf_p, plain, p, inference(p, [status(thm)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
         }
       }
 
@@ -258,7 +258,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "verify input that contains inferences with strong quantifiers if inference is easy" in {
@@ -267,7 +267,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, ?[X]: p(X), file('Problems/test3.p', c)).
         |fof(nc, negated_conjecture, ~(?[X]: p(X)), inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_=== SzsStatus.Verified
+        checkProof(input) must_=== SzsStatus.VerifiedGood
       }
 
       "fail on skolemization step without esa status" in {
@@ -278,7 +278,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
         }
       }
 
@@ -290,7 +290,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
+          case SzsStatus.VerifiedBad(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
         }
       }
 
@@ -302,7 +302,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(sK0, sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0), skolemize(Y, sK1)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.NotVerified(_: NotVerifiedReason.CannotHandleInput) => ok
+          case SzsStatus.Unknown(_: NotVerifiedReason.CannotHandleInput) => ok
         }
       }
 
@@ -314,7 +314,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
+          case SzsStatus.VerifiedBad(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
         }
       }
 
@@ -326,7 +326,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
+          case SzsStatus.VerifiedBad(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
         }
       }
 
@@ -338,7 +338,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(a, a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
+          case SzsStatus.VerifiedBad(reason: IncorrectInference) => reason.stepName must_== "nc_skolem"
         }
       }
 
@@ -352,7 +352,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(r) => r must beAnInstanceOf[DeskolemizationFailed]
+          case SzsStatus.VerifiedBad(r) => r must beAnInstanceOf[DeskolemizationFailed]
         }
       }
 
@@ -364,7 +364,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(i, plain, p(a), inference(instance, [status(thm)], [a])).
           |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
           |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [i, nc_skolem])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on axiom step without thm status" in {
@@ -375,7 +375,7 @@ class checkProofUnitTest extends mutable.Specification {
           """.stripMargin)
         todo("not clear how to enforce this since axiom should also have file directive which doesn't allow setting status")
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: StepWithInvalidStatus) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: StepWithInvalidStatus) => reason.stepName must_== "a"
         }
       }
 
@@ -387,7 +387,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
           """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomSourceMissing) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomSourceMissing) => reason.stepName must_== "a"
         }
       }
 
@@ -399,7 +399,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveMissing) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveMissing) => reason.stepName must_== "a"
         }
       }
 
@@ -411,7 +411,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveLabelMissing) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveLabelMissing) => reason.stepName must_== "a"
         }
       }
 
@@ -423,7 +423,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveFileNotFound) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFileNotFound) => reason.stepName must_== "a"
         }
       }
 
@@ -435,7 +435,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveInvalidSyntax) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveInvalidSyntax) => reason.stepName must_== "a"
         }
       }
 
@@ -447,7 +447,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "a"
         }
       }
 
@@ -459,7 +459,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
         }
       }
 
@@ -471,7 +471,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "a"
         }
       }
 
@@ -483,7 +483,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason: OtherFailureReason.AxiomFileDirectiveStepIsNotAnAxiom) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveStepIsNotAnAxiom) => reason.stepName must_== "a"
         }
       }
 
@@ -494,7 +494,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
         """.stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "verify axiom step even if label in problem file differs from label in proof file" in {
@@ -504,7 +504,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
         """.stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "verify axiom step even if there are steps with same label, if they are equal in role and have alpha-equivalent formulas" in {
@@ -514,7 +514,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
           |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
         """.stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "verify axiom step if given correct absolute path" in {
@@ -524,7 +524,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
           |fof(cont, plain, $$false, inference(falsum, [status(thm)], [a1, nc])).
         """.stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on proof with two steps with the same name if proof steps are different" in {
@@ -535,7 +535,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[DifferentFormulasWithSameName]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DifferentFormulasWithSameName]
         }
       }
 
@@ -546,7 +546,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "fail on proof with inference steps that form a 1-step cycle" in {
@@ -556,7 +556,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [cont])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[InferenceCycle]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[InferenceCycle]
         }
       }
 
@@ -568,7 +568,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(cont1, plain, p, inference(fromFalsum, [status(thm)], [cont2])).
         |fof(cont2, plain, $false, inference(falsum, [status(thm)], [cont1, nc])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[InferenceCycle]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[InferenceCycle]
         }
       }
 
@@ -579,7 +579,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
           |fof(cont2, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
         checkProof(input) must beLike {
-          case SzsStatus.FailedVerified(reason) => reason must beAnInstanceOf[StepWithMissingParents]
+          case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithMissingParents]
         }
       }
 
@@ -591,7 +591,7 @@ class checkProofUnitTest extends mutable.Specification {
           |fof(c, conjecture, p, file('Problems/test2.p', c))
           |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c]))
           |fof(cont2, plain, $false, inference(falsum, [status(thm)], [nc, a]))""".stripMargin)
-        checkProof(input) must beAnInstanceOf[SzsStatus.NotVerified]
+        checkProof(input) must beAnInstanceOf[SzsStatus.Unknown]
       }
 
       "not verify if input has include directives (we do not support this yet)" in {
@@ -612,7 +612,7 @@ class checkProofUnitTest extends mutable.Specification {
         |fof(c, conjecture, p).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-        checkProof(input) must_== SzsStatus.Verified
+        checkProof(input) must_== SzsStatus.VerifiedGood
       }
 
       "do fail if a skolem symbol has a symbol occurring in the conjecture" in todo
@@ -655,12 +655,12 @@ class checkProofExampleTest extends Specification {
     def spec(check: InputFile => SzsStatus): Fragments = {
       val correctProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
-        s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.Verified)
+        s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.VerifiedGood)
       }
 
       val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
-        s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.FailedVerified])
+        s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.VerifiedBad])
       }
 
       correctProofs ^ incorrectProofs

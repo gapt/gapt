@@ -52,26 +52,26 @@ type FailedVerifiedReason =
   TptpDerivationImportError | OtherFailureReason
 
 enum SzsStatus {
-  case Verified
-  case FailedVerified(reason: FailedVerifiedReason)
-  case NotVerified(reason: NotVerifiedReason)
+  case VerifiedGood
+  case VerifiedBad(reason: FailedVerifiedReason)
+  case Unknown(reason: NotVerifiedReason)
 
   def status: String = this match {
-    case Verified               => "Verified"
-    case FailedVerified(reason) => s"FailedVerified : $reason"
-    case NotVerified(_)         => "NotVerified"
+    case VerifiedGood        => "VerifiedGood"
+    case VerifiedBad(reason) => s"VerifiedBad : $reason"
+    case Unknown(_)          => "Unknown"
   }
   def statusLine: String = s"%SZS status $status"
 }
 
 object SzsStatus {
-  def failed(reason: FailedVerifiedReason): SzsStatus.FailedVerified = FailedVerified(reason)
-  def timeout: SzsStatus.NotVerified = NotVerified(NotVerifiedReason.Timeout)
-  def unexpectedInput(message: String): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedInput(message))
-  def cannotHandleInput(message: String, stepName: String | TptpInput): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.CannotHandleInput(message, stepName))
-  def unexpectedException(throwable: Throwable): SzsStatus.NotVerified = NotVerified(NotVerifiedReason.UnexpectedException(throwable))
-  def noConjectureFound(message: String): SzsStatus.NotVerified = unexpectedInput(message)
-  def noRefutationFound(message: String): SzsStatus.NotVerified = unexpectedInput(message)
+  def failed(reason: FailedVerifiedReason): SzsStatus.VerifiedBad = VerifiedBad(reason)
+  def timeout: SzsStatus.Unknown = Unknown(NotVerifiedReason.Timeout)
+  def unexpectedInput(message: String): SzsStatus.Unknown = Unknown(NotVerifiedReason.UnexpectedInput(message))
+  def cannotHandleInput(message: String, stepName: String | TptpInput): SzsStatus.Unknown = Unknown(NotVerifiedReason.CannotHandleInput(message, stepName))
+  def unexpectedException(throwable: Throwable): SzsStatus.Unknown = Unknown(NotVerifiedReason.UnexpectedException(throwable))
+  def noConjectureFound(message: String): SzsStatus.Unknown = unexpectedInput(message)
+  def noRefutationFound(message: String): SzsStatus.Unknown = unexpectedInput(message)
 }
 
 def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 25.seconds): SzsStatus = {
@@ -98,7 +98,7 @@ def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 
         case NoRefutationFound(message)           => SzsStatus.noRefutationFound(message)
         case reason: FailedVerifiedReason         => SzsStatus.failed(reason)
       }
-    case Right(_) => SzsStatus.Verified
+    case Right(_) => SzsStatus.VerifiedGood
   }
 }
 
