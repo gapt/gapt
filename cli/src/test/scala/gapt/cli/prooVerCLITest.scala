@@ -2,7 +2,7 @@ package gapt.cli
 
 import org.specs2.Specification
 import org.specs2.execute.Result
-import org.specs2.specification.BeforeAll
+import org.specs2.specification.{BeforeAll, AfterAll}
 import org.specs2.specification.core.Execution
 import org.specs2.specification.core.Fragment
 import org.specs2.specification.core.Fragments
@@ -11,7 +11,7 @@ import org.specs2.specification.core.SpecStructure
 import os.Path
 import scala.sys.process._
 
-class prooVerCLITest extends Specification with BeforeAll {
+class prooVerCLITest extends Specification with BeforeAll with AfterAll {
   private val usageText =
     """
       |./gapt-check <PROOF>
@@ -55,6 +55,7 @@ class prooVerCLITest extends Specification with BeforeAll {
     private def !!! : (Int, String, String) = runWithExitCodeStdoutStderr(pb)
 
   override def beforeAll(): Unit = prepareGaptCheckScript()
+  override def afterAll(): Unit = os.remove.all(prooVerCLIZipUnpackDirectory)
 
   def is: SpecStructure = {
     given cwd: Cwd = TestResources
