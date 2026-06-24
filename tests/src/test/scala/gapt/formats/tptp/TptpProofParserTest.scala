@@ -248,6 +248,21 @@ class TptpProofParserUnitTest extends Specification {
           (x: TptpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
+
+      "return cannot handle input on introduced choice_axiom" in {
+        val input = InputFile.fromString("""
+        |fof(a, axiom, ![X]: p(X, a)).
+        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y)).
+        |fof(nc, negated_conjecture, ![Y]: ?[X]: ~p(X, Y), inference(negated_conjecture, [status(cth)], [c])).
+        |fof(ca, plain, ![Y]: (?[X]: ~p(X, Y) => ~p(sK0(Y), Y)), introduced(choice_axiom,[])).
+        |fof(nc_skolemized, plain, ![Y]: ~p(sK0(Y), Y), inference(skolemization, [status(esa), new_symbols(skolem, [sK0])], [nc, ca])).
+        |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
+        |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
+        """.stripMargin)
+        RootedTptpDerivation.fromInputFileRefutation(input) must beLeft.like {
+          case x: CannotHandleInput => x.stepName must_=== "ca"
+        }
+      }
     }
 
     "context" in {
