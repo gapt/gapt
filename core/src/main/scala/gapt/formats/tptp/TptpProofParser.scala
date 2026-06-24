@@ -35,18 +35,24 @@ import gapt.proofs.context.immutable.ImmutableContext
 import gapt.proofs.lk.LKProof
 
 sealed trait TptpDerivationStep {
-  def formula: FOLFormula
   def name: String
+  def role: String
+  def formula: FOLFormula
   def parents: Seq[String]
 }
 case class TptpConjectureStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep {
   def parents: Seq[String] = Seq.empty
+  def role: String = "conjecture"
 }
 case class TptpAxiomStep(name: String, formula: FOLFormula, annotationsOption: Option[Annotations]) extends TptpDerivationStep {
   def parents: Seq[String] = Seq.empty
+  def role: String = "axiom"
 }
-case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpDerivationStep
+case class TptpPlainInferenceStep(name: String, formula: FOLFormula, parents: Seq[String], annotations: Annotations) extends TptpDerivationStep {
+  def role: String = "plain"
+}
 case class TptpNegatedConjectureStep(name: String, formula: FOLFormula, parent: String, annotations: Annotations) extends TptpDerivationStep {
+  def role: String = "negated_conjecture"
   def parents: Seq[String] = Seq(parent)
 }
 case class TptpSkolemizationStep(
@@ -59,6 +65,7 @@ case class TptpSkolemizationStep(
     annotations: Annotations
 ) extends TptpDerivationStep {
   def parents: Seq[String] = Seq(parent)
+  def role: String = "plain"
 }
 
 sealed trait TptpDerivationImportError {
@@ -255,8 +262,7 @@ object RootedTptpDerivation {
     }
 
     val context = Context.guess(usedSteps.values.collect {
-      case TptpAxiomStep(_, formula, _)      => formula
-      case TptpConjectureStep(_, formula, _) => formula
+      case s: (TptpAxiomStep | TptpConjectureStep) => s.formula
     })
 
     Right(RootedTptpDerivation(usedSteps, rootLabel, context))
