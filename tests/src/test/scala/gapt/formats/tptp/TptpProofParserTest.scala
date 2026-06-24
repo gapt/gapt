@@ -92,10 +92,10 @@ class TptpProofParserUnitTest extends Specification {
         )
         RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
-              case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
-                (newSkolemSymbol must_=== FOLConst("sK0"))
-                  .and(contextVariables must_=== Seq.empty)
-                  .and(skolemizedSymbol must_=== FOLVar("X"))
+              case s: TptpSkolemizationStep => {
+                (s.newSkolemSymbol must_=== FOLConst("sK0"))
+                  .and(s.contextVariables must_=== Seq.empty)
+                  .and(s.skolemizedSymbol must_=== FOLVar("X"))
               }
             }
         }
@@ -186,10 +186,10 @@ class TptpProofParserUnitTest extends Specification {
         """.stripMargin)
         RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
-              case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
-                (newSkolemSymbol must_=== FOLFunctionConst("sK0", 1))
-                  .and(contextVariables must_=== Seq(FOLVar("Y")))
-                  .and(skolemizedSymbol must_=== FOLVar("X"))
+              case s: TptpSkolemizationStep => {
+                (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 1))
+                  .and(s.contextVariables must_=== Seq(FOLVar("Y")))
+                  .and(s.skolemizedSymbol must_=== FOLVar("X"))
               }
             }
         }
@@ -206,10 +206,10 @@ class TptpProofParserUnitTest extends Specification {
         """.stripMargin)
         RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
-              case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
-                (newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
-                  .and(contextVariables must_=== Seq(FOLVar("Y"), FOLVar("Z")))
-                  .and(skolemizedSymbol must_=== FOLVar("X"))
+              case s: TptpSkolemizationStep => {
+                (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
+                  .and(s.contextVariables must_=== Seq(FOLVar("Y"), FOLVar("Z")))
+                  .and(s.skolemizedSymbol must_=== FOLVar("X"))
               }
             }
         }
@@ -226,10 +226,10 @@ class TptpProofParserUnitTest extends Specification {
         """.stripMargin)
         RootedTptpDerivation.fromInputFileRefutation(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TptpDerivationStep].like {
-              case TptpSkolemizationStep(name, formula, parent, newSkolemSymbol, contextVariables, skolemizedSymbol, annotations) => {
-                (newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
-                  .and(contextVariables must_=== Seq(FOLVar("Z"), FOLVar("Y")))
-                  .and(skolemizedSymbol must_=== FOLVar("X"))
+              case s: TptpSkolemizationStep => {
+                (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
+                  .and(s.contextVariables must_=== Seq(FOLVar("Z"), FOLVar("Y")))
+                  .and(s.skolemizedSymbol must_=== FOLVar("X"))
               }
             }
         }

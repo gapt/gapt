@@ -101,17 +101,17 @@ def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 
 
           val usedNegatedConjectures = refutation.usedDerivationSteps.collect { case s: TptpNegatedConjectureStep => s }
           usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
-            break(Left(StepWithInvalidStatus(s"there is a negated conjecture step with no status or an ambiguous status. should be cth", s.name)))
+            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
           }
 
           val usedPlainInferences = refutation.usedDerivationSteps.collect { case a: TptpPlainInferenceStep => a }
           usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
-            break(Left(StepWithInvalidStatus("there is a plain inference with no status or an ambiguous status. should be either thm or esa", s.name)))
+            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm", "esa"))))
           }
 
           val usedSkolemizationSteps = refutation.usedDerivationSteps.collect { case s: TptpSkolemizationStep => s }
           usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
-            break(Left(StepWithInvalidStatus("there is a skolemization step with no status or an ambiguous status. should be esa", s.name)))
+            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
 
           TptpImporter.loadAsLKRefutation(file)
@@ -222,4 +222,16 @@ extension (usefulInfo: Seq[GeneralTerm]) {
 extension (inference: Source.Inference) {
   def statuses: Set[String] =
     inference.usefulInfo.statusSet
+}
+
+extension (step: TptpPlainInferenceStep) {
+  def statuses: Set[String] = step.source.statuses
+}
+
+extension (step: TptpNegatedConjectureStep) {
+  def statuses: Set[String] = step.source.statuses
+}
+
+extension (step: TptpSkolemizationStep) {
+  def statuses: Set[String] = step.source.statuses
 }

@@ -54,22 +54,22 @@ def rootedTptpDerivationToLKProof(
   given Maybe[MutableContext] = (MutableContext.guess(derivation.usedDerivationSteps.map(_.formula))).newMutable
   val stepProofsByName: Map[String, (LabelledSequent, LKProof)] = derivation.usedDerivationSteps.map { s =>
     val sequentToProve: LabelledSequent = s match {
-      case TptpAxiomStep(name, formula, _) =>
-        Sequent(Vector((name, formula)), Vector((name, formula)))
-      case TptpConjectureStep(name, formula, _) =>
-        Sequent(Vector((name, Neg(formula))), Vector((name, Neg(formula))))
-      case TptpPlainInferenceStep(name, formula, parents, _) =>
-        Sequent(parents.map(p => (p, derivation.get(p).get.formula)), Vector((name, formula)))
-      case TptpNegatedConjectureStep(name, formula, parent, _) =>
-        Sequent(Vector((parent, Neg(derivation.get(parent).get.formula))), Vector((name, formula)))
-      case TptpSkolemizationStep(name, formula, parent, _, _, _, _) =>
-        Sequent(Vector((parent, derivation.get(parent).get.formula)), Vector((name, formula)))
+      case s: TptpAxiomStep =>
+        Sequent(Vector((s.name, s.formula)), Vector((s.name, s.formula)))
+      case s: TptpConjectureStep =>
+        Sequent(Vector((s.name, Neg(s.formula))), Vector((s.name, Neg(s.formula))))
+      case s: TptpPlainInferenceStep =>
+        Sequent(s.parents.map(p => (p, derivation.get(p).get.formula)), Vector((s.name, s.formula)))
+      case s: TptpNegatedConjectureStep =>
+        Sequent(Vector((s.parent, Neg(derivation.get(s.parent).get.formula))), Vector((s.name, s.formula)))
+      case s: TptpSkolemizationStep =>
+        Sequent(Vector((s.parent, derivation.get(s.parent).get.formula)), Vector((s.name, s.formula)))
     }
 
     val proofOption = s match {
       case TptpAxiomStep(name, formula, annotationsOption)      => Some(LogicalAxiom(formula))
       case TptpConjectureStep(name, formula, annotationsOption) => Some(LogicalAxiom(Neg(formula)))
-      case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
+      case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, _, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
         def reportIncorrect(message: String): Nothing = break(Left(IncorrectInference(message, s.name)))
 
         val parentFormula = derivation.get(parent).get.formula
