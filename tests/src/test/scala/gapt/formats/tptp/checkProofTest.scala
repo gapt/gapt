@@ -67,8 +67,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on negated conjecture step with thm status" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(thm)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -78,8 +78,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on negated conjecture without a status" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -89,8 +89,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on negated conjecture inference with more than one distinct statuses" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth),status(thm)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -109,8 +109,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on negated conjecture step whose parent is not a conjecture" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [a1])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -120,8 +120,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on negated conjecture step without a parent" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -153,8 +153,8 @@ class checkProofUnitTest extends mutable.Specification {
       "plain inferences" in {
         "fail on plain inference without parents if formula is not valid" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [])).""".stripMargin)
           checkProof(input) must beLike {
@@ -174,8 +174,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on plain inference without status" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -185,8 +185,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on plain inference with more than one distinct statuses" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm),status(esa)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -196,8 +196,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on plain inference with cth status" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -216,8 +216,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on plain inference with cth status" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(cth)], [a1, nc])).""".stripMargin)
           checkProof(input) must beLike {
@@ -227,8 +227,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on plain inference whose parent is a conjecture" in {
           val input = InputFile.fromString("""
-            |fof(a1, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(inf_p, plain, p, inference(p, [status(thm)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
@@ -260,8 +260,8 @@ class checkProofUnitTest extends mutable.Specification {
       "skolemization" in {
         "fail on skolemization step without esa status" in {
           val input = InputFile.fromString("""
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
@@ -272,8 +272,8 @@ class checkProofUnitTest extends mutable.Specification {
 
         "fail on skolemization step without new_symbols" in {
           val input = InputFile.fromString("""
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
@@ -359,8 +359,8 @@ class checkProofUnitTest extends mutable.Specification {
       "axiom file directive" in {
         "fail on axiom step without thm status" in {
           val input = InputFile.fromString("""
-            |fof(a, axiom, p).
-            |fof(c, conjecture, $true).
+            |fof(a, axiom, p, file, file('Problems/test15.p', a)).
+            |fof(c, conjecture, $true, file('Problems/test15.p', c)).
             |fof(nc, negated_conjecture, $false, inference(negated_conjecture, [status(cth)], [c])).
             """.stripMargin)
           todo("not clear how to enforce this since axiom should also have file directive which doesn't allow setting status")

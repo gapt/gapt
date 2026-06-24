@@ -233,9 +233,6 @@ object RootedTptpDerivation {
     val usedSteps = usedAnnotatedFormulas.map { a => a.name -> parseStep(a).getOrBreak }.toMap
 
     val usedNegatedConjectures = usedSteps.values.collect { case s: TptpNegatedConjectureStep => s }
-    usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
-      break(Left(StepWithInvalidStatus(s"there is a negated conjecture step with no status or an ambiguous status. should be cth", s.name)))
-    }
     if usedNegatedConjectures.exists(c => derivation.hasNonConjectureParent(c.name)) then {
       break(Left(NegatedConjectureStepWithNonConjectureParent("there is a negated conjecture step with a non-conjecture parent")))
     }
@@ -248,16 +245,8 @@ object RootedTptpDerivation {
     }
 
     val usedPlainInferences = usedSteps.values.collect { case a: TptpPlainInferenceStep => a }
-    usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
-      break(Left(StepWithInvalidStatus("there is a plain inference with no status or an ambiguous status. should be either thm or esa", s.name)))
-    }
     usedPlainInferences.find(s => derivation.hasConjectureParent(s.name)).map { s =>
       break(Left(PlainInferenceWithConjectureParent("there is a plain inference with a conjecture parent", s)))
-    }
-
-    val usedSkolemizationSteps = usedSteps.values.collect { case s: TptpSkolemizationStep => s }
-    usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
-      break(Left(StepWithInvalidStatus("there is a skolemization step with no status or an ambiguous status. should be esa", s.name)))
     }
 
     val context = Context.guess(usedSteps.values.collect {
@@ -699,23 +688,6 @@ extension [T](a: IterableOnce[T]) {
   }
 }
 
-extension (gt: GeneralTerm) {
-  def asStatus: Option[String] = gt match {
-    case TptpTerm("status", TptpTerm(value)) => Some(value)
-    case _                                   => None
-  }
-}
-
-extension (usefulInfo: Seq[GeneralTerm]) {
-  def statusSet: Set[String] =
-    usefulInfo.flatMap(_.asStatus).toSet
-}
-
-extension (inference: Source.Inference) {
-  def statuses: Set[String] =
-    inference.usefulInfo.statusSet
-}
-
 extension (source: Source) {
   def asInferenceOption: Option[Source.Inference] = source match {
     case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
@@ -744,16 +716,6 @@ extension (annotatedFormula: AnnotatedFormula) {
   }
 }
 
-extension (annotations: Option[Annotations]) {
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    val ann = annotations.getOrElse { break(false) }
-    val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
-    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse { break(false) }
-
-    statuses.contains(inferenceStatus)
-  }
-}
-
 extension (step: TptpDerivationStep) {
   def annotationsOption: Option[Annotations] = step match {
     case TptpConjectureStep(_, _, annotationsOption) =>
@@ -766,8 +728,5 @@ extension (step: TptpDerivationStep) {
       Some(annotations)
     case TptpSkolemizationStep(_, _, _, _, _, _, annotations) =>
       Some(annotations)
-  }
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    step.annotationsOption.hasUnambiguousStatusAmong(statuses)
   }
 }
