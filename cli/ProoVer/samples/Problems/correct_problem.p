@@ -1,10 +1,10 @@
 %------------------------------------------------------------------------------
-% File     : example2_e : ProoVer 2026
+% File     : correct_problem : ProoVer 2026
 % Source   : ProoVer 2026
 % Status   : Unknown
-% SPC      : FOF_UNK_RFO_PEQ
+% SPC      : FOF_UNK_RFO_NEQ
 %------------------------------------------------------------------------------
 % SZS output start ListOfFormulae
-fof(ax1, axiom, ![X] : (f(f(X)) = f(g(X)) | g(f(X)) = f(f(X)))).
-fof(c, conjecture, g(f(a)) = f(g(a))).
+fof(a1, axiom, p(a) & ~p(b)).
+fof(c, conjecture, ?[X] : ~(p(X) => ![Y] : (p(Y)))).
 % SZS output end ListOfFormulae

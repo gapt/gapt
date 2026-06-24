@@ -1,3 +1,4 @@
+import geny.Readable.InputStreamReadable
 import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
@@ -335,6 +336,31 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
 
         IO.delete(out)
 
+        val unzipDirectory = target.value / "smoke-ProoVer"
+        IO.delete(unzipDirectory)
+
+        log.info(s"Unzipping $zip to $unzipDirectory for smoke test")
+        unzip(zip, unzipDirectory)
+
+        assert(unzipDirectory.exists(), s"unzip directory $unzipDirectory does not exist")
+
+        val unzipSamplesDirectory = unzipDirectory / "samples"
+        log.info(s"Running smoke tests on $unzipDirectory")
+        try {
+          val sampleTestFiles = Seq("correct_proof.p", "evil_proof.p")
+          for (sampleTestFile <- sampleTestFiles) {
+            Process(Seq(
+              "sh",
+              (unzipDirectory / appName).getAbsolutePath,
+              (unzipSamplesDirectory / sampleTestFile).getAbsolutePath
+            )).!!
+          }
+        } finally {
+          IO.delete(unzipDirectory)
+        }
+
+        log.info(s"Smoke test successful")
+
         zip
       }
     )),
@@ -407,5 +433,41 @@ def zipDist(sourceDir: File, zipFile: File): Unit = {
     zos.finish()
   } finally {
     zos.close()
+  }
+}
+
+def unzip(zipFile: File, targetDir: File): Unit = {
+  import java.io._
+  import java.nio.file.Files
+  import scala.collection.JavaConverters._
+  import org.apache.commons.compress.archivers.zip._
+
+  assert(!targetDir.exists(), s"target directory $targetDir already exists")
+  IO.createDirectory(targetDir)
+
+  val zip = new ZipFile(zipFile.file)
+  try {
+    zip.getEntries.asScala.foreach { entry =>
+      val outFile = targetDir / entry.getName
+
+      if (entry.isDirectory) {
+        IO.createDirectory(outFile)
+      } else {
+        IO.createDirectory(outFile.getParentFile)
+        val in = zip.getInputStream(entry)
+        try {
+          val out = new FileOutputStream(outFile)
+          try {
+            in.transferTo(out)
+          } finally {
+            out.close()
+          }
+        } finally {
+          in.close()
+        }
+      }
+    }
+  } finally {
+    zip.close()
   }
 }
