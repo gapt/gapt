@@ -119,6 +119,15 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
         .and(stdout.linesIterator.take(2).size must_== 1)
     }
 
+    def unknownVerification(example: Path): Result = {
+      val (exitCode, stdout, _) =
+        proofCheckerProcess(example.toString).!!!
+
+      (exitCode must_== 0)
+        .and(stdout must startWith("%SZS status Unknown"))
+        .and(stdout.linesIterator.take(2).size must_== 1)
+    }
+
     def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {
       Fragments.foreach(paths) { path =>
         val fragment = f(path)
@@ -131,21 +140,32 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
       }
     }
 
-    val correctProofs =
+    val correctProofs = {
       val correctProofPaths = os.walk(testDerivations)
         .filter(_.baseName.startsWith("correct_"))
       foreachPath(correctProofPaths) { example =>
         val relativePath = example.relativeTo(TestResources.path)
         s"verify $relativePath correctly" ! verifyCorrect(example)
       }
+    }
 
-    val incorrectProofs =
+    val incorrectProofs = {
       val incorrectProofPaths = os.walk(testDerivations)
         .filter(_.baseName.startsWith("incorrect_"))
       foreachPath(incorrectProofPaths) { example =>
         val relativePath = example.relativeTo(TestResources.path)
         s"fail verification of $relativePath" ! failVerification(example)
       }
+    }
+
+    val unknownProofs = {
+      val unknownProofPaths = os.walk(testDerivations)
+        .filter(_.baseName.startsWith("unknown_"))
+      foreachPath(unknownProofPaths) { example =>
+        val relativePath = example.relativeTo(TestResources.path)
+        s"return unknown on $relativePath" ! unknownVerification(example)
+      }
+    }
 
     s2"""
       |exit non-zero on no input file $noInputFile
@@ -160,6 +180,8 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
       |$correctProofs
       |fail incorrect proofs
       |$incorrectProofs
+      |unknown proofs
+      |$unknownProofs
     """.stripMargin
   }
 }
