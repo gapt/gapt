@@ -186,8 +186,7 @@ object TptpDerivation {
       map.updatedWith(step.name) {
         case Some(formula) if step != formula =>
           break(Left(DifferentFormulasWithSameName(
-            s"""formula $formula with name ${formula.name} is already present.
-               |Attempted to add another formula $step with the same name.""".stripMargin
+            s"""formula $formula with name ${formula.name} is already present. Attempted to add another formula $step with the same name.""".stripMargin
           )))
         case _ => Some(step)
       }
@@ -341,8 +340,12 @@ object RootedTptpDerivation {
       annotationsOption: Option[Annotations]
   ): Either[TptpDerivationImportError, TptpSkolemizationStep | TptpPlainInferenceStep] = boundary {
     val folFormula = parseFOLFormula(formula).getOrBreak
-    val annotations = annotationsOption.getOrElse { break(Left(UnexpectedInput("got plain inference without source"))) }
-    val inference = annotations.source.asInferenceOption.getOrElse { break(Left(UnexpectedInput("got plain inference without inference record"))) }
+    val annotations = annotationsOption.getOrElse { break(Left(UnexpectedInput(s"got plain inference without source: $name"))) }
+    annotations.source match {
+      case s: Source.Internal => break(Left(CannotHandleInput("cannot handle internal sources", name)))
+      case _                  =>
+    }
+    val inference = annotations.source.asInferenceOption.getOrElse { break(Left(UnexpectedInput(s"got plain inference without inference record: $name"))) }
     val optionalInfo = annotations.optionalInfo
     inference.rule match {
       case "skolemize" => parseSkolemizationStep(name, folFormula, inference, optionalInfo)
