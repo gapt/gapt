@@ -50,7 +50,7 @@ type LabelledSequent = Sequent[(String, FOLFormula)]
 def rootedTptpDerivationToLKProof(
     derivation: RootedTptpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | DeskolemizationFailed, LKProof] = boundary {
+): Either[IncorrectInference | IncorrectSkolemization | DeskolemizationFailed, LKProof] = boundary {
   given Maybe[MutableContext] = (MutableContext.guess(derivation.usedDerivationSteps.map(_.formula))).newMutable
   val stepProofsByName: Map[String, (LabelledSequent, LKProof)] = derivation.usedDerivationSteps.map { s =>
     val sequentToProve: LabelledSequent = s match {
@@ -67,29 +67,29 @@ def rootedTptpDerivationToLKProof(
     }
 
     val proofOption = s match {
-      case TptpAxiomStep(name, formula, annotationsOption)      => Some(LogicalAxiom(formula))
-      case TptpConjectureStep(name, formula, annotationsOption) => Some(LogicalAxiom(Neg(formula)))
+      case s: TptpAxiomStep      => Some(LogicalAxiom(s.formula))
+      case s: TptpConjectureStep => Some(LogicalAxiom(Neg(s.formula)))
       case s @ TptpSkolemizationStep(name, claimedSkolemizedFormula, parent, _, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
-        def reportIncorrect(message: String): Nothing = break(Left(IncorrectInference(message, s.name)))
+        def reportIncorrect(): Nothing = break(Left(IncorrectSkolemization(s.name)))
 
         val parentFormula = derivation.get(parent).get.formula
-        if parentFormula.contains(newSkolemSymbol) then {
-          reportIncorrect(s"skolemization step $name has skolemSymbol $newSkolemSymbol which is already used in $parentFormula")
-        }
         val All.Block(actualContextVariables, mainSkolemizationFormula) = parentFormula
 
         val (actualBoundVariable, innerSkolemizationFormula) = mainSkolemizationFormula match {
           case Ex(actualBoundVariable, inner) => (actualBoundVariable, inner)
           case f =>
-            reportIncorrect(s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block of parent formula $parentFormula")
+            s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $f inside universal quantifier block of parent formula $parentFormula"
+            reportIncorrect()
         }
 
         if claimedBoundVariable != actualBoundVariable then {
-          reportIncorrect(s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but the actual outer most existential variable in $parentFormula is $actualBoundVariable")
+          s"skolemization step $name claims to skolemize bound variable $claimedBoundVariable, but the actual outer most existential variable in $parentFormula is $actualBoundVariable"
+          reportIncorrect()
         }
 
         if claimedContextVariables.toSet != actualContextVariables.toSet then {
-          reportIncorrect(s"skolemization step $name claims to have context variables $claimedContextVariables, but the actual context variables for $claimedBoundVariable are $actualContextVariables")
+          s"skolemization step $name claims to have context variables $claimedContextVariables, but the actual context variables for $claimedBoundVariable are $actualContextVariables"
+          reportIncorrect()
         }
 
         val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
@@ -101,7 +101,8 @@ def rootedTptpDerivationToLKProof(
         val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, actualContextVariables)
         val forallRight = ForallRightBlock(forallLeft, expectedSkolemizedFormula, actualContextVariables)
         if expectedSkolemizedFormula != claimedSkolemizedFormula then {
-          reportIncorrect(s"skolemization step $name claims to skolemize formula $parentFormula by replacing $claimedBoundVariable with $claimedSkolemTerm which should result in $expectedSkolemizedFormula but the given formula is $claimedSkolemizedFormula")
+          s"skolemization step $name claims to skolemize formula $parentFormula by replacing $claimedBoundVariable with $claimedSkolemTerm which should result in $expectedSkolemizedFormula but the given formula is $claimedSkolemizedFormula"
+          reportIncorrect()
         }
         Some(forallRight)
       }
@@ -109,7 +110,7 @@ def rootedTptpDerivationToLKProof(
     }
 
     val proof = proofOption match {
-      case None    => break(Left(IncorrectInference(s"inference with label ${s.name} is incorrect", s.name)))
+      case None    => break(Left(IncorrectInference(s.name)))
       case Some(p) => p
     }
 

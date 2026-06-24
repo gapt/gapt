@@ -122,7 +122,7 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0)], [nc]))."
         )
-        RootedTptpDerivation.fromInputFileRefutation(input) must beLeft[TptpDerivationImportError].like {
+        RootedTptpDerivation.fromInputFileRefutation(input) must beLeft.like {
           case _: CannotHandleInput => ok
         }
       }
@@ -153,7 +153,7 @@ class TptpProofParserUnitTest extends Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
         )
         RootedTptpDerivation.fromInputFileRefutation(input) must beLeft {
-          (x: TptpDerivationImportError) => x must beAnInstanceOf[SkolemizationStepWithDifferingSkolemTerms]
+          (x: TptpDerivationImportError) => x must beAnInstanceOf[SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm]
         }
       }
 
@@ -407,9 +407,9 @@ class TptpProofParserUnitTest extends Specification {
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
           |fof(s, plain, ![X]: p(X, a(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
         """.stripMargin)
-        todo
-        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beLeft.like {
-          d => d must beAnInstanceOf[InconsistentConstants]
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+          d => d must beAnInstanceOf[DeskolemizationFailed]
         }
       }
 
@@ -421,9 +421,9 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s2, plain, q(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [b])).
           |fof(s, plain, p(sK0) & q(sK0), inference(and, [status(thm)], [s1, s2])).
         """.stripMargin)
-        todo
-        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beLeft.like {
-          d => d must beAnInstanceOf[InconsistentConstants]
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+          d => d must beAnInstanceOf[DeskolemizationFailed]
         }
       }
 

@@ -118,40 +118,67 @@ case class StepWithInvalidStatus(
   override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
 }
 case class NegatedConjectureStepWithNonConjectureParent(
-    message: String
-) extends TptpDerivationImportError
+    stepName: String
+) extends TptpDerivationImportError {
+  def message: String = s"step with name $stepName has a non-conjecture parent"
+}
 case class NegatedConjectureWithoutParent(
-    message: String
-) extends TptpDerivationImportError
+    stepName: String
+) extends TptpDerivationImportError {
+  def message: String = s"negated conjecture step with name $stepName has no parent"
+}
 case class NegatedConjectureWithMultipleDistinctParents() extends TptpDerivationImportError {
   def message: String = "got negated conjecture with multiple distinct parents"
 }
 case class PlainInferenceWithConjectureParent(
-    message: String,
     step: TptpPlainInferenceStep
-) extends TptpDerivationImportError
+) extends TptpDerivationImportError {
+  def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
+}
 case class IncorrectInference(
-    message: String,
     stepName: String
-) extends TptpDerivationImportError
+) extends TptpDerivationImportError {
+  def message: String = s"inference step with name $stepName is incorrect"
+}
+case class IncorrectSkolemization(
+    stepName: String
+) extends TptpDerivationImportError {
+  def message: String = s"skolemization step with name $stepName is incorrect"
+}
 case class DeskolemizationFailed(
     skolemizedProof: LKProof,
     cause: Option[Throwable]
 ) extends TptpDerivationImportError {
-  def message: String = cause match {
-    case Some(t) => s"deskolemization failed: ${t.getMessage}"
-    case None    => "deskolemization failed"
-  }
+  def message: String = "deskolemization failed"
+}
+case class SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(
+    stepName: String
+) extends TptpDerivationImportError {
+  def message: String = s"skolemization step with name $stepName has differing skolem terms"
+}
+case class SkolemizationStepWithoutNewSymbols(
+    stepName: String
+) extends TptpDerivationImportError {
+  def message: String = s"skolemization step with name $stepName has no new symbols"
+}
+case class SkolemizationStepWithoutBinding(
+    stepName: String
+) extends TptpDerivationImportError {
+  def message: String = s"skolemization step with name $stepName has no skolemize(_,_) binding"
 }
 
-case class SkolemizationStepWithDifferingSkolemTerms(message: String, stepName: String) extends TptpDerivationImportError
-case class SkolemizationStepWithoutNewSymbols(message: String, stepName: String) extends TptpDerivationImportError
-case class SkolemizationStepWithoutBinding(message: String, stepName: String) extends TptpDerivationImportError
-case class InconsistentConstants(message: String) extends TptpDerivationImportError
-
-case class CannotHandleInput(message: String, stepName: String | TptpInput) extends TptpDerivationImportError
-case class NoRefutationFound(message: String) extends TptpDerivationImportError
-case class NoConjectureFound(message: String) extends TptpDerivationImportError
+case class CannotHandleIncludeDirectives() extends TptpDerivationImportError {
+  def message: String = "cannot handle include directives"
+}
+case class CannotHandleInput(stepName: String, reason: String) extends TptpDerivationImportError {
+  def message: String = s"cannot handle input step with name $stepName: $reason"
+}
+case class NoRefutationFound() extends TptpDerivationImportError {
+  def message: String = "no refutation found as there is no unique $false formula in the derivation"
+}
+case class NoConjectureFound() extends TptpDerivationImportError {
+  def message: String = s"no conjecture found: $message"
+}
 case class UnexpectedInput(message: String) extends TptpDerivationImportError
 
 /**
@@ -223,10 +250,10 @@ object TptpDerivation {
   // ensures that there are only AnnotatedFormula inputs
   private def intoAnnotatedFormulaSteps(
       tptpFile: TptpFile
-  ): Either[CannotHandleInput, Seq[AnnotatedFormula]] = boundary {
+  ): Either[CannotHandleIncludeDirectives, Seq[AnnotatedFormula]] = boundary {
     val formulas = tptpFile.inputs.map {
       case i: IncludeDirective =>
-        break(Left(CannotHandleInput("cannot handle include directives", i)))
+        break(Left(CannotHandleIncludeDirectives()))
       case a: AnnotatedFormula => a
     }
     Right(formulas)
@@ -286,16 +313,11 @@ object RootedTptpDerivation {
     }
 
     val usedAnnotatedFormulas = derivation.subDerivationRootedAt(rootLabel).getOrBreak
-    val usedSteps = usedAnnotatedFormulas.map {
-      a => a.name -> parseStep(a).getOrBreak
-    }.toMap
+    val usedSteps = usedAnnotatedFormulas.map { a => a.name -> parseStep(a).getOrBreak }.toMap
 
     val usedNegatedConjectures = usedSteps.values.collect { case s: TptpNegatedConjectureStep => s }
-    if usedNegatedConjectures.exists(c => derivation.hasNonConjectureParent(c.name)) then {
-      break(Left(NegatedConjectureStepWithNonConjectureParent("there is a negated conjecture step with a non-conjecture parent")))
-    }
-    if usedNegatedConjectures.exists(c => derivation.parentsOf(c.name).isEmpty) then {
-      break(Left(NegatedConjectureWithoutParent("there is a negated conjecture without a parent")))
+    usedNegatedConjectures.find(c => derivation.hasNonConjectureParent(c.name)).map { s =>
+      break(Left(NegatedConjectureStepWithNonConjectureParent(s.name)))
     }
 
     if usedNegatedConjectures.size > 1 then {
@@ -304,7 +326,7 @@ object RootedTptpDerivation {
 
     val usedPlainInferences = usedSteps.values.collect { case a: TptpPlainInferenceStep => a }
     usedPlainInferences.find(s => derivation.hasConjectureParent(s.name)).map { s =>
-      break(Left(PlainInferenceWithConjectureParent("there is a plain inference with a conjecture parent", s)))
+      break(Left(PlainInferenceWithConjectureParent(s)))
     }
 
     val context = Context.guess(usedSteps.values.collect {
@@ -319,7 +341,7 @@ object RootedTptpDerivation {
   ): Either[TptpDerivationImportError, RootedTptpDerivation] = boundary {
     val derivation = TptpDerivation.fromInputFile(file).getOrBreak
     val refutationStep = derivation.annotatedFormulas.filter(_.formula == Bottom()).singleOption.getOrElse {
-      break(Left(NoRefutationFound("no unique $false formula found in derivation")))
+      break(Left(NoRefutationFound()))
     }
     RootedTptpDerivation.fromDerivationAndRootLabel(derivation, refutationStep.name)
   }
@@ -389,11 +411,12 @@ object RootedTptpDerivation {
     }
     val inference = annotations.source match {
       case s: Source.Inference => s
-      case _                   => break(Left(UnexpectedInput(s"got negated conjecture inference without inference record: $name")))
+      case _ =>
+        break(Left(UnexpectedInput(s"got negated conjecture inference without inference record: $name")))
     }
     annotations.source.parentLabels.distinct match {
       case Seq() =>
-        break(Left(NegatedConjectureWithoutParent("got negated conjecture without parents")))
+        break(Left(NegatedConjectureWithoutParent(name)))
       case Seq(parent) =>
         Right(TptpNegatedConjectureStep(name, folFormula, parent, annotations, inference))
       case Seq(parent, _*) =>
@@ -412,7 +435,7 @@ object RootedTptpDerivation {
     }
     val inference = annotations.source match {
       case s: Source.Inference => s
-      case s: Source.Internal  => break(Left(CannotHandleInput("cannot handle internal sources", name)))
+      case s: Source.Internal  => break(Left(CannotHandleInput(name, "cannot handle internal sources")))
       case _                   => break(Left(UnexpectedInput(s"got plain inference without inference record: $name")))
     }
 
@@ -444,10 +467,10 @@ object RootedTptpDerivation {
     val newSkolemSymbols = inference.usefulInfo.collect {
       case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) => term.asInstanceOf[FOLConst]
       case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(_, _)) =>
-        break(Left(CannotHandleInput("cannot handle multiple skolemizations in one step yet", name)))
+        break(Left(CannotHandleInput(name, "cannot handle multiple skolemizations in one step yet")))
     }
     val newSkolemSymbol = newSkolemSymbols match {
-      case Seq()         => break(Left(SkolemizationStepWithoutNewSymbols("expected at least one new_symbols(skolem,_) term", name)))
+      case Seq()         => break(Left(SkolemizationStepWithoutNewSymbols(name)))
       case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one new_symbols(skolem,_) term")))
       case Seq(term)     => term.asInstanceOf[FOLConst]
     }
@@ -455,7 +478,7 @@ object RootedTptpDerivation {
       case TptpTerm("skolemize", boundVariable, skolemTerm: FOLTerm) => (boundVariable.asInstanceOf[FOLVar], skolemTerm)
     }
     val (boundVariable, skolemTerm) = boundVariableSkolemTermPairs match {
-      case Seq()         => break(Left(SkolemizationStepWithoutBinding("expected at least one skolemize(_,_) term", name)))
+      case Seq()         => break(Left(SkolemizationStepWithoutBinding(name)))
       case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one skolemize(_,_) term")))
       case Seq(pair)     => pair
     }
@@ -469,7 +492,7 @@ object RootedTptpDerivation {
       case _         => break(Left(UnexpectedInput("expected skolem term arguments to be first-order variables")))
     }
     if newSkolemSymbol.name != skolemFunctionConst.name then {
-      break(Left(SkolemizationStepWithDifferingSkolemTerms(s"expected skolem term to be $newSkolemSymbol, got $skolemFunctionConst", name)))
+      break(Left(SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(name)))
     }
     Right(TptpSkolemizationStep(
       name,
