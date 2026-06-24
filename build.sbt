@@ -216,7 +216,7 @@ lazy val root = project.in(file("."))
       else
         throw new Exception(s"evalUserManual failed with exit code ${exitVal}")
     },
-    prooVerDist := (cli / CheckProofCLI / prooVerDist).value
+    prooVerDist := (cli / ProoVerCLI / prooVerDist).value
   )
 
 val dependencyConflictResolutions = Seq("com.lihaoyi" %% "geny" % "1.0.0")
@@ -289,31 +289,31 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
   )
 
 lazy val MainCLI = config("Main")
-lazy val CheckProofCLI = config("CheckProof")
+lazy val ProoVerCLI = config("ProoVerCLI")
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
   .settings(commonSettings: _*)
   .settings(testSettings: _*)
-  .configs(CheckProofCLI)
+  .configs(ProoVerCLI)
   .settings(
     inConfig(MainCLI)(baseAssemblySettings ++ Seq(
       assembly / mainClass := Some("gapt.cli.CLIMain")
     )),
-    inConfig(CheckProofCLI)(baseAssemblySettings ++ Seq(
-      assembly / mainClass := Some("gapt.cli.checkTstpProof"),
-      assembly / assemblyOutputPath := target.value / "check-tstp-proof.jar",
+    inConfig(ProoVerCLI)(baseAssemblySettings ++ Seq(
+      assembly / mainClass := Some("gapt.cli.prooVerCLI"),
+      assembly / assemblyOutputPath := target.value / "gapt-prooVer-cli.jar",
       Test / test := (Test / test).dependsOn(prooVerDist).value,
       prooVerDist := {
         val log = streams.value.log
 
         val jar = assembly.value
         val baseDir = file(".") / "target"
-        val out = baseDir / "ProoVerDist"
+        val out = baseDir / "ProoVer"
         val jarName = s"gapt.jar"
         val appName = s"gapt-check"
-        val gaptCheckResources = file(".") / "cli" / "gapt-check"
+        val prooVerDistResources = file(".") / "cli" / "ProoVer"
 
         IO.delete(out)
-        IO.copyDirectory(gaptCheckResources, out)
+        IO.copyDirectory(prooVerDistResources, out)
         IO.copyFile(jar, out / jarName)
         IO.write(
           out / appName,
@@ -326,7 +326,7 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
 
         log.info(s"Created ProoVer distribution folder: ${out.getAbsolutePath}")
 
-        val zip = baseDir / s"${appName}.zip"
+        val zip = baseDir / s"gapt-ProoVer.zip"
 
         IO.delete(zip)
         zipDist(out, zip)

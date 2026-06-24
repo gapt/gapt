@@ -10,7 +10,7 @@ val usage = """
 |PROOF is a path to a TSTP proof file""".stripMargin.strip
 
 @main
-def checkTstpProof(args: String*): Unit = {
+def prooVerCLI(args: String*): Unit = {
   val input = args match {
     case Seq() => {
       Console.err.println(usage)
