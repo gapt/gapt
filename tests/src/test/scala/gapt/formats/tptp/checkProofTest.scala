@@ -37,7 +37,7 @@ class checkProofUnitTest extends mutable.Specification {
     s"${check.source}" should {
       "return Verified on trivial proof" in {
         val input = InputFile.fromString("""
-        |fof(c, conjecture, $true).
+        |fof(c, conjecture, $true, file('Problems/test14.p', c)).
         |fof(nc, negated_conjecture, $false, inference(nc, [status(cth)], [c])).""".stripMargin)
         checkProof(input) must_== SzsStatus.VerifiedGood
       }
@@ -47,7 +47,7 @@ class checkProofUnitTest extends mutable.Specification {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p(a), file('Problems/test1.p', a1)).
             |fof(a2, axiom, ~p(a), file('Problems/test1.p', a2)).
-            |fof(c, conjecture, p(a)).
+            |fof(c, conjecture, p(a), file('Problems/test1.p', c)).
             |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc, a2])).""".stripMargin)
           checkProof(input) must beLike {
@@ -165,7 +165,7 @@ class checkProofUnitTest extends mutable.Specification {
         "succeed on plain inference without parents if formula is valid" in {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
-            |fof(c, conjecture, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(i, plain, q | ~q, inference(tautology, [status(thm)], [])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc, i])).""".stripMargin)
@@ -372,24 +372,24 @@ class checkProofUnitTest extends mutable.Specification {
         "fail on axiom step without file directive" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, p).
-            |fof(c, conjecture, p).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomSourceMissing) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.SourceMissing) => reason.stepName must_== "a"
           }
         }
 
         "fail on axiom step with a non-file source" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, p, unknown).
-            |fof(c, conjecture, p, unknown).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveMissing) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveMissing) => reason.stepName must_== "a"
           }
         }
 
@@ -401,7 +401,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveLabelMissing) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveLabelMissing) => reason.stepName must_== "a"
           }
         }
 
@@ -413,7 +413,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFileNotFound) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileNotFound) => reason.stepName must_== "a"
           }
         }
 
@@ -425,7 +425,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveInvalidSyntax) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveInvalidSyntax) => reason.stepName must_== "a"
           }
         }
 
@@ -437,7 +437,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "a"
           }
         }
 
@@ -449,7 +449,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
           }
         }
 
@@ -461,7 +461,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveFormulaHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "a"
           }
         }
 
@@ -473,7 +473,7 @@ class checkProofUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkProof(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.AxiomFileDirectiveStepIsNotAnAxiom) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveStepDoesNotMatchRole) => reason.stepName must_== "a"
           }
         }
 
@@ -521,9 +521,130 @@ class checkProofUnitTest extends mutable.Specification {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
             |fof(unused, axiom, q).
-            |fof(c, conjecture, p).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
+          checkProof(input) must_== SzsStatus.VerifiedGood
+        }
+      }
+
+      "conjecture file directive" in {
+        "fail on conjecture step without file directive" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.SourceMissing) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with a non-file source" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, unknown).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveMissing) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive, but without label to a formula" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p')).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveLabelMissing) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive that points to non-existent file" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/nonexistent.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileNotFound) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive that points to non-parsable problem file" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/invalid-tptp-syntax.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveInvalidSyntax) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive that points to file that doesn't contain the label" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test2.p', a)).
+            |fof(c, conjecture, p, file('Problems/test2.p', c0)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive that points to formula which is not alpha-equivalent to formula in step" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test12.p', a)).
+            |fof(c, conjecture, p, file('Problems/test12.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive that points to a label which is not unique and some of the labels have different formulas" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test11.p', a)).
+            |fof(c, conjecture, p, file('Problems/test11.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "c"
+          }
+        }
+
+        "fail on conjecture step with file directive that points to formula which is not a conjecture" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, p, file('Problems/test13.p', a)).
+            |fof(c, conjecture, p, file('Problems/test13.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          checkProof(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveStepDoesNotMatchRole) =>
+              (reason.stepName must_== "c").and(reason.expectedRole must_== "conjecture").and(reason.actualRole must_== "axiom")
+          }
+        }
+
+        "verify conjecture step if given correct absolute path" in {
+          val input = InputFile.fromString(s"""
+            |fof(a1, axiom, p, file('Problems/test8.p', a)).
+            |fof(c1, conjecture, p, file('${fileDirectiveRoot}/Problems/test8.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
+            |fof(cont, plain, $$false, inference(falsum, [status(thm)], [a1, nc])).
+            """.stripMargin)
           checkProof(input) must_== SzsStatus.VerifiedGood
         }
       }
@@ -545,7 +666,7 @@ class checkProofUnitTest extends mutable.Specification {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
-            |fof(c, conjecture, p).
+            |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkProof(input) must_== SzsStatus.VerifiedGood

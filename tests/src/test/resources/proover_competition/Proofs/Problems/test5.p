@@ -1,2 +1,2 @@
 fof(a, axiom, q).
-fof(c, conjecture, q).
+fof(c, conjecture, p).
