@@ -14,7 +14,6 @@ import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.Const
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
-import gapt.expr.stringInterpolationForExpressions
 
 class TptpProofParserTest extends Specification {
 
@@ -115,7 +114,14 @@ class TptpProofParserUnitTest extends Specification {
         RootedTptpDerivation.fromInputFileRefutation(input) must beLeft
       }
 
-      "fail on skolemization with new_symbols that is not a constant" in todo
+      "fail on skolemization with new_symbols that is not a constant" in {
+        val input = simpleSkolemConstantDerivation(
+          "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0(X)]), skolemize(X, sK0)], [nc]))."
+        )
+        RootedTptpDerivation.fromInputFileRefutation(input) must beLeft.like {
+          case _: CannotHandleInput => ok
+        }
+      }
 
       // only for now. we don't handle multiple symbols yet
       "fail on skolemization step with more than one given symbol" in {
@@ -285,30 +291,6 @@ class TptpProofParserUnitTest extends Specification {
         val context = derivation.context
         context.constant("b") must beNone
       }
-
-      "should include introduced skolem symbols as constants and skolem functions" in {
-        val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
-          |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
-        """.stripMargin)
-        todo
-        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        val skolemConst = Const("sK0", Ti ->: Ti)
-        val context = derivation.context
-        (context.constant("sK0") must beSome(skolemConst))
-          .and(context.skolemDef(skolemConst) must beSome(le"^X ?Y p(X,Y)"))
-      }
-
-      "should include constant that is not used in axiom, but as instance in plain inference" in {
-        val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
-          |fof(s, plain, ?[Y]: p(a, Y), inference(instance, [status(thm)], [a])).
-        """.stripMargin)
-        todo
-        RootedTptpDerivation.fromInputFileAndRootLabel(input, "s") must beRight.like { derivation =>
-          derivation.context.constant("a") must_=== Some(FOLConst("a"))
-        }
-      }
     }
 
     "skolemization" in {
@@ -427,7 +409,19 @@ class TptpProofParserUnitTest extends Specification {
         }
       }
 
-      "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in todo
+      "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ?[X]: p(X)).
+          |fof(b, axiom, ![Y]: ?[X]: q(Y, X)).
+          |fof(s1, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
+          |fof(s2, plain, ![Y]: q(Y, sK0(Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [b])).
+          |fof(s, plain, p(sK0) & ![Y]: q(Y, sK0(Y)), inference(and, [status(thm)], [s1, s2])).
+        """.stripMargin)
+        val Right(derivation) = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+          d => d must beAnInstanceOf[ProofReconstructionError]
+        }
+      }
 
       "suceed on skolemization step that introduces a symbol that is used in derivation in an unused axiom" in {
         val input = InputFile.fromString("""

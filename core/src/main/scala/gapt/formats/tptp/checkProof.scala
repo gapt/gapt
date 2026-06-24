@@ -79,6 +79,7 @@ type VerifiedBadReason =
     | PlainInferenceWithConjectureParent
     | NegatedConjectureWithMultipleDistinctParents
     | DistinctFormulasWithSameName
+    | ProofReconstructionError
 
 type UnknownReason =
   Throwable
