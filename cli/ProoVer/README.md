@@ -9,14 +9,19 @@ Uses [GAPT](https://www.logic.at/gapt/) to check TSTP derivations.
 ```
 
 where `<PROOF>` is a path to a TSTP derivation. For example, using the provided
-proofs in the `examples` directory we get
+proofs in the `samples` directory we get
 
 ```bash
-./gapt-check examples/correct_example1_c_proof.p
-%SZS status Verified
+./gapt-check samples/correct_proof.p
+%SZS status VerifiedGood
 ```
 
 ```bash
-./gapt-check examples/incorrect_example1_e_proof.p
-%SZS status FailedVerified : ...
+./gapt-check samples/evil_proof.p
+%SZS status VerifiedBad : ...
+```
+
+```bash
+./gapt-check samples/timeout_proof.p
+%SZS status Timeout
 ```
