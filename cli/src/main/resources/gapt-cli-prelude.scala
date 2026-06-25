@@ -12,6 +12,7 @@ import gapt.formats.babel.BabelParser.parseFormula
 import gapt.formats.dimacs._
 import gapt.formats.tip._
 import gapt.formats.tptp._
+import gapt.formats.tptp.check._
 import gapt.formats.verit._
 import gapt.formats.smt._
 import gapt.formats.llk._
