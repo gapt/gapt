@@ -33,7 +33,7 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
   private def prepareGaptCheckScript(): Unit = {
     assert(os.exists(prooVerCLIZip))
     os.remove.all(prooVerCLIZipUnpackDirectory)
-    val exitCode = Process(Seq("unzip", prooVerCLIZip.toString, "-d", prooVerCLIZipUnpackDirectory.toString)).!
+    val exitCode = Process(Seq("unzip", "-q", prooVerCLIZip.toString, "-d", prooVerCLIZipUnpackDirectory.toString)).!
     assert(exitCode == 0)
     assert(os.exists(prooVerCLIScript))
   }
