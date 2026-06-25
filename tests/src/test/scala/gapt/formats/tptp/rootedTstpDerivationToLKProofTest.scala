@@ -4,7 +4,7 @@ import gapt.expr.formula.Bottom
 import gapt.expr.stringInterpolationForExpressions
 import gapt.formats.ClasspathInputFile
 import gapt.formats.InputFile
-import gapt.formats.tptp.RootedTptpDerivation
+import gapt.formats.tptp.RootedTstpDerivation
 import gapt.proofs.SequentMatchers
 import gapt.provers.escargot.Escargot
 import gapt.utils.EitherHelpers.RichEither
@@ -13,17 +13,17 @@ import org.specs2.mutable.Specification
 
 import scala.concurrent.duration.*
 
-class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatchers {
-  "rootedTptpDerivationIntoLKProof" should {
+class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatchers {
+  "rootedTstpDerivationIntoLKProof" should {
     "return proof with negated conjecture in antecedent" in {
       val input = InputFile.fromString("""
       |fof(a, axiom, ![X]: p(X)).
       |fof(c, conjecture, ![X]: p(X)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).""".stripMargin)
-      val sketch = RootedTptpDerivation.fromInputFileAndRootLabel(input, "cont").toOption.get
+      val sketch = RootedTstpDerivation.fromInputFileAndRootLabel(input, "cont").toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTptpDerivationToLKProof(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProof(sketch, Escargot) }
 
       lkProof must beRight.like { proof => proof.conclusion.multiSetEquals(fos"!x p(x), -(!x p(x)) :- ${Bottom()}") }
     }
@@ -33,9 +33,9 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
       |fof(a, axiom, ![X]: p(X)).
       |fof(c, conjecture, p(a)).
       |fof(end, plain, p(a), inference(instance, [status(thm)], [a])).""".stripMargin)
-      val sketch = RootedTptpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
+      val sketch = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTptpDerivationToLKProof(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProof(sketch, Escargot) }
 
       lkProof must beRight.like { proof => proof.conclusion.multiSetEquals(fos"!x p(x) :- p(a)") }
     }
@@ -46,9 +46,9 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
       |fof(a1, axiom, ![X]: p(X)).
       |fof(c, conjecture, ![X]: p(X)).
       |fof(end, plain, ![X]: p(X), inference(instance, [status(thm)], [a1, a1])).""".stripMargin)
-      val sketch = RootedTptpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
+      val sketch = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTptpDerivationToLKProof(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProof(sketch, Escargot) }
 
       lkProof must beRight.like { proof =>
         proof.conclusion.multiSetEquals(fos"!x p(x), !x p(x) :- !x p(x)")
@@ -57,9 +57,9 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
 
     "work on example1_c" in {
       val input = ClasspathInputFile("proover_competition/Proofs/correct_example1_c_proof.p")
-      val sketch = RootedTptpDerivation.fromInputFileRefutation(input).toOption.get
+      val sketch = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTptpDerivationToLKProof(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProof(sketch, Escargot) }
 
       lkProof must beRight.like { proof =>
         proof.conclusion.multiSetEquals(fos"p(a) & ~p(b), -(?x -(p(x) -> !y p(y))) :- ${Bottom()}")
@@ -68,9 +68,9 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
 
     "work on example2_c" in {
       val input = ClasspathInputFile("proover_competition/Proofs/correct_example2_c_proof.p")
-      val sketch = RootedTptpDerivation.fromInputFileRefutation(input).toOption.get
+      val sketch = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTptpDerivationToLKProof(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProof(sketch, Escargot) }
 
       lkProof must beRight.like { proof =>
         proof.conclusion.multiSetEquals(fos"!x(p(x) -> p(f(x))), !x(p(x) -> p(f(x))), p(a), -p(f(f(a))), -p(f(f(a))) :- ${Bottom()}")
@@ -89,8 +89,8 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
           |fof(i, plain, ~p(sK0), inference(instance, [status(thm)], [nc])).
           |fof(f, plain, $false, inference(falsum, [status(thm)], [s, i])).
         """.stripMargin)
-        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "f").get
-        rootedTptpDerivationToLKProof(derivation) must beRight
+        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "f").get
+        rootedTstpDerivationToLKProof(derivation) must beRight
       }
 
       "fails on incorrect proof that ends in a formula containing a skolem symbol" in {
@@ -98,8 +98,8 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
           |fof(a, axiom, ?[X]: p(X)).
           |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
         """.stripMargin)
-        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
+        rootedTstpDerivationToLKProof(derivation) must beLeft.like {
           case d => d must beAnInstanceOf[DeskolemizationFailed]
         }
       }
@@ -109,8 +109,8 @@ class rootedTptpDerivationIntoLKProofTest extends Specification with SequentMatc
           |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
           |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val derivation = RootedTptpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTptpDerivationToLKProof(derivation) must beLeft.like {
+        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
+        rootedTstpDerivationToLKProof(derivation) must beLeft.like {
           case d => d must beAnInstanceOf[DeskolemizationFailed]
         }
       }

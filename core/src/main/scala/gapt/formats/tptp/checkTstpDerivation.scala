@@ -101,7 +101,7 @@ enum SzsStatus {
 
   def status: String = this match {
     case VerifiedGood                                   => "VerifiedGood"
-    case VerifiedBad(reason: TptpDerivationImportError) => s"VerifiedBad : ${reason.message}"
+    case VerifiedBad(reason: TstpDerivationImportError) => s"VerifiedBad : ${reason.message}"
     case VerifiedBad(reason: OtherFailureReason)        => s"VerifiedBad : ${reason.toString}"
     case Unknown(_)                                     => "Unknown"
     case Timeout                                        => "Timeout"
@@ -113,28 +113,28 @@ enum SzsStatus {
   def statusLine: String = s"%SZS status $status"
 }
 
-def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 25.seconds): SzsStatus = {
+def checkTstpDerivation(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 25.seconds): SzsStatus = {
   val result = {
     try withTimeout(timeout) {
         boundary {
-          val refutation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
+          val refutation = RootedTstpDerivation.fromInputFileRefutation(file).getOrBreak
           refutation.usedDerivationSteps.foreach {
-            case step: (TptpAxiomStep | TptpConjectureStep) =>
+            case step: (TstpAxiomStep | TstpConjectureStep) =>
               checkStepHasCorrectFileDirective(step, fileDirectiveRoot).getOrBreak
             case _ =>
           }
 
-          val usedNegatedConjectures = refutation.usedDerivationSteps.collect { case s: TptpNegatedConjectureStep => s }
+          val usedNegatedConjectures = refutation.usedDerivationSteps.collect { case s: TstpNegatedConjectureStep => s }
           usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
           }
 
-          val usedPlainInferences = refutation.usedDerivationSteps.collect { case a: TptpPlainInferenceStep => a }
+          val usedPlainInferences = refutation.usedDerivationSteps.collect { case a: TstpPlainInferenceStep => a }
           usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm", "esa"))))
           }
 
-          val usedSkolemizationSteps = refutation.usedDerivationSteps.collect { case s: TptpSkolemizationStep => s }
+          val usedSkolemizationSteps = refutation.usedDerivationSteps.collect { case s: TstpSkolemizationStep => s }
           usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
@@ -156,7 +156,7 @@ def checkProof(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 
 }
 
 private def checkStepHasCorrectFileDirective(
-    s: TptpAxiomStep | TptpConjectureStep,
+    s: TstpAxiomStep | TstpConjectureStep,
     fileDirectiveRoot: os.Path
 ): Either[VerifiedBadReason, Unit] = boundary {
   val annotations = s.annotationsOption.getOrElse {
@@ -222,7 +222,7 @@ extension (annotations: Option[Annotations]) {
   }
 }
 
-extension (step: TptpDerivationStep) {
+extension (step: TstpDerivationStep) {
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
     step.annotationsOption.hasUnambiguousStatusAmong(statuses)
   }
@@ -245,14 +245,14 @@ extension (inference: Source.Inference) {
     inference.usefulInfo.statusSet
 }
 
-extension (step: TptpPlainInferenceStep) {
+extension (step: TstpPlainInferenceStep) {
   def statuses: Set[String] = step.source.statuses
 }
 
-extension (step: TptpNegatedConjectureStep) {
+extension (step: TstpNegatedConjectureStep) {
   def statuses: Set[String] = step.source.statuses
 }
 
-extension (step: TptpSkolemizationStep) {
+extension (step: TstpSkolemizationStep) {
   def statuses: Set[String] = step.source.statuses
 }

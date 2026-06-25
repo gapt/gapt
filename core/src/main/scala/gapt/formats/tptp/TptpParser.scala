@@ -248,12 +248,12 @@ object TptpImporter {
   def loadWithIncludes(file: InputFile): TptpFile =
     loadWithIncludes(file, pwd)
 
-  def loadAsTptpDerivation(file: InputFile): Either[TptpDerivationImportError, TptpDerivation] =
-    TptpDerivation.fromInputFile(file)
+  def loadAsTptpDerivation(file: InputFile): Either[TstpDerivationImportError, TstpDerivation] =
+    TstpDerivation.fromInputFile(file)
 
-  def loadAsLKRefutation(file: InputFile): Either[TptpDerivationImportError, LKProof] = boundary {
-    val rootedTptpDerivation = RootedTptpDerivation.fromInputFileRefutation(file).getOrBreak
-    rootedTptpDerivationToLKProof(rootedTptpDerivation)
+  def loadAsLKRefutation(file: InputFile): Either[TstpDerivationImportError, LKProof] = boundary {
+    val rootedTptpDerivation = RootedTstpDerivation.fromInputFileRefutation(file).getOrBreak
+    rootedTstpDerivationToLKProof(rootedTptpDerivation)
   }
 
   def main(args: Array[String]): Unit =
