@@ -32,8 +32,6 @@ def prooVerCLI(args: String*): Unit = {
     return
   }
 
-  // directory of the input file defines where we resolve file directives
-  val fileDirectiveRoot = path / os.up
-  val szsStatus = checkTstpDerivation(OnDiskInputFile(path), fileDirectiveRoot)
+  val szsStatus = checkTstpDerivation(OnDiskInputFile(path))
   Console.out.println(szsStatus.statusLine)
 }

@@ -160,10 +160,10 @@ def rootedTstpDerivationToLKProof(
     try deskolemizeET(LKToExpansionProof(proof))
     catch
       case e: IllegalArgumentException =>
-        break(Left(DeskolemizationFailed(proof, Some(e))))
+        break(Left(DeskolemizationFailed(Some(e))))
   }
   val deskolemizedLKProof = ExpansionProofToLK(deskolemizedExpansionProof).getOrElse {
-    break(Left(DeskolemizationFailed(proof, None)))
+    break(Left(DeskolemizationFailed(None)))
   }
   Right(deskolemizedLKProof)
 }
