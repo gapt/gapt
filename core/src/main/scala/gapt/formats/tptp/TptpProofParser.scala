@@ -32,7 +32,6 @@ import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.proofs.context.Context
 import gapt.utils.linearizeStrictPartialOrder
 import gapt.proofs.context.immutable.ImmutableContext
-import gapt.proofs.lk.LKProof
 
 sealed trait TstpDerivationStep {
   def name: String
@@ -146,7 +145,6 @@ case class IncorrectSkolemization(
   def message: String = s"skolemization step with name $stepName is incorrect"
 }
 case class DeskolemizationFailed(
-    skolemizedProof: LKProof,
     cause: Option[Throwable]
 ) extends TstpDerivationImportError {
   def message: String = "deskolemization failed"

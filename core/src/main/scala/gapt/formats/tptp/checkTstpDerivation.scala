@@ -16,28 +16,28 @@ enum OtherFailureReason {
   case SourceMissing(stepName: String)
   case FileDirectiveMissing(stepName: String)
   case FileDirectiveLabelMissing(stepName: String)
-  case FileDirectiveFileNotFound(stepName: String, absolutePath: os.Path)
-  case FileDirectiveInvalidSyntax(stepName: String, absolutePath: os.Path)
+  case FileDirectiveFileNotFound(stepName: String, fileName: String)
+  case FileDirectiveInvalidSyntax(stepName: String, fileName: String)
   case FileDirectiveFileDoesNotHaveLabel(
       stepName: String,
-      absolutePath: os.Path,
+      fileName: String,
       label: String
   )
   case FileDirectiveFileHasMultipleDistinctFormulasWithLabel(
       stepName: String,
-      absolutePath: os.Path,
+      fileName: String,
       label: String
   )
   case FileDirectiveStepDoesNotMatchRole(
       stepName: String,
-      absolutePath: os.Path,
+      fileName: String,
       label: String,
       expectedRole: String,
       actualRole: String
   )
   case FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
       stepName: String,
-      absolutePath: os.Path,
+      fileName: String,
       label: String,
       expected: Formula,
       actual: Formula
@@ -51,17 +51,17 @@ enum OtherFailureReason {
     case s: FileDirectiveLabelMissing =>
       s"step ${s.stepName} is missing a file directive label"
     case s: FileDirectiveFileNotFound =>
-      s"step ${s.stepName} has a file source (${s.absolutePath}) that could not be found"
+      s"step ${s.stepName} has a file source (${s.fileName}) that could not be found"
     case s: FileDirectiveInvalidSyntax =>
-      s"step ${s.stepName} has a file source (${s.absolutePath}) with invalid TPTP syntax"
+      s"step ${s.stepName} has a file source (${s.fileName}) with invalid TPTP syntax"
     case s: FileDirectiveFileDoesNotHaveLabel =>
-      s"step ${s.stepName} has a file source (${s.absolutePath}) that does not have the label '${s.label}' referred to in the file directive"
+      s"step ${s.stepName} has a file source (${s.fileName}) that does not have the label '${s.label}' referred to in the file directive"
     case s: FileDirectiveFileHasMultipleDistinctFormulasWithLabel =>
-      s"step ${s.stepName} has a file source (${s.absolutePath}) that has multiple distinct formulas with the same label '${s.label}'"
+      s"step ${s.stepName} has a file source (${s.fileName}) that has multiple distinct formulas with the same label '${s.label}'"
     case s: FileDirectiveStepDoesNotMatchRole =>
-      s"step ${s.stepName} has a file source (${s.absolutePath}) that points to a formula with name ${s.label} that does not have the same role as the step. expected: ${s.expectedRole}, actual: ${s.actualRole}"
+      s"step ${s.stepName} has a file source (${s.fileName}) that points to a formula with name ${s.label} that does not have the same role as the step. expected: ${s.expectedRole}, actual: ${s.actualRole}"
     case s: FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula =>
-      s"step ${s.stepName} has a file source (${s.absolutePath}) that points to a formula with name ${s.label} that is not alpha-equivalent to the claimed formula. expected: ${s.expected}, actual: ${s.actual}"
+      s"step ${s.stepName} has a file source (${s.fileName}) that points to a formula with name ${s.label} that is not alpha-equivalent to the claimed formula. expected: ${s.expected}, actual: ${s.actual}"
 
 }
 import OtherFailureReason._
@@ -92,6 +92,7 @@ type UnknownReason =
     | SkolemizationStepWithoutNewSymbols
     | UnexpectedInput
     | CannotHandleIncludeDirectives
+    | FileNotFound
 
 enum SzsStatus {
   case VerifiedGood
@@ -113,14 +114,47 @@ enum SzsStatus {
   def statusLine: String = s"%SZS status $status"
 }
 
-def checkTstpDerivation(file: InputFile, fileDirectiveRoot: os.Path, timeout: Duration = 25.seconds): SzsStatus = {
+case class FileNotFound(fileName: String)
+trait FileNameResolver {
+  def apply(fileName: String): Either[FileNotFound, String]
+}
+
+object FileNameResolver {
+  val empty: FileNameResolver = fileName => Left(FileNotFound(fileName))
+  val absolute: FileNameResolver = fileName => {
+    val path =
+      if Paths.get(fileName).isAbsolute() then os.Path(fileName)
+      else os.Path(fileName, os.pwd)
+
+    if os.exists(path) then Right(os.read(path))
+    else Left(FileNotFound(fileName))
+  }
+  given FileNameResolver = absolute
+}
+
+extension [R <: FileNameResolver](r: R) {
+  def extend(f: FileNameResolver): FileNameResolver = fileName =>
+    boundary { Right(f(fileName).getOrElse { r(fileName).getOrBreak }) }
+
+  def relativeTo(root: os.Path): FileNameResolver = fileName =>
+    if Paths.get(fileName).isAbsolute() then r(fileName)
+    else r((root / os.RelPath(fileName)).toString)
+}
+
+def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r: FileNameResolver): SzsStatus = {
+  val input = r(file.fileName) match {
+    case Left(e)      => return SzsStatus.Unknown(e)
+    case Right(input) => input
+  }
+  val inputFile = InputFile.fromString(input)
   val result = {
     try withTimeout(timeout) {
         boundary {
-          val refutation = RootedTstpDerivation.fromInputFileRefutation(file).getOrBreak
+          val refutation = RootedTstpDerivation.fromInputFileRefutation(inputFile).getOrBreak
           refutation.usedDerivationSteps.foreach {
             case step: (TstpAxiomStep | TstpConjectureStep) =>
-              checkStepHasCorrectFileDirective(step, fileDirectiveRoot).getOrBreak
+              val fileDirectiveResolver = r.relativeTo(os.Path(file.fileName) / os.up)
+              checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver).getOrBreak
             case _ =>
           }
 
@@ -139,7 +173,7 @@ def checkTstpDerivation(file: InputFile, fileDirectiveRoot: os.Path, timeout: Du
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
 
-          TptpImporter.loadAsLKRefutation(file)
+          TptpImporter.loadAsLKRefutation(inputFile)
         }
       }
     catch e => Left(e)
@@ -147,7 +181,11 @@ def checkTstpDerivation(file: InputFile, fileDirectiveRoot: os.Path, timeout: Du
 
   result match {
     case Left(reason) => reason match {
-        case _: TimeOutException       => SzsStatus.Timeout
+        case _: TimeOutException => SzsStatus.Timeout
+        case t: Throwable => {
+          t.printStackTrace()
+          SzsStatus.Unknown(t)
+        }
         case r: UnknownReason          => SzsStatus.Unknown(r)
         case reason: VerifiedBadReason => SzsStatus.VerifiedBad(reason)
       }
@@ -156,9 +194,8 @@ def checkTstpDerivation(file: InputFile, fileDirectiveRoot: os.Path, timeout: Du
 }
 
 private def checkStepHasCorrectFileDirective(
-    s: TstpAxiomStep | TstpConjectureStep,
-    fileDirectiveRoot: os.Path
-): Either[VerifiedBadReason, Unit] = boundary {
+    s: TstpAxiomStep | TstpConjectureStep
+)(using resolver: FileNameResolver): Either[VerifiedBadReason, Unit] = boundary {
   val annotations = s.annotationsOption.getOrElse {
     break(Left(SourceMissing(s.name)))
   }
@@ -170,18 +207,14 @@ private def checkStepHasCorrectFileDirective(
       break(Left(FileDirectiveMissing(s.name)))
   }
 
-  val absolutePath =
-    if Paths.get(fileName).isAbsolute() then os.Path(fileName)
-    else fileDirectiveRoot / os.RelPath(fileName)
-
-  if !os.exists(absolutePath) then {
-    break(Left(FileDirectiveFileNotFound(s.name, absolutePath)))
+  val tptpFileContent = resolver(fileName).getOrElse {
+    break(Left(FileDirectiveFileNotFound(s.name, fileName)))
   }
   val tptpFile = {
-    try TptpImporter.loadWithIncludes(absolutePath, fileDirectiveRoot)
+    try TptpImporter.loadWithoutIncludes(InputFile.fromString(tptpFileContent))
     catch {
       case _: IllegalArgumentException =>
-        break(Left(FileDirectiveInvalidSyntax(s.name, absolutePath)))
+        break(Left(FileDirectiveInvalidSyntax(s.name, fileName)))
     }
   }
   val fileDirectiveFormulas = tptpFile.inputs.collect {
@@ -189,20 +222,20 @@ private def checkStepHasCorrectFileDirective(
   }
   val fileDirectiveFormula = fileDirectiveFormulas.distinct match {
     case Seq() =>
-      break(Left(FileDirectiveFileDoesNotHaveLabel(s.name, absolutePath, label)))
+      break(Left(FileDirectiveFileDoesNotHaveLabel(s.name, fileName, label)))
     case Seq(_, _, _*) =>
-      break(Left(FileDirectiveFileHasMultipleDistinctFormulasWithLabel(s.name, absolutePath, label)))
+      break(Left(FileDirectiveFileHasMultipleDistinctFormulasWithLabel(s.name, fileName, label)))
     case Seq(a) => a
   }
 
   if fileDirectiveFormula.role != s.role then {
-    break(Left(FileDirectiveStepDoesNotMatchRole(s.name, absolutePath, label, s.role, fileDirectiveFormula.role)))
+    break(Left(FileDirectiveStepDoesNotMatchRole(s.name, fileName, label, s.role, fileDirectiveFormula.role)))
   }
 
   if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
     break(Left(FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
       s.name,
-      absolutePath,
+      fileName,
       label,
       fileDirectiveFormula.formula,
       s.formula

@@ -26,21 +26,33 @@ import gapt.formats.tptp.StepWithMissingParents
 import gapt.formats.tptp.DeskolemizationFailed
 import gapt.formats.tptp.IncorrectSkolemization
 import gapt.formats.tptp.CannotHandleInput
+import gapt.formats.StringInputFile
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
-val fileDirectiveRoot = testResourcesRoot / "proover_competition" / "Proofs"
+val fileDirectiveRoot = testResourcesRoot / "ProoVer_competition" / "Proofs"
+given resolver: FileNameResolver = FileNameResolver.absolute.relativeTo(fileDirectiveRoot)
 
 class checkTstpDerivationUnitTest extends mutable.Specification {
   def todo(message: String): Pending = {
     throw new PendingException(Pending(s"TODO: $message"))
   }
-  def spec(check: sourcecode.Text[InputFile => SzsStatus]) = {
-    val checkDerivation = check.value
+  def spec(check: sourcecode.Text[InputFile => FileNameResolver ?=> SzsStatus]) = {
+    val checkDerivation0 = check.value
+    def checkDerivation(inputFile: InputFile): SzsStatus = {
+      assert(inputFile.isInstanceOf[StringInputFile])
+      val inputPath = fileDirectiveRoot / "input"
+      val r = resolver.extend {
+        case s if s == inputPath.toString => Right(inputFile.read)
+        case s                            => resolver(s)
+      }
+      checkDerivation0(inputPath)(using r)
+    }
     s"${check.source}" should {
+
       "return Verified on trivial proof" in {
         val input = InputFile.fromString("""
-        |fof(c, conjecture, $true, file('Problems/test14.p', c)).
-        |fof(nc, negated_conjecture, $false, inference(nc, [status(cth)], [c])).""".stripMargin)
+            |fof(c, conjecture, $true, file('Problems/test14.p', c)).
+            |fof(nc, negated_conjecture, $false, inference(nc, [status(cth)], [c])).""".stripMargin)
         checkDerivation(input) must_== SzsStatus.VerifiedGood
       }
 
@@ -771,7 +783,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
   }
 
   val timeout = 1.second
-  spec(i => checkTstpDerivation(i, fileDirectiveRoot, timeout = timeout))
+  spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i, timeout)(using r))
 }
 
 class checkTstpDerivationExampleTest extends Specification {
@@ -789,7 +801,7 @@ class checkTstpDerivationExampleTest extends Specification {
       }
     }
 
-    def spec(check: InputFile => SzsStatus): Fragments = {
+    def spec(check: InputFile => FileNameResolver ?=> SzsStatus): Fragments = {
       val correctProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.VerifiedGood)
@@ -806,7 +818,7 @@ class checkTstpDerivationExampleTest extends Specification {
     val timeout = 25.seconds
     s2"""
     |checkProof1
-    |${spec(i => checkTstpDerivation(i, fileDirectiveRoot, timeout = timeout))}
+    |${spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i, timeout)(using r))}
   """.stripMargin
   }
 }
