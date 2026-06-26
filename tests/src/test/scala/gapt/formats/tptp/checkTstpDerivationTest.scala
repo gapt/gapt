@@ -29,7 +29,7 @@ import gapt.formats.tptp.CannotHandleInput
 import gapt.formats.StringInputFile
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
-val fileDirectiveRoot = testResourcesRoot / "ProoVer_competition" / "Proofs"
+val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "ProoVer_competition" / "Proofs"
 given resolver: FileNameResolver = FileNameResolver.absolute.relativeTo(fileDirectiveRoot)
 
 class checkTstpDerivationUnitTest extends mutable.Specification {
