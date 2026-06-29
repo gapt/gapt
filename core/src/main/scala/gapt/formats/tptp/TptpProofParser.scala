@@ -295,10 +295,11 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
 */
 case class RootedTstpDerivation private (
     private val steps: Map[String, TstpDerivationStep],
+    private val topologicalOrder: Seq[String],
     private val rootLabel: String,
     val context: ImmutableContext
 ) {
-  def usedDerivationSteps: Iterable[TstpDerivationStep] = steps.values
+  def topologicallySortedUsedDerivationSteps: Iterable[TstpDerivationStep] = topologicalOrder.map(s => steps(s))
   def get(name: String): Option[TstpDerivationStep] = steps.get(name)
   def root: TstpDerivationStep = steps(rootLabel)
 }
@@ -333,7 +334,7 @@ object RootedTstpDerivation {
       case s: (TstpAxiomStep | TstpConjectureStep) => s.formula
     })
 
-    Right(RootedTstpDerivation(usedSteps, rootLabel, context))
+    Right(RootedTstpDerivation(usedSteps, usedAnnotatedFormulas.map(_.name).toSeq, rootLabel, context))
   }
 
   def fromInputFileRefutation(
