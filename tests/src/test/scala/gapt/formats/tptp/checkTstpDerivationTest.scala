@@ -162,6 +162,33 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkDerivation(input) must_== SzsStatus.VerifiedGood
         }
+
+        "fail on negated conjecture if negation of conjecture is not implied by conclusion" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a1, axiom, p | q, file('Problems/problem.p', a1)).
+              |fof(a2, axiom, ~q, file('Problems/problem.p', a2)).
+              |fof(c, conjecture, p | q, file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, a2, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a1, axiom, p | q).
+              |fof(a2, axiom, ~q).
+              |fof(c, conjecture, p | q).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedBad(r: IncorrectInference) => r.stepName must_=== "nc"
+          }
+        }
+
+        "fail on negated conjecture step without negated_conjecture inference name" in todo
+
+        "fail on negated conjecture step without negated_conjecture role" in todo
+
+        "do X on negated conjecture step with inference record parent" in todo("specify")
+        "do X if input has more than one negated conjecture" in todo("specify")
       }
 
       "plain inferences" in {
@@ -767,13 +794,11 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       "do fail if a skolem symbol has a symbol occurring in the conjecture" in todo
       "do X on axiom and conjecture steps that import different files" in todo("specify")
       "do X on an axiom with a source that only refers to another axiom" in todo("specify")
-      "do X on negated conjecture step with inference record parent" in todo("specify")
-      "do X on negated conjecture if negation of conjecture is not implied by conclusion" in todo("specify")
+
       "do X if input has no conjecture" in todo("specify")
       "do X if input has more than one conjecture" in todo("specify")
       "do X if input has no negated conjecture" in todo("specify")
       "do X on conjecture with incorrect file directive" in todo("specify")
-      "do X if input has more than one negated conjecture" in todo("specify")
       "do X if input has no $false proof step" in todo("specify")
       "do X if input has more than one $false proof step" in todo("specify")
       "do X on inputs with higher-order formulas" in todo("specify")

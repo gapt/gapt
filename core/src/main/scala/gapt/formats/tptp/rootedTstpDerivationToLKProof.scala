@@ -105,8 +105,12 @@ def rootedTstpDerivationToLKProof(
         context += proofDeclaration(s.name, LogicalAxiom(Neg(s.formula)), Seq.empty)
       }
       case s: TstpNegatedConjectureStep => {
-        val proof = replayProof(s.name, Neg(derivation.get(s.parent).get.formula) +: Sequent() :+ s.formula)
-        context += proofDeclaration(s.name, proof, s.parents)
+        val parentFormula = derivation.get(s.parent).get.formula
+        val negatedConjectureToFormulaProof =
+          replayProof(s.name, Neg(parentFormula) +: Sequent() :+ s.formula)
+        val _ = replayProof(s.name, s.formula +: Sequent() :+ Neg(parentFormula))
+
+        context += proofDeclaration(s.name, negatedConjectureToFormulaProof, s.parents)
       }
       case s: TstpSkolemizationStep => {
         val TstpSkolemizationStep(
