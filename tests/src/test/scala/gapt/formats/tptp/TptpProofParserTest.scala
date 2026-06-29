@@ -43,7 +43,7 @@ class TptpProofParserTest extends Specification {
 }
 
 class TptpProofParserUnitTest extends Specification {
-  "TptpDerivation" should {
+  "TstpDerivation" should {
     "handle nested inference sources" in {
       val input = InputFile.fromString("""
         |fof(a1, axiom, p).
@@ -71,7 +71,7 @@ class TptpProofParserUnitTest extends Specification {
     "fail if given derivation which ends in a conjecture" in todo
   }
 
-  "RootedTptpDerivation" should {
+  "RootedTstpDerivation" should {
     "parse skolemization steps" in {
       def simpleSkolemConstantDerivation(skolemizationStep: String) = InputFile.fromString(s"""
       |fof(a, axiom, ![X]: p(X)).
@@ -332,7 +332,7 @@ class TptpProofParserUnitTest extends Specification {
         rootedTstpDerivationToLKProof(derivation) must beLeft
       }
 
-      "fail on skolemization step whose actual context variables don't match the claimed context variables" in {
+      "fail on skolemization step whose actual context variables do not match the claimed context variables" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: ![Z]: p(X,Y,Z)).
           |fof(s, plain, ![X, Z]: p(X,sK0(X,Z), Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X,Z))], [a])).
@@ -422,8 +422,6 @@ class TptpProofParserUnitTest extends Specification {
         RootedTstpDerivation.fromInputFileRefutation(input) must beRight
       }
 
-      "do X if two skolemizations happen on the same formula with the same skolem constant" in todo
-
       "do X on skolemization step whose parent formula contains multiple bound variables with the same name" in todo
       "do X on skolemization step shose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in todo
 
@@ -436,6 +434,7 @@ class TptpProofParserUnitTest extends Specification {
     }
 
     "fail import if given root label is not present" in todo
+    "do X if axiom does not contain file source" in todo
     "do X if given root label is an axiom" in todo
     "do X if given root label is a conjecture" in todo
     "fail if derivation contains constants with different arities" in todo

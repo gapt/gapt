@@ -77,8 +77,6 @@ class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatc
       }
     }
 
-    "should fail on examples" in todo
-
     "skolemization proof" in {
       "returns skolemization proof for correct skolemization step without context variables" in {
         val input = InputFile.fromString("""
@@ -113,6 +111,38 @@ class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatc
         rootedTstpDerivationToLKProof(derivation) must beLeft.like {
           case d => d must beAnInstanceOf[DeskolemizationFailed]
         }
+      }
+
+      "fails if two skolemizations with the same symbol happen, even if they are on the same formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X)).
+          |fof(c, conjecture, ![X]: p(X)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(ncs1, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
+          |fof(ncs2, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
+          |fof(ai, plain, p(sK0), inference(instance, [status(thm)], [a])).
+          |fof(i, plain, $false, inference(and, [status(thm)], [ai, ncs1, ncs2])).
+        """.stripMargin)
+
+        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
+        rootedTstpDerivationToLKProof(derivation) must beLeft.like {
+          case d => d must beAnInstanceOf[DeskolemizationFailed]
+        }
+      }
+
+      "succeeds if two skolemizations with distinct symbols happen, even if they are on the same formula" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X]: p(X)).
+          |fof(c, conjecture, ![X]: p(X)).
+          |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+          |fof(ncs1, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
+          |fof(ncs2, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemize(X, sK1)], [nc])).
+          |fof(ai, plain, p(sK0) | p(sK1), inference(instances, [status(thm)], [a])).
+          |fof(i, plain, $false, inference(and, [status(thm)], [ai, ncs1, ncs2])).
+        """.stripMargin)
+
+        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
+        rootedTstpDerivationToLKProof(derivation) must beRight
       }
     }
   }
