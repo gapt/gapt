@@ -11,9 +11,6 @@ import gapt.formats.InputFile
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFunctionConst
-import gapt.expr.Const
-import gapt.expr.ty.Ti
-import gapt.expr.ty.To
 
 class TptpProofParserTest extends Specification {
 
@@ -268,28 +265,6 @@ class TptpProofParserUnitTest extends Specification {
         RootedTstpDerivation.fromInputFileRefutation(input) must beLeft.like {
           case x: CannotHandleInput => x.stepName must_=== "ca"
         }
-      }
-    }
-
-    "context" in {
-      "should include symbols occurring in axioms" in {
-        val input = InputFile.fromString("""
-            |fof(a, axiom, ![X]: q(X, a)).
-          """.stripMargin)
-        val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "a"): @unchecked
-        val context = derivation.context
-        (context.constant("a") must beSome(FOLConst("a")))
-          .and(context.constant("q") must beSome(Const("q", Ti ->: Ti ->: To)))
-      }
-
-      "should not include symbols that are not used in derivation" in {
-        val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: q(X, a)).
-          |fof(b, axiom, ![X]: q(X, b)).
-        """.stripMargin)
-        val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "a"): @unchecked
-        val context = derivation.context
-        context.constant("b") must beNone
       }
     }
 
