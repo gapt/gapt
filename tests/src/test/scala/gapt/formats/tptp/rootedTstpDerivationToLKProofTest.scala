@@ -144,6 +144,16 @@ class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatc
         val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
         rootedTstpDerivationToLKProof(derivation) must beRight
       }
+
+      "picks outermost bound variable to skolemize if there are multiple with the same name" in {
+        val _ = InputFile.fromString("""
+          |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
+          |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """.stripMargin)
+        todo
+      }
+
+      "fails on skolemization step shose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in todo
     }
   }
 }
