@@ -73,6 +73,7 @@ type VerifiedBadReason =
     | InferenceCycle
     | OtherFailureReason
     | StepWithInvalidStatus
+    | StepWithInvalidInferenceRule
     | StepWithMissingParents
     | NegatedConjectureStepWithNonConjectureParent
     | NegatedConjectureWithoutParent
