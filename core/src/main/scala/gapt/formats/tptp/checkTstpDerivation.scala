@@ -23,7 +23,7 @@ enum OtherFailureReason {
       fileName: String,
       label: String
   )
-  case FileDirectiveFileHasMultipleDistinctFormulasWithLabel(
+  case FileDirectiveFileHasMultipleFormulasWithSameLabel(
       stepName: String,
       fileName: String,
       label: String
@@ -56,7 +56,7 @@ enum OtherFailureReason {
       s"step ${s.stepName} has a file source (${s.fileName}) with invalid TPTP syntax"
     case s: FileDirectiveFileDoesNotHaveLabel =>
       s"step ${s.stepName} has a file source (${s.fileName}) that does not have the label '${s.label}' referred to in the file directive"
-    case s: FileDirectiveFileHasMultipleDistinctFormulasWithLabel =>
+    case s: FileDirectiveFileHasMultipleFormulasWithSameLabel =>
       s"step ${s.stepName} has a file source (${s.fileName}) that has multiple distinct formulas with the same label '${s.label}'"
     case s: FileDirectiveStepDoesNotMatchRole =>
       s"step ${s.stepName} has a file source (${s.fileName}) that points to a formula with name ${s.label} that does not have the same role as the step. expected: ${s.expectedRole}, actual: ${s.actualRole}"
@@ -221,11 +221,11 @@ private def checkStepHasCorrectFileDirective(
   val fileDirectiveFormulas = tptpFile.inputs.collect {
     case a: AnnotatedFormula if a.name == label => a
   }
-  val fileDirectiveFormula = fileDirectiveFormulas.distinct match {
+  val fileDirectiveFormula = fileDirectiveFormulas match {
     case Seq() =>
       break(Left(FileDirectiveFileDoesNotHaveLabel(s.name, fileName, label)))
     case Seq(_, _, _*) =>
-      break(Left(FileDirectiveFileHasMultipleDistinctFormulasWithLabel(s.name, fileName, label)))
+      break(Left(FileDirectiveFileHasMultipleFormulasWithSameLabel(s.name, fileName, label)))
     case Seq(a) => a
   }
 

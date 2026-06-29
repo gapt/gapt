@@ -533,7 +533,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleFormulasWithSameLabel) => reason.stepName must_== "a"
           }
         }
 
@@ -569,20 +569,23 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation(input) must_== SzsStatus.VerifiedGood
         }
 
-        "verify axiom step even if there are steps with same label, if they are equal in role and have alpha-equivalent formulas" in {
+        "fail axiom step if there are steps with same label, even if they are equal in role and have alpha-equivalent formulas" in {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test8.p', a)).
             |fof(c1, conjecture, p, file('Problems/test8.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
             """.stripMargin)
-          checkDerivation(input) must_== SzsStatus.VerifiedGood
+          checkDerivation(input) must beLike {
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleFormulasWithSameLabel) =>
+              (reason.stepName must_== "a1").and(reason.label must_== "a").and(reason.fileName must_== "Problems/test8.p")
+          }
         }
 
         "verify axiom step if given correct absolute path" in {
           val input = InputFile.fromString(s"""
-            |fof(a1, axiom, p, file('${fileDirectiveRoot}/Problems/test8.p', a)).
-            |fof(c1, conjecture, p, file('Problems/test8.p', c)).
+            |fof(a1, axiom, p, file('${fileDirectiveRoot}/Problems/test2.p', a)).
+            |fof(c1, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
             |fof(cont, plain, $$false, inference(falsum, [status(thm)], [a1, nc])).
             """.stripMargin)
@@ -693,7 +696,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleDistinctFormulasWithLabel) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleFormulasWithSameLabel) => reason.stepName must_== "c"
           }
         }
 
@@ -712,8 +715,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
 
         "verify conjecture step if given correct absolute path" in {
           val input = InputFile.fromString(s"""
-            |fof(a1, axiom, p, file('Problems/test8.p', a)).
-            |fof(c1, conjecture, p, file('${fileDirectiveRoot}/Problems/test8.p', c)).
+            |fof(a1, axiom, p, file('Problems/test2.p', a)).
+            |fof(c1, conjecture, p, file('${fileDirectiveRoot}/Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
             |fof(cont, plain, $$false, inference(falsum, [status(thm)], [a1, nc])).
             """.stripMargin)
@@ -734,14 +737,16 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "verify proof with two steps with the same name if proof steps are equal" in {
+        "fail on proof with two steps with the same name even if proof steps are equal" in {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
             |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-          checkDerivation(input) must_== SzsStatus.VerifiedGood
+          checkDerivation(input) must beLike {
+            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DistinctFormulasWithSameName]
+          }
         }
       }
 
