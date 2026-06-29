@@ -27,6 +27,7 @@ import gapt.formats.tptp.DeskolemizationFailed
 import gapt.formats.tptp.IncorrectSkolemization
 import gapt.formats.tptp.CannotHandleInput
 import gapt.formats.StringInputFile
+import gapt.formats.tptp.StepWithInvalidInferenceRule
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "ProoVer_competition" / "Proofs"
@@ -52,7 +53,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       "return Verified on trivial proof" in {
         val input = InputFile.fromString("""
             |fof(c, conjecture, $true, file('Problems/test14.p', c)).
-            |fof(nc, negated_conjecture, $false, inference(nc, [status(cth)], [c])).""".stripMargin)
+            |fof(nc, negated_conjecture, $false, inference(negated_conjecture, [status(cth)], [c])).""".stripMargin)
         checkDerivation(input) must_== SzsStatus.VerifiedGood
       }
 
@@ -183,9 +184,39 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "fail on negated conjecture step without negated_conjecture inference name" in todo
+        "fail on negated conjecture step without negated_conjecture inference name" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a1, axiom, p, file('Problems/problem.p', a)).
+              |fof(c, conjecture, p, file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~p, inference(nc, [status(cth)], [c])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p).
+              |fof(c, conjecture, p).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedBad(r: StepWithInvalidInferenceRule) => r.stepName must_=== "nc"
+          }
+        }
 
-        "fail on negated conjecture step without negated_conjecture role" in todo
+        "fail on negated conjecture step without negated_conjecture role" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a1, axiom, p, file('Problems/problem.p', a)).
+              |fof(c, conjecture, p, file('Problems/problem.p', c)).
+              |fof(nc, plain, ~p, inference(negated_conjecture, [status(cth)], [c])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p).
+              |fof(c, conjecture, p).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beAnInstanceOf[SzsStatus.VerifiedBad]
+        }
 
         "do X on negated conjecture step with inference record parent" in todo("specify")
         "do X if input has more than one negated conjecture" in todo("specify")

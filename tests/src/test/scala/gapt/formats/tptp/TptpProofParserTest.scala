@@ -438,7 +438,7 @@ class TptpProofParserUnitTest extends Specification {
         val input = InputFile.fromString("""
           |fof(a, axiom, ?[X]: ![Y, Z]: p(X,Y,Z)).
           |fof(c, conjecture, ?[X]: ![Y]: p(X,Y,Y)).
-          |fof(nc, negated_conjecture, ![X]: ?[Z]: ~p(X,Z,Z), inference(negation, [status(cth)], [c])).
+          |fof(nc, negated_conjecture, ![X]: ?[Z]: ~p(X,Z,Z), inference(negated_conjecture, [status(cth)], [c])).
           |fof(ncs, plain, ![X]: ~p(X, sK0(X), sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [nc])).
           |fof(as, plain, ![Y,Z]: p(sK1, Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemize(X, sK1)], [a])).
           |fof(i, plain, $false, inference(and, [status(thm)], [as, ncs])).

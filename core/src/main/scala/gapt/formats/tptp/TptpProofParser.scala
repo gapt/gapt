@@ -116,6 +116,13 @@ case class StepWithInvalidStatus(
 ) extends TstpDerivationImportError {
   override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
 }
+case class StepWithInvalidInferenceRule(
+    stepName: String,
+    actualInferenceName: String,
+    expectedInferenceName: String
+) extends TstpDerivationImportError {
+  override def message: String = s"$stepName has invalid inference name '$actualInferenceName'. Expected '$expectedInferenceName'"
+}
 case class NegatedConjectureStepWithNonConjectureParent(
     stepName: String
 ) extends TstpDerivationImportError {
@@ -415,6 +422,10 @@ object RootedTstpDerivation {
       case _ =>
         break(Left(UnexpectedInput(s"got negated conjecture inference without inference record: $name")))
     }
+    val expectedRule = "negated_conjecture"
+    if inference.rule != expectedRule then
+      break(Left(StepWithInvalidInferenceRule(name, inference.rule, expectedRule)))
+
     annotations.source.parentLabels.distinct match {
       case Seq() =>
         break(Left(NegatedConjectureWithoutParent(name)))

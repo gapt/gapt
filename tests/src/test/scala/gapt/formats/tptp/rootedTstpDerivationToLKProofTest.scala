@@ -84,7 +84,7 @@ class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatc
         val input = InputFile.fromString("""
           |fof(a, axiom, ?[X]: p(X)).
           |fof(c, conjecture, ?[X]: p(X)).
-          |fof(nc, negated_conjecture, ![X]: ~p(X), inference(negation, [status(cth)], [c])).
+          |fof(nc, negated_conjecture, ![X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
           |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
           |fof(i, plain, ~p(sK0), inference(instance, [status(thm)], [nc])).
           |fof(f, plain, $false, inference(falsum, [status(thm)], [s, i])).
