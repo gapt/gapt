@@ -93,7 +93,7 @@ class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatc
         rootedTstpDerivationToLKProof(derivation) must beRight
       }
 
-      "fails on incorrect proof that ends in a formula containing a skolem symbol" in {
+      "fails on incorrect proof that ends in a formula containing a skolem symbol without context variables" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ?[X]: p(X)).
           |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
@@ -104,7 +104,7 @@ class rootedTstpDerivationIntoLKProofTest extends Specification with SequentMatc
         }
       }
 
-      "returns skolemization proof for correct skolemization step with a context variable" in {
+      "fails on incorrect proof that ends in a formula containing a skolem symbol with context variables" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
           |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
