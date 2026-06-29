@@ -421,16 +421,6 @@ class TptpProofParserUnitTest extends Specification {
 
         RootedTstpDerivation.fromInputFileRefutation(input) must beRight
       }
-
-      "do X on skolemization step whose parent formula contains multiple bound variables with the same name" in todo
-      "do X on skolemization step shose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in todo
-
-      "fail on skolemization step if parent context variables don't match formula context variables" in todo
-
-      "succeed on skolemization step that skolemizes an inner quantifier inside the outer-most existential block" in todo
-
-      "succeed on bound variables within nested forall / exists scopes" in todo
-
     }
 
     "fail import if given root label is not present" in todo
