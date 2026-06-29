@@ -272,7 +272,7 @@ object TstpDerivation {
   ): Either[DistinctFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
     val map = steps.foldLeft(Map.empty[String, AnnotatedFormula]) { (map, step) =>
       map.updatedWith(step.name) {
-        case Some(formula) if step != formula =>
+        case Some(formula) =>
           break(Left(DistinctFormulasWithSameName(formula.name)))
 
         case _ => Some(step)
