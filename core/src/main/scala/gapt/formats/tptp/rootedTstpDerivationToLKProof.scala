@@ -1,30 +1,41 @@
 package gapt.formats.tptp
 
+import gapt.expr.Abs
+import gapt.expr.Apps
+import gapt.expr.formula.All
+import gapt.expr.formula.Ex
 import gapt.expr.formula.Neg
+import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.formula.hol.freeFOLVariables
+import gapt.expr.given
+import gapt.expr.substitute
 import gapt.formats.tptp.*
+import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Ant
+import gapt.proofs.RichFormulaSequent
 import gapt.proofs.Sequent
-import gapt.proofs.Suc
+import gapt.proofs.context.facet.ProofNames
+import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.context.update.ProofDeclaration
+import gapt.proofs.expansion.ExpansionProofToLK
+import gapt.proofs.expansion.deskolemizeET
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.CutRule
-import gapt.provers.ResolutionProver
-import gapt.provers.escargot.Escargot
-
-import scala.util.boundary
-import boundary.break
 import gapt.proofs.lk.rules.ExistsSkLeftRule
-import gapt.expr.formula.Ex
-import gapt.expr.{substitute, given}
-import gapt.expr.formula.All
+import gapt.proofs.lk.rules.LogicalAxiom
 import gapt.proofs.lk.rules.macros.ForallLeftBlock
 import gapt.proofs.lk.rules.macros.ForallRightBlock
-import gapt.proofs.lk.rules.LogicalAxiom
-import gapt.proofs.expansion.deskolemizeET
 import gapt.proofs.lk.transformations.LKToExpansionProof
-import gapt.proofs.context.mutable.MutableContext
+import gapt.proofs.lk.util.instantiateProof
+import gapt.provers.ResolutionProver
+import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe
-import gapt.proofs.expansion.ExpansionProofToLK
+
+import scala.util.boundary
+
+import boundary.break
 
 type LabelledSequent = Sequent[(String, FOLFormula)]
 
@@ -54,25 +65,60 @@ def rootedTstpDerivationToLKProof(
   IncorrectInference | IncorrectSkolemization | DeskolemizationFailed | ProofReconstructionError,
   LKProof
 ] = boundary {
-  given Maybe[MutableContext] = (MutableContext.guess(derivation.usedDerivationSteps.map(_.formula))).newMutable
-  val stepProofsByName: Map[String, (LabelledSequent, LKProof)] = derivation.usedDerivationSteps.map { s =>
-    val sequentToProve: LabelledSequent = s match {
-      case s: TstpAxiomStep =>
-        Sequent(Vector((s.name, s.formula)), Vector((s.name, s.formula)))
-      case s: TstpConjectureStep =>
-        Sequent(Vector((s.name, Neg(s.formula))), Vector((s.name, Neg(s.formula))))
-      case s: TstpPlainInferenceStep =>
-        Sequent(s.parents.map(p => (p, derivation.get(p).get.formula)), Vector((s.name, s.formula)))
-      case s: TstpNegatedConjectureStep =>
-        Sequent(Vector((s.parent, Neg(derivation.get(s.parent).get.formula))), Vector((s.name, s.formula)))
-      case s: TstpSkolemizationStep =>
-        Sequent(Vector((s.parent, derivation.get(s.parent).get.formula)), Vector((s.name, s.formula)))
-    }
+  val steps = derivation.topologicallySortedUsedDerivationSteps.toSeq.reverse
+  given context: MutableContext = MutableContext.guess(steps.map(_.formula))
 
-    val proofOption = s match {
-      case s: TstpAxiomStep      => Some(LogicalAxiom(s.formula))
-      case s: TstpConjectureStep => Some(LogicalAxiom(Neg(s.formula)))
-      case s @ TstpSkolemizationStep(name, claimedSkolemizedFormula, parent, _, newSkolemSymbol, claimedContextVariables, claimedBoundVariable, _) => {
+  def replayProof(inferenceName: String, sequentToProve: Sequent[FOLFormula]): LKProof = {
+    try {
+      prover.getLKProof(sequentToProve).getOrElse {
+        break(Left(IncorrectInference(inferenceName)))
+      }
+    } catch {
+      case e: IllegalArgumentException =>
+        // this means there was an issue with adding to context in prover
+        // which likely means a skolem constant got bound with different
+        // types which is incorrect
+        break(Left(ProofReconstructionError(inferenceName)))
+    }
+  }
+
+  def addParentProofLinks(proof: LKProof, parents: Seq[String]): LKProof = {
+    parents.foldLeft(proof) { (proof, parent) =>
+      val parentProofLink = context.get[ProofNames].link(FOLConst(parent)).get
+      CutRule(parentProofLink, proof)
+    }
+  }
+
+  def proofDeclaration(name: String, proof: LKProof, parents: Seq[String]): ProofDeclaration = {
+    val freeVars = freeFOLVariables(proof.conclusion.toImplication).toSeq
+    val const = FOLFunctionConst(name, freeVars.size)
+    val lhs = Apps(const, freeVars)
+    ProofDeclaration(lhs, addParentProofLinks(proof, parents))
+  }
+
+  steps.foreach { s =>
+    s match {
+      case s: TstpAxiomStep => {
+        context += proofDeclaration(s.name, LogicalAxiom(s.formula), Seq.empty)
+      }
+      case s: TstpConjectureStep => {
+        context += proofDeclaration(s.name, LogicalAxiom(Neg(s.formula)), Seq.empty)
+      }
+      case s: TstpNegatedConjectureStep => {
+        val proof = replayProof(s.name, Neg(derivation.get(s.parent).get.formula) +: Sequent() :+ s.formula)
+        context += proofDeclaration(s.name, proof, s.parents)
+      }
+      case s: TstpSkolemizationStep => {
+        val TstpSkolemizationStep(
+          name,
+          claimedSkolemizedFormula,
+          parent,
+          _,
+          newSkolemSymbol,
+          claimedContextVariables,
+          claimedBoundVariable,
+          _
+        ) = s
         def reportIncorrect(): Nothing = break(Left(IncorrectSkolemization(s.name)))
 
         val parentFormula = derivation.get(parent).get.formula
@@ -107,88 +153,41 @@ def rootedTstpDerivationToLKProof(
           s"skolemization step $name claims to skolemize formula $parentFormula by replacing $claimedBoundVariable with $claimedSkolemTerm which should result in $expectedSkolemizedFormula but the given formula is $claimedSkolemizedFormula"
           reportIncorrect()
         }
-        Some(forallRight)
-      }
-      case _ =>
         try {
-          prover.getLKProof(sequentToProve.map(_._2))
-        } catch
-          case e: IllegalArgumentException =>
-            // this means there was an issue with adding to context in prover
-            // which likely means a skolem constant got bound with different
-            // types which is incorrect
-            break(Left(ProofReconstructionError(s.name)))
-    }
-
-    val proof = proofOption match {
-      case None    => break(Left(IncorrectInference(s.name)))
-      case Some(p) => p
-    }
-
-    val sequentSorted = sortSequentLike(sequentToProve, proof.conclusion.asInstanceOf[Sequent[FOLFormula]])
-
-    (s.name, (sequentSorted, proof))
-  }.toMap
-
-  def cutProofsStartingFrom(name: String): (LabelledSequent, LKProof) = derivation.get(name).get match {
-    case TstpAxiomStep(_, _, _) | TstpConjectureStep(_, _, _) => stepProofsByName(name)
-
-    case _ => {
-      val p @ (sequent, proof) = stepProofsByName(name)
-      sequent.antecedent.foldLeft(p) {
-        case ((s, p), (label, formula)) => {
-          val (parentSequent, parentProof) = cutProofsStartingFrom(label)
-          assert(parentProof.conclusion.succedent.size == 1, s"parentProof.conclusion.succedent.size = ${parentProof.conclusion.succedent.size}, label = $label")
-          assert(
-            parentProof.conclusion.succedent.head == formula,
-            s"parentProof.conclusion.succedent.head = ${parentProof.conclusion.succedent.head}, formula = $formula, label = $label"
-          )
-          val index = Ant(s.antecedent.indexWhere((l, _) => l == label))
-          assert(index.k >= 0, s"index = $index, label = $label")
-          assert(p.conclusion(index) == formula, s"p.conclusion($index) = ${p.conclusion(index)}, formula = $formula")
-          val updatedProof: LKProof = CutRule(parentProof, Suc(0), p, index)
-          val cutSequent: LabelledSequent = s.delete(index) ++ parentSequent.delete(Suc(0))
-          val sortedCutSequent = sortSequentLike(cutSequent, updatedProof.conclusion.asInstanceOf[Sequent[FOLFormula]])
-          (sortedCutSequent, updatedProof)
+          context += { ctx =>
+            import gapt.proofs.context.facet.skolemFunsFacet
+            val skolemDefinition = Abs.Block(actualContextVariables, Ex(actualBoundVariable, innerSkolemizationFormula))
+            ctx.state.update[SkolemFunctions](sf => sf + (newSkolemSymbol, skolemDefinition))
+          }
+        } catch {
+          case e: IllegalArgumentException => break(Left(DeskolemizationFailed(Some(e))))
         }
+        try {
+          context += proofDeclaration(name, forallRight, Seq(parent))
+        } catch {
+          case e: IllegalArgumentException => break(Left(ProofReconstructionError(s.name)))
+        }
+      }
+
+      case s: TstpPlainInferenceStep => {
+        val parentFormulas = s.parents.map(p => derivation.get(p).get.formula)
+        val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
+        val proof = replayProof(s.name, sequentToProve)
+        context += proofDeclaration(s.name, proof, s.parents)
       }
     }
   }
 
-  val (_, proof) = cutProofsStartingFrom(derivation.root.name)
+  val proof = instantiateProof(FOLConst(derivation.root.name))(using context)
   val deskolemizedExpansionProof = {
     try deskolemizeET(LKToExpansionProof(proof))
-    catch
+    catch {
       case e: IllegalArgumentException =>
         break(Left(DeskolemizationFailed(Some(e))))
+    }
   }
   val deskolemizedLKProof = ExpansionProofToLK(deskolemizedExpansionProof).getOrElse {
     break(Left(DeskolemizationFailed(None)))
   }
   Right(deskolemizedLKProof)
-}
-
-// Escargot.getLKProof does not guarantee that the conclusion of the output proof
-// is the same sequent as the input sequent. Therefore we sort our given labelled sequent
-// based on the order of formulas in the given target sequent given from the Escargot
-// proof. This is necessary so we can glue together the individual step proofs
-// on the right formulas which allows for a more faithful representation of the
-// TstpDerivation as an LKProof
-private def sortSequentLike(source: LabelledSequent, target: Sequent[FOLFormula]): LabelledSequent = {
-  assert(
-    target.multiSetEquals(source.map(_._2)),
-    s"sequents are not equal up to multiset equality source = $source, target = ${target}"
-  )
-  val (antecedentSorted, remainder) = target.antecedent.foldLeft((Vector.empty[(String, FOLFormula)], source.antecedent)) {
-    case ((newSequent, oldSequent), formula) => {
-      val index = oldSequent.indexWhere((_, f) => f == formula)
-      assert(index >= 0, s"index not found, formula = $formula, oldSequent = $oldSequent, source = $source, target = $target")
-      val element = oldSequent(index)
-      (newSequent :+ element, oldSequent.take(index) ++ oldSequent.drop(index + 1))
-    }
-  }
-  assert(remainder.isEmpty, s"remainder = $remainder")
-  val result = Sequent(antecedentSorted, source.succedent)
-  assert(result.map(_._2) == target, s"result = $result, proof.conclusion = ${target}")
-  result
 }

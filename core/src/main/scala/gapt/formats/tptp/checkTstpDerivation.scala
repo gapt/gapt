@@ -151,24 +151,24 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
     try withTimeout(timeout) {
         boundary {
           val refutation = RootedTstpDerivation.fromInputFileRefutation(inputFile).getOrBreak
-          refutation.usedDerivationSteps.foreach {
+          refutation.topologicallySortedUsedDerivationSteps.foreach {
             case step: (TstpAxiomStep | TstpConjectureStep) =>
               val fileDirectiveResolver = r.relativeTo(os.Path(file.fileName) / os.up)
               checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver).getOrBreak
             case _ =>
           }
 
-          val usedNegatedConjectures = refutation.usedDerivationSteps.collect { case s: TstpNegatedConjectureStep => s }
+          val usedNegatedConjectures = refutation.topologicallySortedUsedDerivationSteps.collect { case s: TstpNegatedConjectureStep => s }
           usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
           }
 
-          val usedPlainInferences = refutation.usedDerivationSteps.collect { case a: TstpPlainInferenceStep => a }
+          val usedPlainInferences = refutation.topologicallySortedUsedDerivationSteps.collect { case a: TstpPlainInferenceStep => a }
           usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm", "esa"))))
           }
 
-          val usedSkolemizationSteps = refutation.usedDerivationSteps.collect { case s: TstpSkolemizationStep => s }
+          val usedSkolemizationSteps = refutation.topologicallySortedUsedDerivationSteps.collect { case s: TstpSkolemizationStep => s }
           usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
