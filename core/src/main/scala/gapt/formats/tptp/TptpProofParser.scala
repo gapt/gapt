@@ -29,9 +29,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLFunctionConst
-import gapt.proofs.context.Context
 import gapt.utils.linearizeStrictPartialOrder
-import gapt.proofs.context.immutable.ImmutableContext
 
 sealed trait TstpDerivationStep {
   def name: String
@@ -303,8 +301,7 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
 case class RootedTstpDerivation private (
     private val steps: Map[String, TstpDerivationStep],
     private val topologicalOrder: Seq[String],
-    private val rootLabel: String,
-    val context: ImmutableContext
+    private val rootLabel: String
 ) {
   def topologicallySortedUsedDerivationSteps: Iterable[TstpDerivationStep] = topologicalOrder.map(s => steps(s))
   def get(name: String): Option[TstpDerivationStep] = steps.get(name)
@@ -337,11 +334,7 @@ object RootedTstpDerivation {
       break(Left(PlainInferenceWithConjectureParent(s)))
     }
 
-    val context = Context.guess(usedSteps.values.collect {
-      case s: (TstpAxiomStep | TstpConjectureStep) => s.formula
-    })
-
-    Right(RootedTstpDerivation(usedSteps, usedAnnotatedFormulas.map(_.name).toSeq, rootLabel, context))
+    Right(RootedTstpDerivation(usedSteps, usedAnnotatedFormulas.map(_.name).toSeq, rootLabel))
   }
 
   def fromInputFileRefutation(
