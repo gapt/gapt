@@ -174,7 +174,7 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
 
-          TptpImporter.loadAsLKRefutation(inputFile)
+          rootedTstpDerivationToLKProof(refutation)
         }
       }
     catch e => Left(e)
