@@ -11,6 +11,7 @@ import gapt.formats.InputFile
 import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFunctionConst
+import gapt.expr.stringInterpolationForExpressions
 
 class TptpProofParserTest extends Specification {
 
@@ -275,7 +276,7 @@ class TptpProofParserUnitTest extends Specification {
             |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
           """.stripMargin)
         val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step in which the bound variable occurs in an inner existential quantifier" in {
@@ -284,7 +285,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X]: ?[Y]: p(X, Y, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
         """.stripMargin)
         val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step that has no outermost existential quantifier" in {
@@ -293,7 +294,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in {
@@ -302,7 +303,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X]: p(X,Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0)], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step in which the variable is not bound to an existential quantifier" in {
@@ -311,7 +312,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X]: p(X,sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0)], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step in which the variable is bound to an universal quantifier" in {
@@ -320,7 +321,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X]: p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step where the resulting formula is not the skolemization of the parent formula" in {
@@ -329,7 +330,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
       "fail on skolemization step whose actual context variables do not match the claimed context variables" in {
@@ -338,16 +339,39 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X, Z]: p(X,sK0(X,Z), Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X,Z))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
-      "fail on skolemization step which claims the same context variables as the parent formula, but in a different order" in {
+      "succeed on skolemization step which claims the same context variables as the parent formula, but in a different order" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
+      }
+
+      "fail on skolemization step with non-distinct context variables" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, X]: ?[Y]: p(Y)).
+          |fof(s, plain, ![X, X]: p(sK(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+          case IncorrectSkolemization(e: NonRectifiedFormula) =>
+            (e.stepName must_== "s").and(e.formula must_== fof"!x!x?y p(y)")
+        }
+      }
+
+      "fail on skolemization step with skolem term that uses the same context variable multiple times" in {
+        val input = InputFile.fromString("""
+          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
+          |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,X))], [a])).
+        """.stripMargin)
+        val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+          case IncorrectSkolemization(e: ContextVariableMismatch) => e.stepName must_== "s"
+        }
       }
 
       "fail on skolemization step which contains a context variable that does not occur in the parent formula" in {
@@ -356,17 +380,17 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,W))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft
       }
 
-      "fail on skolemization step that introduces a symbol that is already used in parent" in {
+      "fail on skolemization step that introduces a symbol that is already used in input" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
           |fof(s, plain, ![X]: p(X, a(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft.like {
-          d => d must beAnInstanceOf[DeskolemizationFailed]
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+          case IncorrectSkolemization(e: SkolemSymbolIsAConstantExistingInTheInput) => ok
         }
       }
 
@@ -379,8 +403,15 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, p(sK0) & q(sK0), inference(and, [status(thm)], [s1, s2])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft.like {
-          d => d must beAnInstanceOf[DeskolemizationFailed]
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+          case IncorrectSkolemization(e: MultipleIncompatibleSkolemDefinitionsOfSameSymbol) => {
+            (e.skolemSymbol must_== "sK0")
+              .and(e.stepDefinitions.size must_== 2)
+              .and(e.stepDefinitions("s1").skolemSymbol must_== FOLConst("sK0"))
+              .and(e.stepDefinitions("s2").skolemSymbol must_== FOLConst("sK0"))
+              .and(e.stepDefinitions("s1").skolemDefinition must_=== le"?x p(x)")
+              .and(e.stepDefinitions("s2").skolemDefinition must_=== le"?x q(x)")
+          }
         }
       }
 
@@ -393,8 +424,14 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, p(sK0) & ![Y]: q(Y, sK0(Y)), inference(and, [status(thm)], [s1, s2])).
         """.stripMargin)
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
-        rootedTstpDerivationToLKProof(derivation) must beLeft.like {
-          d => d must beAnInstanceOf[ProofReconstructionError]
+        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+          case IncorrectSkolemization(e: MultipleIncompatibleSkolemDefinitionsOfSameSymbol) => {
+            (e.skolemSymbol must_== "sK0")
+              .and(e.stepDefinitions("s1").skolemSymbol must_== FOLConst("sK0"))
+              .and(e.stepDefinitions("s2").skolemSymbol must_== FOLFunctionConst("sK0", 1))
+              .and(e.stepDefinitions("s1").skolemDefinition must_=== le"?x p(x)")
+              .and(e.stepDefinitions("s2").skolemDefinition must_=== le"^y ?x q(y, x)")
+          }
         }
       }
 

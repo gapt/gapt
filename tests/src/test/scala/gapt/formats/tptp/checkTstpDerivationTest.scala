@@ -23,11 +23,13 @@ import gapt.formats.tptp.SkolemizationStepWithoutBinding
 import org.specs2.execute.PendingException
 import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
 import gapt.formats.tptp.StepWithMissingParents
-import gapt.formats.tptp.DeskolemizationFailed
 import gapt.formats.tptp.IncorrectSkolemization
 import gapt.formats.tptp.CannotHandleInput
 import gapt.formats.StringInputFile
 import gapt.formats.tptp.StepWithInvalidInferenceRule
+import gapt.formats.tptp.FormulaMismatch
+import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
+import gapt.expr.formula.fol.FOLConst
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "ProoVer_competition" / "Proofs"
@@ -342,7 +344,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "return unknown on skolemization step without new_symbols" in {
+        "fail verification of skolemization step without new_symbols" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
             |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
@@ -350,7 +352,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.Unknown(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(reason: SkolemizationStepWithoutNewSymbols) => reason.stepName must_== "nc_skolem"
           }
         }
 
@@ -366,7 +368,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "return unknown on skolemization step that doesn't specify variable to be skolemized" in {
+        "fail verification of skolemization step that doesn't specify variable to be skolemized" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
             |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
@@ -374,7 +376,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.Unknown(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(reason: SkolemizationStepWithoutBinding) => reason.stepName must_== "nc_skolem"
           }
         }
 
@@ -386,7 +388,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: IncorrectSkolemization) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch)) => reason.stepName must_== "nc_skolem"
           }
         }
 
@@ -398,7 +400,11 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(a, a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DeskolemizationFailed]
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: SkolemSymbolIsAConstantExistingInTheInput)) => {
+              (reason.skolemizationStepName must_== "nc_skolem")
+                .and(reason.inputStepName must beAnyOf("a", "c"))
+                .and(reason.const must_== FOLConst("a"))
+            }
           }
         }
 
@@ -412,7 +418,10 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(r) => r must beAnInstanceOf[DeskolemizationFailed]
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(r: SkolemSymbolIsAConstantExistingInTheInput)) =>
+              (r.skolemizationStepName must_== "nc_skolem")
+                .and(r.inputStepName must_== "a")
+                .and(r.const must_== FOLConst("a"))
           }
         }
 
@@ -423,6 +432,29 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(i, plain, p(a), inference(instance, [status(thm)], [a])).
             |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
+            |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [i, nc_skolem])).""".stripMargin)
+          checkDerivation(input) must_== SzsStatus.VerifiedGood
+        }
+
+        "verify proof that uses a symbol in a plain inference that is not present in the axioms or conjecture" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
+            |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
+            |fof(i, plain, p(a), inference(instance, [status(thm)], [a])).
+            |fof(nc_skolem, plain, ~p(a), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
+            |fof(taut, plain, q | ~q, inference(taut, [status(thm)], [])).
+            |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [i, nc_skolem, taut])).""".stripMargin)
+          checkDerivation(input) must_== SzsStatus.VerifiedGood
+        }
+
+        "verify derivation that has skolemization step whose parent has constants that are not in an axiom or conjecture" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, ![X]: p(X), file('Problems/test4.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('Problems/test4.p', c)).
+            |fof(nc, negated_conjecture, ?[X]: (~p(X) & (q | ~q)), inference(negated_conjecture, [status(cth)], [c])).
+            |fof(i, plain, p(a), inference(instance, [status(thm)], [a])).
+            |fof(nc_skolem, plain, ~p(a) & (q | ~q), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(X, a)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [i, nc_skolem])).""".stripMargin)
           checkDerivation(input) must_== SzsStatus.VerifiedGood
         }
