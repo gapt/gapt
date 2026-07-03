@@ -24,6 +24,7 @@ import scala.util.{Failure, Success}
 import scala.util.Try
 import gapt.proofs.lk.LKProof
 import scala.util.boundary
+import gapt.proofs.lk.util.instantiateProof
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -253,7 +254,8 @@ object TptpImporter {
 
   def loadAsLKRefutation(file: InputFile): Either[TstpDerivationImportError, LKProof] = boundary {
     val rootedTptpDerivation = RootedTstpDerivation.fromInputFileRefutation(file).getOrBreak
-    rootedTstpDerivationToLKProof(rootedTptpDerivation)
+    val (proof, context) = rootedTstpDerivationToLKProofContext(rootedTptpDerivation).getOrBreak
+    Right(instantiateProof(proof)(using context))
   }
 
   def main(args: Array[String]): Unit =

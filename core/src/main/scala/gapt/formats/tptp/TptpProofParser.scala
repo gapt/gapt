@@ -86,106 +86,6 @@ case class TstpSkolemizationStep(
   def role: String = "plain"
 }
 
-sealed trait TstpDerivationImportError {
-  def message: String
-}
-case class InputSyntaxError(
-    cause: IllegalArgumentException
-) extends TstpDerivationImportError {
-  override def message: String = cause.getMessage
-}
-case class DistinctFormulasWithSameName(
-    label: String
-) extends TstpDerivationImportError {
-  override def message: String = s"there are multiple distinct formulas with the same name: $label"
-}
-case class InferenceCycle() extends TstpDerivationImportError {
-  def message: String = "inference cycle detected"
-}
-case class StepWithMissingParents(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message = s"$stepName has parent labels that are not in the derivation"
-}
-case class StepWithInvalidStatus(
-    stepName: String,
-    actualStatuses: Iterable[String],
-    validStatuses: Iterable[String]
-) extends TstpDerivationImportError {
-  override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
-}
-case class StepWithInvalidInferenceRule(
-    stepName: String,
-    actualInferenceName: String,
-    expectedInferenceName: String
-) extends TstpDerivationImportError {
-  override def message: String = s"$stepName has invalid inference name '$actualInferenceName'. Expected '$expectedInferenceName'"
-}
-case class NegatedConjectureStepWithNonConjectureParent(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"step with name $stepName has a non-conjecture parent"
-}
-case class NegatedConjectureWithoutParent(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"negated conjecture step with name $stepName has no parent"
-}
-case class NegatedConjectureWithMultipleDistinctParents() extends TstpDerivationImportError {
-  def message: String = "got negated conjecture with multiple distinct parents"
-}
-case class PlainInferenceWithConjectureParent(
-    step: TstpPlainInferenceStep
-) extends TstpDerivationImportError {
-  def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
-}
-case class IncorrectInference(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"inference step with name $stepName is incorrect"
-}
-case class IncorrectSkolemization(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"skolemization step with name $stepName is incorrect"
-}
-case class DeskolemizationFailed(
-    cause: Option[Throwable]
-) extends TstpDerivationImportError {
-  def message: String = "deskolemization failed"
-}
-case class SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"skolemization step with name $stepName has differing skolem terms"
-}
-case class SkolemizationStepWithoutNewSymbols(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"skolemization step with name $stepName has no new symbols"
-}
-case class SkolemizationStepWithoutBinding(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message: String = s"skolemization step with name $stepName has no skolemize(_,_) binding"
-}
-case class CannotHandleIncludeDirectives() extends TstpDerivationImportError {
-  def message: String = "cannot handle include directives"
-}
-case class CannotHandleInput(stepName: String, reason: String) extends TstpDerivationImportError {
-  def message: String = s"cannot handle input step with name $stepName: $reason"
-}
-case class NoRefutationFound() extends TstpDerivationImportError {
-  def message: String = "no refutation found as there is no unique $false formula in the derivation"
-}
-case class NoConjectureFound() extends TstpDerivationImportError {
-  def message: String = s"no conjecture found: $message"
-}
-case class UnexpectedInput(message: String) extends TstpDerivationImportError
-case class ProofReconstructionError(stepName: String) extends TstpDerivationImportError {
-  def message: String = s"there was an error during proof reconstruction of step $stepName. this could mean a skolem symbol was not bound with a different type"
-}
-
 /**
 * Represents all the information inside a TstpDerivation.
 * It guarantees that the parent relationship is acyclic.
@@ -218,11 +118,12 @@ case class TstpDerivation private (private val map: Map[String, AnnotatedFormula
     }
     walk(derivationEndLabel)
 
-    val usedSteps = linearizeStrictPartialOrder(reachableSteps.toSet, x => parentsOf(x.name)).getOrElse {
+    val usedStepsRootToLeafs = linearizeStrictPartialOrder(reachableSteps.toSet, x => parentsOf(x.name)).getOrElse {
       break(Left(InferenceCycle()))
     }
+    val usedStepsLeafsToRoot = usedStepsRootToLeafs.reverse
 
-    Right(usedSteps)
+    Right(usedStepsLeafsToRoot)
   }
 }
 
@@ -300,10 +201,11 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
 */
 case class RootedTstpDerivation private (
     private val steps: Map[String, TstpDerivationStep],
-    private val topologicalOrder: Seq[String],
+    private val leafsToRootTopologicalOrder: Seq[String],
     private val rootLabel: String
 ) {
-  def topologicallySortedUsedDerivationSteps: Iterable[TstpDerivationStep] = topologicalOrder.map(s => steps(s))
+  def stepsIterator: Iterator[TstpDerivationStep] = steps.valuesIterator
+  def stepsTopologicallyOrderedFromLeafsToRoot: Iterator[TstpDerivationStep] = leafsToRootTopologicalOrder.iterator.map(s => steps(s))
   def get(name: String): Option[TstpDerivationStep] = steps.get(name)
   def root: TstpDerivationStep = steps(rootLabel)
 }
