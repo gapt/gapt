@@ -224,6 +224,8 @@ private def checkStepHasCorrectFileDirective(
       break(Left(FileDirectiveFileDoesNotHaveLabel(s.name, fileName, label)))
     case Seq(_, _, _*) =>
       break(Left(FileDirectiveFileHasMultipleFormulasWithSameLabel(s.name, fileName, label)))
+    case Seq(a@AnnotatedFormula(language, name, "hypothesis", formula, annotations)) =>
+      AnnotatedFormula(language, name, "axiom", formula, annotations) //hypothesis is a synonym for axiom
     case Seq(a) => a
   }
 
