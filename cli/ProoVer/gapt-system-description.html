@@ -9,12 +9,14 @@ TU Wien, Austria<br />
     GAPT (General Architecture for Proof Theory) [GAPT] is a library containing many
     data structures, algorithms, parsers and other components common in proof
     theory and automated deduction. As such it implements various proof calculi,
-    including LK proofs, expansion proofs and resolution proofs.
+    including LK proofs and resolution proofs.
 </p>
 <p>
     The main idea of the GAPT proof checker is to attempt to import a given TSTP derivation as
-    an LK proof and use the invariants of the internal proof data structures to verify
-    the correctness of the proof. As a pre-pass GAPT performs other auxiliary checks
+    an acyclic directed graph of LK proofs which can then combined into a compact representation
+    of an LK proof of a sequent whose antecedent contains input axioms and the negation of the input conjecture
+    and whose succeedent contains $false.
+    As a pre-pass GAPT performs other auxiliary checks
     like checking that the axiom file directives are correct. To check semantic entailment
     of plain inferences GAPT uses its internal superposition prover Escargot.
 </p>
@@ -27,58 +29,54 @@ TU Wien, Austria<br />
 </p>
 <p>
     The checker not only outputs the SZS status, but in case of VerifiedBad it also gives a more detailed
-    message as to what went wrong. In particular, if Escargot can establish that a plain inference is incorrect,
-    it outputs the checker outputs the step name of the incorrect inference.
+    message as to what went wrong. For example, if Escargot can establish that a plain inference is incorrect,
+    the checker outputs the step name of the incorrect inference.
 </p>
 <p>
     The approach of importing the TSTP derivation as an LK proof allows, in principle, to compute a more
     elaborated version of the TSTP derivation that requires no external ATP tools to check anymore.
 </p>
-<p>
-
-</p>
 <h3>Implementation</h3>
 
 <p>
     GAPT is implemented in Scala. It uses parboiled2 as a parsing library to parse the TPTP format.
-    It uses the internal superposition prover Escargot for checking plain inferences, so it does
-    not depend on an external ATP tool for checking.
+    The internal superposition prover Escargot is used for checking plain inferences, so GAPT does
+    not depend on an external ATP tool for proof checking.
 </p>
 
 <p>
     The proof checking proceeds in the following way:
     First the input file is parsed in the TPTP format.
-    Then the file is checked for unique formula names and for the fact that the inference parent relation forms a directed acyclic graph.
+    Then the file is checked for unique formula names and for acyclicity of the derivation.
     Next, auxiliary checks are performed to ensure all steps have valid statuses and the file directives in axioms and conjectures are correct.
     Now, each step is assigned a first-order sequent where the step's parents' formulas are in the antecedent and the step's formula is in the succeedent.
-    For plain inference steps it is attempted to find an LK proof for this sequent by using the internal superposition prover Escargot.
-    For skolemization inference steps an LK proof for the skolemization sequent is constructed using a special skolemization LK rule.
-    For negated conjecture steps an attempt is made to find an LK proof for both the if and only if direction of negation of conjecture iff negated_conjecture.
-    Given all these individual LK proofs they are combined them into an LK proof using cuts which results in a proof with the end sequent
-    axioms, negated_conjecture -> $false.
-    To make sure that skolem symbols are used appropriately across all inferences, i.e., the same skolem symbol is not used for different skolemized formulas,
-    the LK proof is transformed into an expansion proof and proof deskolemization is applied to it.
-    If this succeeds the resulting expansion proof is transformed back into an LK proof.
+    For plain inference steps an attempt is made to find an LK proof for this sequent by using the internal superposition prover Escargot.
+    For skolemization inference steps an LK proof for the sequent is constructed using a special skolemization LK rule.
+    For negated conjecture steps an attempt is made to find an LK proof for both the if and only if direction of negation(conjecture) iff negated_conjecture.
+    To make sure that skolem symbols are used appropriately across all inferences, e.g., the same skolem symbol is not used for different skolemized formulas,
+    an additional check is performed across the whole derivation.
+    Finally, for each step, LK cuts between the step's proofs and the step's parents' proofs are applied
+    which results in LK proofs whose antecedents contain axioms and the negation of the conjecture
+    from the input file and whose succeedent contains the formula of the given step.
+    This results in a compact representation of the LK proof of the input refutation, i.e., an LK proof of the sequent
+    whose antecedent consists of input axioms and the negation of the conjecture and whose succeedent consists of $false.
+    This representation avoids unfolding the whole LK proof into a tree and instead saves space by remaining a directed acyclic graph.
 </p>
 
 <p>
-GAPT is available at:
-<pre>
-    <A HREF="https://www.logic.at/gapt/">https://www.logic.at/gapt/</A>
-</PRE>
+    GAPT is available at:
+    <pre>
+        <a href="https://www.logic.at/gapt/">https://www.logic.at/gapt/</a>
+    </pre>
 </p>
 
 <h3>Expected Competition Performance</h3>
 <p>
-    GAPT will probably struggle to verify very large derivations due to the approach
-    of importing a whole LK proof into memory. Also, while Escargot works very well
-    on small examples, it will likely not be able to compete with state-of-the art
-    resolution provers in checking difficult plain inferences. On top of that,
-    conversion between different proof formats in our checking strategy might add
-    significant overhead.
-</p>
-<p>
-    However, GAPT should be able to handle most small- to medium-sized input derivations
+    We expect GAPT to perform reasonably well.
+    It might struggle to verify difficult plain inferences, since Escargot works
+    very well on small examples, but is likely not able to compete with state-of-the art
+    resolution provers in this area.
+    However, GAPT should be able to handle most reasonably granular input derivations
     correctly and we expect to receive few to no negative points.
 </p>
 
@@ -92,6 +90,5 @@ GAPT is available at:
         (Coimbra, Portugal), pp.293–301, Lecture Notes in Computer Science, vol 9706, Springer
     </dd>
 </dl>
-<p></p>
 
 <hr />
