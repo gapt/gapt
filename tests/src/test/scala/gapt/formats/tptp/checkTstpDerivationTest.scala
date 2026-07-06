@@ -32,7 +32,7 @@ import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
 import gapt.expr.formula.fol.FOLConst
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
-val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "ProoVer_competition" / "Proofs"
+val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
 given resolver: FileNameResolver = FileNameResolver.absolute.relativeTo(fileDirectiveRoot)
 
 class checkTstpDerivationUnitTest extends mutable.Specification {
