@@ -408,8 +408,6 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "allow outer skolemization deeply nested inside the formula" in todo
-
         "fail on proof where skolemization step introduces a symbol already used in non-parent resulting in incorrect derivation" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, p(a), file('Problems/test10.p', a)).
@@ -458,21 +456,31 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [i, nc_skolem])).""".stripMargin)
           checkDerivation(input) must_== SzsStatus.VerifiedGood
         }
-      }
 
-      "axiom file directive" in {
-        "fail on axiom step without thm status" in {
-          val input = InputFile.fromString("""
-            |fof(a, axiom, p, file, file('Problems/test15.p', a)).
-            |fof(c, conjecture, $true, file('Problems/test15.p', c)).
-            |fof(nc, negated_conjecture, $false, inference(negated_conjecture, [status(cth)], [c])).
-            """.stripMargin)
-          todo("not clear how to enforce this since axiom should also have file directive which doesn't allow setting status")
-          checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: StepWithInvalidStatus) => reason.stepName must_== "a"
+        "fail if a skolem symbol occurs in the conjecture" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+            |fof(a, axiom, ![X]: ?[Y]: p(X, Y), file('Problems/problem.p', a)).
+            |fof(c, conjecture, ![X]:?[Y]: p(a(X), Y), file('Problems/problem.p', c)).
+            |fof(nc, negated_conjecture, ?[X]:![Y]: ~p(a(X),Y), inference(negated_conjecture, [status(cth)], [c])).
+            |fof(as, plain, ![X]: p(X, a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [as, nc])).
+          """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
+            |fof(c, conjecture, ![X]: ?[Y]: p(a(X), Y)).
+          """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(r: SkolemSymbolIsAConstantExistingInTheInput)) => ok
           }
         }
 
+        "allow outer skolemization deeply nested inside the formula" in todo
+
+      }
+
+      "axiom file directive" in {
         "fail on axiom step without file directive" in {
           val input = InputFile.fromString("""
             |fof(a, axiom, p).
@@ -859,7 +867,6 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
-      "fail if a skolem symbol has a symbol occurring in the conjecture" in todo
       "fail on plain inference with esa status if inference name is not skolemize" in todo
       "fail on fof inputs with higher-order formulas" in todo
       "succeed on derivation that derives $false only from axioms" in todo
