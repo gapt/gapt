@@ -133,7 +133,7 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
     }
 
     val correctProofs = {
-      val correctProofPaths = os.walk(testDerivations)
+      val correctProofPaths = os.list(testDerivations)
         .filter(_.baseName.startsWith("correct_"))
       foreachPath(correctProofPaths) { example =>
         val relativePath = example.relativeTo(TestResources.path)
@@ -142,7 +142,7 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
     }
 
     val incorrectProofs = {
-      val incorrectProofPaths = os.walk(testDerivations)
+      val incorrectProofPaths = os.list(testDerivations)
         .filter(_.baseName.startsWith("incorrect_"))
       foreachPath(incorrectProofPaths) { example =>
         val relativePath = example.relativeTo(TestResources.path)
@@ -151,7 +151,7 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
     }
 
     val unknownProofs = {
-      val unknownProofPaths = os.walk(testDerivations)
+      val unknownProofPaths = os.list(testDerivations)
         .filter(_.baseName.startsWith("unknown_"))
       foreachPath(unknownProofPaths) { example =>
         val relativePath = example.relativeTo(TestResources.path)
