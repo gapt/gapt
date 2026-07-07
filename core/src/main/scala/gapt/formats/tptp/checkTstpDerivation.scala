@@ -82,13 +82,13 @@ type VerifiedBadReason =
     | PlainInferenceWithConjectureParent
     | NegatedConjectureWithMultipleDistinctParents
     | DistinctFormulasWithSameName
+    | NoRefutationFound
 
 type UnknownReason =
   Throwable
     | InputSyntaxError
     | CannotHandleInput
     | NoConjectureFound
-    | NoRefutationFound
     | UnexpectedInput
     | CannotHandleIncludeDirectives
     | FileNotFound
