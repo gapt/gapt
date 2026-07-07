@@ -163,8 +163,8 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
           }
 
           val usedPlainInferences = refutation.stepsIterator.collect { case a: TstpPlainInferenceStep => a }
-          usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm", "esa"))).map { s =>
-            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm", "esa"))))
+          usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm"))).map { s =>
+            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
           }
 
           val usedSkolemizationSteps = refutation.stepsIterator.collect { case s: TstpSkolemizationStep => s }

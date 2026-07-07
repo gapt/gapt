@@ -279,15 +279,6 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "verify on plain inference with esa status" in {
-          val input = InputFile.fromString("""
-            |fof(a1, axiom, p, file('Problems/test2.p', a)).
-            |fof(c, conjecture, p, file('Problems/test2.p', c)).
-            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
-            |fof(cont, plain, $false, inference(falsum, [status(esa)], [a1, nc])).""".stripMargin)
-          checkDerivation(input) must_== SzsStatus.VerifiedGood
-        }
-
         "fail on plain inference with cth status" in {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
@@ -867,13 +858,35 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
-      "fail on plain inference with esa status if inference name is not skolemize" in todo
+      "fail on plain inference with esa status if inference name is not skolemize" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a, axiom, p, file('Problems/problem.p', a)).
+            |fof(c, conjecture, p, file('Problems/problem.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(refute, plain, $false, inference(falsum, [status(esa)], [a, nc])).
+            """.stripMargin)
+          case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, p).
+            |fof(c, conjecture, p).
+          """.stripMargin)
+        }
+
+        checkDerivation0("/input") must beLike {
+          case SzsStatus.VerifiedBad(reason: StepWithInvalidStatus) =>
+            (reason.stepName must_== "refute")
+              .and(reason.actualStatuses must_== Set("esa"))
+              .and(reason.validStatuses must_== Set("thm"))
+        }
+      }
       "fail on fof inputs with higher-order formulas" in todo
       "succeed on derivation that derives $false only from axioms" in todo
 
-      "give up if input has more than one conjecture" in todo
-      "succeed if input has multiple $false proof steps, but only one of them is a root" in todo
+      "succeed if input has multiple $false proof steps whose induced refutations are all correct" in todo
       "give up if input has more than one $false proof step that are roots" in todo
+      "fail if input has multiple $false proof steps and one of the induced refutations is incorrect" in todo
+
+      "give up if input has more than one conjecture" in todo
 
       "do X on axiom and conjecture steps that import different files" in todo("specify")
       "do X on an axiom with a source that only refers to another axiom" in todo("specify")
