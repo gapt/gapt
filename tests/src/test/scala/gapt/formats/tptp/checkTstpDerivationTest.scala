@@ -221,7 +221,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
 
         "fail on negated conjecture step with inference record parent" in todo
-        "handle input with multiple negated conjecturs" in todo
+        "handle input with multiple negated conjectures" in todo
       }
 
       "plain inferences" in {
