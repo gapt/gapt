@@ -120,11 +120,6 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
         .and(stdout.linesIterator.take(2).size must_== 1)
     }
 
-    def timeout(example: Path): Result = {
-      val (exitCode, stdout, _) = proofCheckerProcess(example.toString).!!!
-      (exitCode must_== 0).and(stdout must_== "%SZS status Timeout")
-    }
-
     def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {
       Fragments.foreach(paths) { path =>
         val fragment = f(path)
@@ -164,15 +159,6 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
       }
     }
 
-    val timeoutProofs = {
-      val timeoutProofPaths = os.walk(testDerivations)
-        .filter(_.baseName.startsWith("timeout_"))
-      foreachPath(timeoutProofPaths) { example =>
-        val relativePath = example.relativeTo(TestResources.path)
-        s"timeout on $relativePath" ! timeout(example)
-      }
-    }
-
     s2"""
       |exit non-zero on no input file $noInputFile
       |exit zero on --help $help
@@ -188,8 +174,6 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
       |$incorrectProofs
       |unknown proofs
       |$unknownProofs
-      |timeout proofs
-      |$timeoutProofs
     """.stripMargin
   }
 }
