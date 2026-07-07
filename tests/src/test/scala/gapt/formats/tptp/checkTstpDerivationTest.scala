@@ -827,13 +827,13 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       }
 
       "unknown status" in {
-        "not verify an empty input file" in {
-          checkDerivation(InputFile.fromString("")) must beAnInstanceOf[SzsStatus.Unknown]
+        "fail verification of an empty input file" in {
+          checkDerivation(InputFile.fromString("")) must beAnInstanceOf[SzsStatus.VerifiedBad]
         }
 
-        "not verify an input file without a conjecture" in {
+        "fail an input file without a conjecture" in {
           val input = InputFile.fromString("fof(a1, axiom, p(a) & ~p(b), file('example1_c.p',a1)).")
-          checkDerivation(input) must beAnInstanceOf[SzsStatus.Unknown]
+          checkDerivation(input) must beAnInstanceOf[SzsStatus.VerifiedBad]
         }
 
         "not verify an input file without a $false inference" in {
@@ -841,7 +841,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(a, axiom, p(a)).
             |fof(c, conjecture, p(a)).
             |fof(nc, negated_conjecture, ~p(a), inference(negated_conjecture, [status(cth)], [c])).""".stripMargin)
-          checkDerivation(input) must beAnInstanceOf[SzsStatus.Unknown]
+          checkDerivation(input) must beAnInstanceOf[SzsStatus.VerifiedBad]
         }
 
         "not verify proof with invalid tptp syntax" in {
@@ -870,7 +870,6 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       "fail on plain inference with esa status if inference name is not skolemize" in todo
       "fail on fof inputs with higher-order formulas" in todo
       "succeed on derivation that derives $false only from axioms" in todo
-      "fail if input does not contain $false" in todo
 
       "give up if input has more than one conjecture" in todo
       "succeed if input has multiple $false proof steps, but only one of them is a root" in todo
@@ -901,12 +900,12 @@ class checkTstpDerivationExampleTest extends Specification {
     }
 
     def spec(check: InputFile => FileNameResolver ?=> SzsStatus): Fragments = {
-      val correctProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
+      val correctProofs = foreachPath(os.list(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.VerifiedGood)
       }
 
-      val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
+      val incorrectProofs = foreachPath(os.list(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.VerifiedBad])
       }
