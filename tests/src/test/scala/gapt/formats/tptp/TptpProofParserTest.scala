@@ -65,8 +65,8 @@ class TptpProofParserUnitTest extends Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
       TstpDerivation.fromInputFile(input) must beRight.like {
         case d =>
-          (d.rootLabels must_=== Set("cont"))
-            .and(d.refutationLabels must_=== Set("cont"))
+          (d.nonConjectureRootLabels must_=== Set("cont"))
+            .and(d.nonConjectureRefutationLabels must_=== Set("cont"))
       }
     }
 
@@ -78,7 +78,29 @@ class TptpProofParserUnitTest extends Specification {
         |fof(root1, plain, $false, inference(falsum, [status(thm)], [nc, a])).
         |fof(root2, plain, ~p | q, inference(or, [status(thm)], [nc])).""".stripMargin)
       TstpDerivation.fromInputFile(input) must beRight.like {
-        case d => d.rootLabels must_== Set("root1", "root2")
+        case d => d.nonConjectureRootLabels must_== Set("root1", "root2")
+      }
+    }
+
+    "include axioms in rootLabels if they are roots" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, p).
+        |fof(b, axiom, q).
+        |fof(c, conjecture, p).
+        |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+        |fof(root, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
+      TstpDerivation.fromInputFile(input) must beRight.like {
+        case d => d.nonConjectureRootLabels must_== Set("root", "b")
+      }
+    }
+
+    "do not include conjectures in rootLabels, even if they have no children" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, $false).
+        |fof(c, conjecture, p).
+        |fof(root, plain, $false, inference(falsum, [status(thm)], [a])).""".stripMargin)
+      TstpDerivation.fromInputFile(input) must beRight.like {
+        case d => d.nonConjectureRootLabels must_== Set("root")
       }
     }
 
@@ -90,7 +112,16 @@ class TptpProofParserUnitTest extends Specification {
         |fof(refute1, plain, $false, inference(falsum, [status(thm)], [nc, a])).
         |fof(refute2, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
       TstpDerivation.fromInputFile(input) must beRight.like {
-        case d => d.refutationLabels must_== Set("refute1", "refute2")
+        case d => d.nonConjectureRefutationLabels must_== Set("refute1", "refute2")
+      }
+    }
+
+    "do not include conjecture in refutation labels even if it is $false" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, $false).
+        |fof(c, conjecture, $false).""".stripMargin)
+      TstpDerivation.fromInputFile(input) must beRight.like {
+        case d => d.nonConjectureRefutationLabels must_== Set("a")
       }
     }
 
