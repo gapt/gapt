@@ -99,6 +99,21 @@ case class TstpDerivation private (private val map: Map[String, AnnotatedFormula
     map(formulaName).parentLabels.map(p => map(p))
   }
 
+  val rootLabels: Set[String] = {
+    def isRoot(key: String): Boolean = {
+      map.forall((_, f) => !f.parentLabels.contains(key))
+    }
+
+    map.keys.filter(isRoot).toSet
+  }
+
+  val refutationLabels: Set[String] = {
+    map.flatMap {
+      case (k, f) if f.formula == Bottom() => Some(k)
+      case _                               => None
+    }.toSet
+  }
+
   def subDerivationRootedAt(
       derivationEndLabel: String
   ): Either[StepWithMissingParents | InferenceCycle, Iterable[AnnotatedFormula]] = boundary {
