@@ -140,8 +140,8 @@ extension [R <: FileNameResolver](r: R) {
     else r((root / os.RelPath(fileName)).toString)
 }
 
-def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r: FileNameResolver): SzsStatus = {
-  val input = r(file.fileName) match {
+def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using resolver: FileNameResolver): SzsStatus = {
+  val input = resolver(file.fileName) match {
     case Left(e)      => return SzsStatus.Unknown(e)
     case Right(input) => input
   }
@@ -152,7 +152,7 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
           val refutation = RootedTstpDerivation.fromInputFileRefutation(inputFile).getOrBreak
           refutation.stepsIterator.foreach {
             case step: (TstpAxiomStep | TstpConjectureStep) =>
-              val fileDirectiveResolver = r.relativeTo(os.Path(file.fileName) / os.up)
+              val fileDirectiveResolver = resolver.relativeTo(os.Path(file.fileName) / os.up)
               checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver).getOrBreak
             case _ =>
           }

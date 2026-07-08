@@ -99,18 +99,18 @@ case class TstpDerivation private (private val map: Map[String, AnnotatedFormula
     map(formulaName).parentLabels.map(p => map(p))
   }
 
-  val rootLabels: Set[String] = {
+  val nonConjectureRootLabels: Set[String] = {
     def isRoot(key: String): Boolean = {
-      map.forall((_, f) => !f.parentLabels.contains(key))
+      map(key).role != "conjecture" && map.forall((_, f) => !f.parentLabels.contains(key))
     }
 
     map.keys.filter(isRoot).toSet
   }
 
-  val refutationLabels: Set[String] = {
+  val nonConjectureRefutationLabels: Set[String] = {
     map.flatMap {
-      case (k, f) if f.formula == Bottom() => Some(k)
-      case _                               => None
+      case (k, f) if f.role != "conjecture" && f.formula == Bottom() => Some(k)
+      case _                                                         => None
     }.toSet
   }
 
