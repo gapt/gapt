@@ -1,0 +1,356 @@
+% Refutation found. Thanks to Tanya!
+% SZS status Theorem for linear_example_104
+% SZS output start Proof for linear_example_104
+fof(f1,axiom,(
+  ! [X0] : ('P'(X0) => 'P'(s(X0)))),
+  file('../../ProoVer_competition/Proofs/Problems/linear_example_104.p',a0)).
+fof(f2,axiom,(
+  'P'('0')),
+  file('../../ProoVer_competition/Proofs/Problems/linear_example_104.p',a1)).
+fof(f3,conjecture,(
+  'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  file('../../ProoVer_competition/Proofs/Problems/linear_example_104.p',c)).
+fof(f4,negated_conjecture,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(negated_conjecture,[status(cth)],[f3])).
+fof(f5,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(flattening,[status(thm)],[f4])).
+fof(f6,plain,(
+  ! [X0] : ('P'(s(X0)) | ~'P'(X0))),
+  inference(ennf_transformation,[status(thm)],[f1])).
+fof(f7,plain,(
+  ( ! [X0] : ('P'(s(X0)) | ~'P'(X0)) )),
+  inference(cnf_transformation,[status(thm)],[f6])).
+fof(f8,plain,(
+  'P'('0')),
+  inference(cnf_transformation,[status(thm)],[f2])).
+fof(f9,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(cnf_transformation,[status(thm)],[f5])).
+fof(f10,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f9,f7])).
+fof(f11,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f10,f7])).
+fof(f12,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f11,f7])).
+fof(f13,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f12,f7])).
+fof(f14,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f13,f7])).
+fof(f15,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f14,f7])).
+fof(f16,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f15,f7])).
+fof(f17,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f16,f7])).
+fof(f18,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f17,f7])).
+fof(f19,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f18,f7])).
+fof(f20,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f19,f7])).
+fof(f21,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f20,f7])).
+fof(f22,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f21,f7])).
+fof(f23,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f22,f7])).
+fof(f24,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f23,f7])).
+fof(f25,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f24,f7])).
+fof(f26,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f25,f7])).
+fof(f27,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f26,f7])).
+fof(f28,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f27,f7])).
+fof(f29,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f28,f7])).
+fof(f30,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f29,f7])).
+fof(f31,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f30,f7])).
+fof(f32,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f31,f7])).
+fof(f33,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f32,f7])).
+fof(f34,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f33,f7])).
+fof(f35,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f34,f7])).
+fof(f36,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f35,f7])).
+fof(f37,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f36,f7])).
+fof(f38,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f37,f7])).
+fof(f39,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f38,f7])).
+fof(f40,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f39,f7])).
+fof(f41,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f40,f7])).
+fof(f42,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f41,f7])).
+fof(f43,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f42,f7])).
+fof(f44,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f43,f7])).
+fof(f45,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f44,f7])).
+fof(f46,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f45,f7])).
+fof(f47,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f46,f7])).
+fof(f48,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f47,f7])).
+fof(f49,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f48,f7])).
+fof(f50,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f49,f7])).
+fof(f51,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f50,f7])).
+fof(f52,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f51,f7])).
+fof(f53,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f52,f7])).
+fof(f54,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f53,f7])).
+fof(f55,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f54,f7])).
+fof(f56,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f55,f7])).
+fof(f57,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f56,f7])).
+fof(f58,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f57,f7])).
+fof(f59,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f58,f7])).
+fof(f60,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f59,f7])).
+fof(f61,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f60,f7])).
+fof(f62,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f61,f7])).
+fof(f63,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f62,f7])).
+fof(f64,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f63,f7])).
+fof(f65,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f64,f7])).
+fof(f66,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f65,f7])).
+fof(f67,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f66,f7])).
+fof(f68,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f67,f7])).
+fof(f69,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f68,f7])).
+fof(f70,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f69,f7])).
+fof(f71,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f70,f7])).
+fof(f72,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f71,f7])).
+fof(f73,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f72,f7])).
+fof(f74,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f73,f7])).
+fof(f75,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f74,f7])).
+fof(f76,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f75,f7])).
+fof(f77,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f76,f7])).
+fof(f78,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f77,f7])).
+fof(f79,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f78,f7])).
+fof(f80,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f79,f7])).
+fof(f81,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f80,f7])).
+fof(f82,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f81,f7])).
+fof(f83,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f82,f7])).
+fof(f84,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f83,f7])).
+fof(f85,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f84,f7])).
+fof(f86,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f85,f7])).
+fof(f87,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f86,f7])).
+fof(f88,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f87,f7])).
+fof(f89,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f88,f7])).
+fof(f90,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f89,f7])).
+fof(f91,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f90,f7])).
+fof(f92,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f91,f7])).
+fof(f93,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f92,f7])).
+fof(f94,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))))),
+  inference(resolution,[status(thm)],[f93,f7])).
+fof(f95,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))),
+  inference(resolution,[status(thm)],[f94,f7])).
+fof(f96,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))))),
+  inference(resolution,[status(thm)],[f95,f7])).
+fof(f97,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))),
+  inference(resolution,[status(thm)],[f96,f7])).
+fof(f98,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))))),
+  inference(resolution,[status(thm)],[f97,f7])).
+fof(f99,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))),
+  inference(resolution,[status(thm)],[f98,f7])).
+fof(f100,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))))),
+  inference(resolution,[status(thm)],[f99,f7])).
+fof(f101,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))),
+  inference(resolution,[status(thm)],[f100,f7])).
+fof(f102,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s(s('0'))))))))))))),
+  inference(resolution,[status(thm)],[f101,f7])).
+fof(f103,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s(s('0')))))))))))),
+  inference(resolution,[status(thm)],[f102,f7])).
+fof(f104,plain,(
+  ~'P'(s(s(s(s(s(s(s(s(s('0'))))))))))),
+  inference(resolution,[status(thm)],[f103,f7])).
+fof(f105,plain,(
+  ~'P'(s(s(s(s(s(s(s(s('0')))))))))),
+  inference(resolution,[status(thm)],[f104,f7])).
+fof(f106,plain,(
+  ~'P'(s(s(s(s(s(s(s('0'))))))))),
+  inference(resolution,[status(thm)],[f105,f7])).
+fof(f107,plain,(
+  ~'P'(s(s(s(s(s(s('0')))))))),
+  inference(resolution,[status(thm)],[f106,f7])).
+fof(f108,plain,(
+  ~'P'(s(s(s(s(s('0'))))))),
+  inference(resolution,[status(thm)],[f107,f7])).
+fof(f109,plain,(
+  ~'P'(s(s(s(s('0')))))),
+  inference(resolution,[status(thm)],[f108,f7])).
+fof(f110,plain,(
+  ~'P'(s(s(s('0'))))),
+  inference(resolution,[status(thm)],[f109,f7])).
+fof(f111,plain,(
+  ~'P'(s(s('0')))),
+  inference(resolution,[status(thm)],[f110,f7])).
+fof(f112,plain,(
+  ~'P'(s('0'))),
+  inference(resolution,[status(thm)],[f111,f7])).
+fof(f113,plain,(
+  ~'P'('0')),
+  inference(resolution,[status(thm)],[f112,f7])).
+fof(f114,plain,(
+  $false),
+  inference(forward_subsumption_resolution,[status(thm)],[f113,f8])).
+% SZS output end Proof for linear_example_104
+% ------------------------------
+% Version: Vampire 5.0.1 (Release build, commit 3f1362b99 on 2026-07-01 15:21:00 +0200)
+% Linked with Z3 4.14.0.0 3c47fd96cf5645d0c42b2c819d9e9a84380aa721 z3-4.8.4-9178-g3c47fd96c
+% CaDiCaL version: 2.1.3
+% Termination reason: Refutation
+% Time elapsed: 0.012 s
+% Peak memory usage: 12 MB
+% Instructions burned: 17 (million)
+% ------------------------------
+% ------------------------------
