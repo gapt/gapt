@@ -79,11 +79,13 @@ object resolutionToTptp {
           p.introducedDefinitions.keys.map(defMap) ++
           Some(p).collect { case p: SkolemQuantResolutionRule => defMap(p.skolemConst) }
 
+        val status = TptpStatus.detect(p)
+
         fofOrCnf(
           label,
           "plain",
           inf,
-          Some(Annotations(Source.Inference(inferenceName, Seq.empty, parents.map(p => ParentInfo(Source.Name(p)))), Seq.empty))
+          Some(Annotations(Source.Inference(inferenceName, Seq(status.annotation), parents.map(p => ParentInfo(Source.Name(p)))), Seq.empty))
         )
     }
   }

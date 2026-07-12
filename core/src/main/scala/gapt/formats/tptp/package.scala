@@ -1,6 +1,6 @@
 package gapt.formats
 
-import gapt.expr._
+import gapt.expr.*
 import gapt.expr.formula.Atom
 import gapt.expr.formula.Eq
 import gapt.expr.formula.Formula
@@ -8,7 +8,9 @@ import gapt.expr.formula.hol.existentialClosure
 import gapt.expr.ty.FunctionType
 import gapt.expr.ty.Ti
 import gapt.expr.ty.To
-import gapt.proofs._
+import gapt.proofs.*
+import gapt.proofs.lk.rules.StrongQuantifierRule
+import gapt.proofs.resolution.*
 
 package object tptp {
 
@@ -69,12 +71,31 @@ package object tptp {
     // every source should be accounted for by one of the other enum cases
     case General(term: GeneralTerm)
   }
+
   case class Annotations(source: Source, optionalInfo: Seq[GeneralTerm])
   case class AtomicWord(inner: String)
 
   case class AnnotatedFormula(language: String, name: String, role: FormulaRole, formula: Formula, annotations: Option[Annotations]) extends TptpInput
 
   case class IncludeDirective(fileName: String, formulaSelection: Option[Seq[String]]) extends TptpInput
+
+  enum TptpStatus(tptp_status: GeneralTerm) {
+    // represents status(esa), status(thm), status(cth) for ProoVer inference information
+    case ESA extends TptpStatus(Const("esa", Ti))
+    case THM extends TptpStatus(Const("thm", Ti))
+    case CTH extends TptpStatus(Const("cth", Ti))
+    case UnknownStatus extends TptpStatus(Const("unknown", Ti))
+
+    val annotation = App(Const("status", Ti ->: Ti), tptp_status)
+  }
+  object TptpStatus {
+    def detect(p: ResolutionProof) = p match {
+      case Factor(_, _, _) | Subst(_, _) | Resolution(_, _, _, _) | Paramod(_, _, _, _, _, _) => THM
+      case _: PropositionalResolutionRule | _: WeakQuantResolutionRule => THM
+      case _: StrongQuantifierRule => ESA
+      case _: InitialClause => UnknownStatus
+    }
+  }
 
   object TptpTerm {
     def apply(sym: String, args: Seq[Expr]): Expr =

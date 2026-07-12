@@ -222,8 +222,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation0("/input") must beAnInstanceOf[SzsStatus.VerifiedBad]
         }
 
-        "fail on negated conjecture step with inference record parent" in todo
-        "handle input with multiple negated conjectures" in todo
+        "fail on negated conjecture step with inference record parent" in todo // parents need not be labels, only accept if chain of thm
+        "handle input with multiple negated conjectures" in todo // TODO
       }
 
       "plain inferences" in {
@@ -912,7 +912,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       "succeed on derivation that derives $false only from axioms" in todo
       "give up if input has more than one conjecture" in todo
 
-      "do X on axiom and conjecture steps that import different files" in todo("specify")
+      "do X on axiom and conjecture steps that import different files" in todo("specify") //
       "do X on an axiom with a source that only refers to another axiom" in todo("specify")
     }
   }

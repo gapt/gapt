@@ -4,7 +4,7 @@ import gapt.expr.*
 import gapt.expr.formula.fol.*
 import gapt.proofs.*
 import gapt.expr.subst.Substitution
-import gapt.proofs.resolution.{Input, Resolution, ResolutionProof, Subst}
+import gapt.proofs.resolution.{Input, Resolution, ResolutionProof, Subst, AllR, ImpR, AndL}
 
 import scala.collection.mutable
 
@@ -22,15 +22,18 @@ object BranchingResolutionExampleProof {
     Resolution(pn, Suc(0), Input(hos"p(${sn(n)}) ⊢ "), Ant(0))
   }
 
-  val c1 = Input(hos"p(x), p(s(x)) ⊢ p(s(s(x)))")
+  //val c1 = Input(hos"p(x), p(s(x)) ⊢ p(s(s(x)))")
+  val c1_closed = Input(fos"⊢ ∀x (p(x) ∧ p(s(x)) → p(s(s(x))))")
+  val c1 = AndL(ImpR(AllR(c1_closed, Suc(0), fov"x"), Suc(0)), Ant(0))
+
   val x = fov"x"
 
-  def createDerivation(n: Int, proofs: mutable.Map[Int, ResolutionProof]): ResolutionProof = {
+  def createDerivation(n: Int, proofs: mutable.Map[Int, ResolutionProof], dag : Boolean = true): ResolutionProof = {
     n match {
       case 0 => proofs.getOrElseUpdate(n, Input(hos"⊢ p(0) "))
       case 1 => proofs.getOrElseUpdate(n, Input(hos"⊢ p(s(0))  "))
       case _ =>
-        if proofs contains n then
+        if dag && (proofs contains n) then
           proofs(n)
         else {
           val parent1 = createDerivation(n-2, proofs) // derives ⊢ p(n-2)
@@ -44,7 +47,8 @@ object BranchingResolutionExampleProof {
     }
   }
 
-  def sn(n: Int): FOLTerm = if n == 0 then fot"0" else fot"s(${sn(n - 1)})"
+  def sn(n: Int, term : FOLTerm = fot"0"): FOLTerm =
+    if n == 0 then term else sn(n-1, fot"s($term)")
 
 
 }

@@ -1,3 +1,4 @@
+% the current proofver rules forbid cnf axioms
 cnf(p0, axiom, p(s('0')), file('Problems/BranchingResolutionExample25_cnf_axioms.p', ax1)).
 cnf(p1, axiom, p('0'), file('Problems/BranchingResolutionExample25_cnf_axioms.p',ax2)).
 cnf(p2, axiom, ~ p(X) | ~ p(s(X)) | p(s(s(X))), file('Problems/BranchingResolutionExample25_cnf_axioms.p',ax3)).
