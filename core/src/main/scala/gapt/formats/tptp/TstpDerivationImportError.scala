@@ -72,6 +72,7 @@ case class IncorrectSkolemization(
 sealed trait IncorrectSkolemizationReason {
   def message: String
 }
+
 case class NoExistentialQuantifierAfterRootUniversalBlock(
     stepName: String,
     claimedBoundVariable: FOLVar,
@@ -161,3 +162,14 @@ case class NoConjectureFound() extends TstpDerivationImportError {
   def message: String = s"no conjecture found: $message"
 }
 case class UnexpectedInput(message: String) extends TstpDerivationImportError
+
+//new by martin
+case class NoStrongQuantifierFittingSkolemization(stepName:String, inputFormula : FOLFormula, skolemizedFormula : FOLFormula, skVar:FOLVar, skTerm:FOLTerm)
+  extends IncorrectSkolemizationReason {
+  def message: String = s"could not find a strong quantifier s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
+}
+
+case class MultipleStrongQuantifiersFittingSkolemization(stepName:String, inputFormula : FOLFormula, skolemizedFormula : FOLFormula, skVar:FOLVar, skTerm:FOLTerm) 
+extends IncorrectSkolemizationReason {
+  def message: String = s"could find multiple (non-unique) strong quantifiers s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
+}

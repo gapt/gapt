@@ -371,6 +371,7 @@ class TptpProofParserUnitTest extends Specification {
         val Right(derivation) = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s"): @unchecked
         rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: ContextVariableMismatch) => e.stepName must_== "s"
+          case IncorrectSkolemization(e: NoExistentialQuantifierAfterRootUniversalBlock) => e.stepName must_== "s"
         }
       }
 
