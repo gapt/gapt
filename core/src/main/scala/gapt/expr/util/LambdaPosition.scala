@@ -15,8 +15,12 @@ import gapt.expr.util.LambdaPosition.Choice
 object LambdaPosition {
 
   trait Choice
-  case object Left extends Choice
-  case object Right extends Choice
+  case object Left extends Choice with Ordered[Choice] {
+    override def compare(that: Choice): Int = that match { case Left => 0; case Right => 1 }
+  }
+  case object Right extends Choice with Ordered[Choice] {
+    override def compare(that: Choice): Int = that match { case Left => -1; case Right => 0 }
+  }
 
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
@@ -70,7 +74,7 @@ object LambdaPosition {
     }
 
   /**
-   * Replaces a a subexpression in a Expr.
+   * Replaces a subexpression in an Expr.
    *
    * @param exp The expression in which to perform the replacement.
    * @param pos The position at which to replace.
@@ -113,6 +117,7 @@ case class LambdaPosition(list: List[Choice]) {
   def head: Choice = list.head
   def headOption: Option[Choice] = list.headOption
   def tail: LambdaPosition = LambdaPosition(list.tail)
+  def truncate: LambdaPosition = LambdaPosition(list.dropRight(1))
   def isEmpty: Boolean = list.isEmpty
   override def toString = s"[${list.mkString(",")}]"
 

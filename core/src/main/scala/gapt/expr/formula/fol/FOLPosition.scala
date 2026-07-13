@@ -39,7 +39,7 @@ object FOLPosition {
   }
 
   /**
-   * Replaces a a subexpression in a FOLFormula. This function is actually a wrapper around [[gapt.expr.util.LambdaPosition.replace]].
+   * Replaces a subexpression in a FOLFormula. This function is actually a wrapper around [[gapt.expr.util.LambdaPosition.replace]].
    *
    * @param f The formula in which to perform the replacement.
    * @param pos The position at which to replace.

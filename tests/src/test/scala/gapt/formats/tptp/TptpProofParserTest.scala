@@ -430,6 +430,7 @@ class TptpProofParserUnitTest extends Specification {
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
         tstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: ContextVariableMismatch) => e.stepName must_== "s"
+          case IncorrectSkolemization(e: NoExistentialQuantifierAfterRootUniversalBlock) => e.stepName must_== "s"
         }
       }
 

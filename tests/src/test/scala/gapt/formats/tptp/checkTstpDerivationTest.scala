@@ -26,7 +26,7 @@ import gapt.formats.tptp.IncorrectSkolemization
 import gapt.formats.tptp.CannotHandleInput
 import gapt.formats.StringInputFile
 import gapt.formats.tptp.StepWithInvalidInferenceRule
-import gapt.formats.tptp.FormulaMismatch
+import gapt.formats.tptp.{FormulaMismatch, NoStrongQuantifierFittingSkolemization}
 import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
 import gapt.expr.formula.fol.FOLConst
 import gapt.formats.tptp.NonExistentStep
@@ -222,8 +222,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation0("/input") must beAnInstanceOf[SzsStatus.VerifiedBad]
         }
 
-        "fail on negated conjecture step with inference record parent" in todo
-        "handle input with multiple negated conjectures" in todo
+        "fail on negated conjecture step with inference record parent" in todo // parents need not be labels, only accept if chain of thm
+        "handle input with multiple negated conjectures" in todo //TODO
       }
 
       "plain inferences" in {
@@ -382,6 +382,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
             case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch)) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: NoStrongQuantifierFittingSkolemization)) => reason.stepName must_== "nc_skolem"
           }
         }
 
@@ -911,8 +912,16 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       "fail on fof inputs with higher-order formulas" in todo
       "succeed on derivation that derives $false only from axioms" in todo
       "give up if input has more than one conjecture" in todo
+      "fail on plain inference with esa status if inference name is not skolemize" in todo // bad
+      "fail on fof inputs with higher-order formulas" in todo // bad
+      "succeed on derivation that derives $false only from axioms" in todo // martin03
+      "fail if input does not contain $false" in todo // bad
 
-      "do X on axiom and conjecture steps that import different files" in todo("specify")
+      "give up if input has more than one conjecture" in todo // bad
+      "succeed if input has multiple $false proof steps, but only one of them is a root" in todo // geht noch nicht
+      "give up if input has more than one $false proof step that are roots" in todo
+
+      "do X on axiom and conjecture steps that import different files" in todo("specify") //
       "do X on an axiom with a source that only refers to another axiom" in todo("specify")
     }
   }

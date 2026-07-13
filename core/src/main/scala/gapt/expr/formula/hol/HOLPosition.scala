@@ -32,7 +32,7 @@ object HOLPosition {
   }
 
   /**
-   * Replaces a a subexpression in a Formula. This function is actually a wrapper around [[util.LambdaPosition.replace]].
+   * Replaces a subexpression in a Formula. This function is actually a wrapper around [[util.LambdaPosition.replace]].
    *
    * @param f The formula in which to perform the replacement.
    * @param pos The position at which to replace.
@@ -258,7 +258,7 @@ object HOLPosition {
  * connectives. LambdaPositions treat e.g. conjunctions like any other function, while HOLPositions treat them naturally,
  * i.e. 1 denotes the left conjunct and 2 the right conjunct.
  *
- * Note that this can cause unexpeted behavior: Say a variable of type o -> o -> o is substituted by ∧ in some expression.
+ * Note that this can cause unexpected behavior: Say a variable of type o -> o -> o is substituted by ∧ in some expression.
  * The LambdaPositions will stay the same, but the HOLPositions won't.
  *
  * @param list The list of integers describing the position.
