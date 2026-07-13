@@ -41,7 +41,7 @@ def prooVerCLI(args: String*): Unit = {
     val szsStatus = Await.result(future, 28.seconds)
     Console.out.println(szsStatus.statusLine)
   } catch {
-    case e: TimeoutException => Console.out.println("%SZS status Timeout")
-    case _                   => Console.out.println("%SZS status Unknown")
+    case e: TimeoutException => Console.out.println(SzsStatus.Timeout.statusLine)
+    case e                   => Console.out.println(SzsStatus.Unknown(e).statusLine)
   }
 }
