@@ -280,17 +280,23 @@ object VerifiedSkolemization {
       reportIncorrectSkolemization(ContextVariableMismatch(name, claimedContextVariables, actualContextVariables, claimedBoundVariable, parentFormula))
     }
 
-    val mainSkolemizationFormula = HOLPosition.toLambdaPosition(parentFormula)(q_pos).get(parentFormula).get.asInstanceOf[FOLFormula] // TODO: remove this ugly cast
+    val mainSkolemizationFormula = HOLPosition.toLambdaPosition(parentFormula)(q_pos).get(parentFormula).get.asInstanceOf[FOLFormula]
+    // TODO: remove this ugly cast
     val skolemDefinition = Abs.Block(actualContextVariables, mainSkolemizationFormula)
 
-    val innerFormula = mainSkolemizationFormula match {
-      case All(_, f) => f
-      case Ex(_, f)  => f
+    val (parentSKVar, innerFormula) = mainSkolemizationFormula match {
+      case All(v, f) => (v,f)
+      case Ex(v, f)  => (v,f)
+    }
+    val inferredSkolemizationFormula = HOLPosition.replace(parentFormula, q_pos, innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)).asInstanceOf[FOLFormula]
+    if inferredSkolemizationFormula != claimedSkolemizedFormula then {
+      reportIncorrectSkolemization(FormulaMismatch(name, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, inferredSkolemizationFormula, parentFormula))
     }
 
+
     val skolemFormulaPolarity = FindSkolemizableInstance.polarityAndContextAt(q_pos, parentFormula, pol)._1
-    println(s"===== $parentFormula $skolemFormulaPolarity $q_pos")
-    val skolemizationProof = CreateSkolemizationProof(parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
+    //println(s"===== $parentFormula $skolemFormulaPolarity $q_pos")
+    val skolemizationProof = CreateSkolemizationProof(parentFormula, inferredSkolemizationFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
     Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, skolemizationProof))
   }
 }
@@ -439,9 +445,9 @@ object CreateSkolemizationProof {
       val innerSubstituted = innerFormula.substitute(skVar -> skTerm)
       val axiom = LogicalAxiom(innerSubstituted)
       if polarity == Negative then
-        ExistsSkLeftRule(axiom, Ant(0), unskolemized, skTerm)
+        ExistsSkLeftRule(axiom, Ant(0), Ex(skVar, innerFormula), skTerm)
       else
-        ForallSkRightRule(axiom, Suc(0), unskolemized, skTerm)
+        ForallSkRightRule(axiom, Suc(0), All(skVar, innerFormula), skTerm)
     } else {
       val branch = pathToSk.head
       val remainingBranch = pathToSk.tail
@@ -490,7 +496,8 @@ object CreateSkolemizationProof {
           val (b, sb) = swapPos(a, sa)
           val p1 = ImpLeftRule(axiom, rp, b)
           ImpRightRule(p1, sb)
-        case (a @ All(x, f), sa @ All(y, fs), 1) =>
+        case (a @ All(x, f), All(y, fs), 1) =>
+          val sa = All(x, fs)
           val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val (b, sb) = swapPos(a, sa)
           val p1 = ForallLeftRule(rp, b)

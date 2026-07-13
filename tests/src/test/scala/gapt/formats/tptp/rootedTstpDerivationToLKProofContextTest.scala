@@ -394,7 +394,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       }
 
       "succeeds on skolemization step whose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in {
-        skipped("we ignore alpha equivalence right now") //TODO: fix
+        //skipped("we ignore alpha equivalence right now") //TODO: fix
         val input = InputFile.fromString(
           """
             |fof(a, axiom, ?[Y]:![X]: p(Y, X)).
