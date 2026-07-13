@@ -110,7 +110,7 @@ enum SzsStatus {
   def isBad: Boolean = this.isInstanceOf[VerifiedBad]
   def isUnknown: Boolean = this.isInstanceOf[Unknown]
 
-  def statusLine: String = s"%SZS status $status"
+  def statusLine: String = s"% SZS status $status"
 }
 
 case class FileNotFound(fileName: String)

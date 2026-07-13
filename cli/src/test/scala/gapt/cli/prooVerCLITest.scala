@@ -103,20 +103,20 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
 
     def verifyCorrect(example: Path): Result = {
       val (exitCode, stdout, _) = proofCheckerProcess(example.toString).!!!
-      (exitCode must_== 0).and(stdout must_== "%SZS status VerifiedGood")
+      (exitCode must_== 0).and(stdout must_== "% SZS status VerifiedGood")
     }
 
     def failVerification(example: Path): Result = {
       val (exitCode, stdout, _) = proofCheckerProcess(example.toString).!!!
       (exitCode must_== 0)
-        .and(stdout must startWith("%SZS status VerifiedBad"))
+        .and(stdout must startWith("% SZS status VerifiedBad"))
         .and(stdout.linesIterator.take(2).size must_== 1)
     }
 
     def unknownVerification(example: Path): Result = {
       val (exitCode, stdout, _) = proofCheckerProcess(example.toString).!!!
       (exitCode must_== 0)
-        .and(stdout must startWith("%SZS status Unknown"))
+        .and(stdout must startWith("% SZS status Unknown"))
         .and(stdout.linesIterator.take(2).size must_== 1)
     }
 

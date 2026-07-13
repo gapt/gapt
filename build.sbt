@@ -347,13 +347,13 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
         val unzipSamplesDirectory = unzipDirectory / "samples"
         log.info(s"Running smoke tests on $unzipDirectory")
         try {
-          val sampleTestFiles = Seq("correct_proof", "evil_proof")
+          val sampleTestFiles = Seq("COR000+1", "EVL000+1", "TMO000+1")
           for (sampleTestFile <- sampleTestFiles) {
             val claimedSampleSolution = IO.read(unzipSamplesDirectory / "Solutions" / s"$sampleTestFile.out").strip()
             val output = Process(Seq(
               "sh",
               (unzipDirectory / appName).getAbsolutePath,
-              (unzipSamplesDirectory / s"$sampleTestFile.p").getAbsolutePath
+              (unzipSamplesDirectory / s"$sampleTestFile.s").getAbsolutePath
             )).!!.strip
             assert(output == claimedSampleSolution, s"""on sample file $sampleTestFile: output "$output" does not match expected output "$claimedSampleSolution"""")
           }
