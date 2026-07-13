@@ -3,7 +3,7 @@ fof(p1, axiom, p('0'), file('Problems/BranchingResolutionExample25_closed_axioms
 fof(p2, axiom, ![X]: ((p(X) & p(s(X))) => p(s(s(X)))), file('Problems/BranchingResolutionExample25_closed_axioms.p', ax3)).
 fof(p3, plain, ![X]: ((p(X) & p(s(X))) => p(s(s(X)))), inference(all_r, [status(thm)], [p2])).
 fof(p4, plain, ![X]: (~ (p(X) & p(s(X))) | p(s(s(X)))), inference(imp_r, [status(thm)], [p3])).
-fof(p5, plain, ![X]: ~ p(X) | ~ p(s(X)) | p(s(s(X))), inference(and_l, [status(thm)], [p4])).
+fof(p5, plain, ![X]: (~ p(X) | ~ p(s(X)) | p(s(s(X)))), inference(and_l, [status(thm)], [p4])).
 fof(p6, plain, ~ p('0') | ~ p(s('0')) | p(s(s('0'))), inference(subst, [status(thm)], [p5])).
 fof(p7, plain, ~ p(s('0')) | p(s(s('0'))), inference(resolution, [status(thm)], [p1, p6])).
 fof(p8, plain, p(s(s('0'))), inference(resolution, [status(thm)], [p0, p7])).
