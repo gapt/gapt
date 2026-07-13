@@ -246,7 +246,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
         tstpDerivationToProofContext(derivation) must beRight
       }
 
-      "succeeds if two skolemizations with the same symbol happen if they are on the same formula" in {
+      "fails if two skolemizations with the same symbol happen even if they are on the same formula" in {
         val input = InputFile.fromString(
           """
             |fof(a, axiom, ![X]: p(X)).
@@ -260,7 +260,13 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
         )
 
         val derivation = TstpDerivation.fromInputFile(input).toOption.get
-        tstpDerivationToProofContext(derivation) must beRight
+        tstpDerivationToProofContext(derivation) must beLeft.like {
+          case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
+            (skolemSymbol must_=== "sK0")
+              .and(stepDefinitions must haveSize(2))
+              .and(stepDefinitions("ncs1").skolemSymbol must_=== FOLFunctionConst("sK0", 0))
+              .and(stepDefinitions("ncs2").skolemSymbol must_=== FOLFunctionConst("sK0", 0))
+        }
       }
 
       "fails if two skolemization steps have incompatible definitions" in {

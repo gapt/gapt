@@ -347,12 +347,9 @@ private def incompatibleSkolemDefinitions(
   skolemizationsByStepName.toSeq.combinations(2).foldLeft(Map.empty) {
     case (acc, Seq((leftStep, leftSkolemization), (rightStep, rightSkolemization))) => {
       val leftSymbol = leftSkolemization.skolemSymbol
-      val leftDefinition = leftSkolemization.skolemDefinition
       val rightSymbol = rightSkolemization.skolemSymbol
-      val rightDefinition = rightSkolemization.skolemDefinition
       assert(leftSymbol.name == rightSymbol.name, s"skolem symbol names do not match: ${leftSymbol.name} != ${rightSymbol.name}")
-      if leftDefinition == rightDefinition then acc
-      else acc ++ Set((leftStep, leftSkolemization), (rightStep, rightSkolemization))
+      acc ++ Set((leftStep, leftSkolemization), (rightStep, rightSkolemization))
     }
     case _ => throw new AssertionError("cannot happen as we only select 2 combinations")
   }
