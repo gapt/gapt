@@ -297,7 +297,8 @@ object VerifiedSkolemization {
     val skolemFormulaPolarity = FindSkolemizableInstance.polarityAndContextAt(q_pos, parentFormula, pol)._1
     //println(s"===== $parentFormula $skolemFormulaPolarity $q_pos")
     val skolemizationProof = CreateSkolemizationProof(parentFormula, inferredSkolemizationFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
-    Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, skolemizationProof))
+    val cutWithClaimedFormula = CutRule(skolemizationProof, LogicalAxiom(claimedSkolemizedFormula)) // fixes alpha equivalence
+    Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, cutWithClaimedFormula))
   }
 }
 
