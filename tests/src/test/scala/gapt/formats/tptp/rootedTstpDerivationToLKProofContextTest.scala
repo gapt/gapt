@@ -95,7 +95,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       val skTerm = fot"f(x)"
       val y = fov"y"
       val pos = HOLPosition(List(1))
-      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, pos, Negative)
+      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, fof"P(x,y)", pos, Negative)
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
 
@@ -106,7 +106,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       val skTerm = fot"f(x)"
       val y = fov"y"
       val pos = HOLPosition(List(1))
-      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, pos, Negative)
+      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, fof"P(x,y)", pos, Negative)
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
 
@@ -116,7 +116,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       val skTerm = fot"f(x)"
       val y = fov"y"
       val pos = HOLPosition(List(1,1))
-      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, pos, Negative)
+      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, fof"P(x,y)", pos, Negative)
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
 
@@ -126,7 +126,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       val skTerm = fot"s(x)"
       val y = fov"y"
       val pos = HOLPosition(List(1,1,1,2))
-      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, pos, Negative)
+      val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, fof"P(x,y)", pos, Negative)
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
   }

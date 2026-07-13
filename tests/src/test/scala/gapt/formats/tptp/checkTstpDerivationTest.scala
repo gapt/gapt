@@ -27,7 +27,7 @@ import gapt.formats.tptp.IncorrectSkolemization
 import gapt.formats.tptp.CannotHandleInput
 import gapt.formats.StringInputFile
 import gapt.formats.tptp.StepWithInvalidInferenceRule
-import gapt.formats.tptp.FormulaMismatch
+import gapt.formats.tptp.{FormulaMismatch, NoStrongQuantifierFittingSkolemization}
 import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
 import gapt.expr.formula.fol.FOLConst
 
@@ -389,6 +389,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
             case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch)) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: NoStrongQuantifierFittingSkolemization)) => reason.stepName must_== "nc_skolem"
           }
         }
 

@@ -202,7 +202,16 @@ object VerifiedSkolemization {
     }
     val (q_pos, sk_context, parent_context) = possible_matches(0)
 
+    val (allContextQuantifierTypes, allContextVariables) = sk_context unzip
     val actualContextVariables = sk_context collect { case (Weak, x) => x.asInstanceOf[FOLVar] }
+
+    if allContextQuantifierTypes.count(_ == Strong) > 0 then {
+      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula)) //TODO: check if this is necessary
+    }
+
+    if allContextVariables.distinct != allContextVariables then {
+      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
+    }
 
     if actualContextVariables.distinct != actualContextVariables then {
       reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
@@ -225,9 +234,9 @@ object VerifiedSkolemization {
       case Ex(_, f) => f
     }
 
-    val innerSubstituted = innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)
+    //val innerSubstituted = innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)
 //    println(s"Creating proof for: $parentFormula $claimedSkolemizedFormula $claimedBoundVariable $claimedSkolemTerm")
-    val skolemizationProof = CreateSkolemizationProof(parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, q_pos, pol)
+    val skolemizationProof = CreateSkolemizationProof(parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
     Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, skolemizationProof))
     //    val All.Block(actualContextVariables, mainSkolemizationFormula) = parentFormula
     //
@@ -345,7 +354,7 @@ object FindSkolemizableInstance {
   }
 
   /**
-   * Finds all positions p and variable contects s.t. unskolemized[p] is a strongly quantified
+   * Finds all positions p and variable contexts s.t. unskolemized[p] is a strongly quantified
    * formula Q skVar . F and replacing unskolemized[p] by F{skVar <- skTerm} obtains skolemized.
    */
   def apply(unskolemized: FOLFormula, skolemized: FOLFormula, polarity: Polarity, skVar : FOLVar, skConst : Const, skTerm : FOLTerm) = {
@@ -408,11 +417,12 @@ object CreateSkolemizationProof {
    * @param polarity in which polarity we are right now
    * @return
    */
-  def apply(unskolemized : FOLFormula, skolemized : FOLFormula, skVar : FOLVar, skTerm : FOLTerm, pathToSk: HOLPosition, polarity: Polarity) : LKProof = {
+  def apply(unskolemized : FOLFormula, skolemized : FOLFormula, skVar : FOLVar, skTerm : FOLTerm, innerFormula : FOLFormula, pathToSk: HOLPosition, polarity: Polarity) : LKProof = {
     if unskolemized == skolemized then
-      LogicalAxiom(unskolemized)
+      LogicalAxiom(skolemized)
     if pathToSk.isEmpty then {
-      val axiom = LogicalAxiom(skolemized)
+      val innerSubstituted = innerFormula.substitute(skVar -> skTerm)
+      val axiom = LogicalAxiom(innerSubstituted)
       if polarity == Negative then
         ExistsSkLeftRule(axiom, Ant(0), unskolemized, skTerm)
       else
@@ -426,53 +436,53 @@ object CreateSkolemizationProof {
 
       (unskolemized, skolemized, branch) match {
         case (a @ Neg(f), sa @ Neg(fs), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, remainingBranch, !polarity)
+          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, !polarity)
           val (b, sb) = swapPos(a, sa)
           val p1 = NegLeftRule(rp, sb)
           NegRightRule(p1, b)
         case (a @ And(f, g), sa @ And(fs, _), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val axiom = LogicalAxiom(g)
           val (b, sb) = swapPos(a, sa)
           val p1 = AndRightRule(rp, axiom, sb)
           AndLeftRule(p1, b)
         case (a @ And(f, g), sa @ And(_,gs), 2) =>
           val axiom = LogicalAxiom(f)
-          val rp = apply(g, gs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(g, gs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val (b, sb) = swapPos(a, sa)
           val p1 = AndRightRule(axiom, rp, sb)
           AndLeftRule(p1, b)
         case (a @ Or(f, g), sa @ Or(fs, _), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val axiom = LogicalAxiom(g)
           val (b, sb) = swapPos(a, sa)
           val p1 = OrLeftRule(rp, axiom, b)
           OrRightRule(p1, sb)
         case (a @ Or(f, g), sa @ Or(_, gs), 2) =>
-          val rp = apply(g, gs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(g, gs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val axiom = LogicalAxiom(f)
           val (b, sb) = swapPos(a, sa)
           val p1 = OrLeftRule(axiom, rp, b)
           OrRightRule(p1, sb)
         case (a @ Imp(f, g), sa @ Imp(fs, _), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, remainingBranch, !polarity)
+          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, !polarity)
           val axiom = LogicalAxiom(g)
           val (b, sb) = swapPos(a, sa)
           val p1 = ImpLeftRule(rp, axiom, b)
           ImpRightRule(p1, sb)
         case (a @ Imp(f, g), sa @ Imp(_, gs), 2) =>
-          val rp = apply(g, gs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(g, gs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val axiom = LogicalAxiom(f)
           val (b, sb) = swapPos(a, sa)
           val p1 = ImpLeftRule(axiom, rp, b)
           ImpRightRule(p1, sb)
         case (a @ All(x,f), sa @ All(y,fs), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val (b, sb) = swapPos(a, sa)
           val p1 = ForallLeftRule(rp, b)
           ForallRightRule(p1, sb)
         case (a @ Ex(x,f), sa @ Ex(y,fs), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, remainingBranch, polarity)
+          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
           val (b, sb) = swapPos(a, sa)
           val p1 = ExistsRightRule(rp, sb)
           ExistsLeftRule(p1, b)
