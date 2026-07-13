@@ -30,6 +30,7 @@ import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.utils.linearizeStrictPartialOrder
+import gapt.utils.EitherHelpers.RichEither
 
 sealed trait TstpDerivationStep {
   def name: String
@@ -90,18 +91,21 @@ case class TstpSkolemizationStep(
 * Represents all the information inside a TstpDerivation.
 * It guarantees that the parent relationship is acyclic.
 */
-case class TstpDerivation private (private val map: Map[String, AnnotatedFormula]) {
-  def annotatedFormulas: Iterable[AnnotatedFormula] = map.values
+case class TstpDerivation private (
+    private val map: Map[String, TstpDerivationStep],
+    private val topologicallyOrderedFromSinksToSources: Iterable[String]
+) {
+  def stepsIterator: Iterator[TstpDerivationStep] = map.valuesIterator
+  def stepsTopologicallyOrdered: Iterable[TstpDerivationStep] = topologicallyOrderedFromSinksToSources.map(map(_))
+  def get(label: String): Option[TstpDerivationStep] = map.get(label)
 
-  def get(label: String): Option[AnnotatedFormula] = map.get(label)
-
-  def parentsOf(formulaName: String): Seq[AnnotatedFormula] = {
-    map(formulaName).parentLabels.map(p => map(p))
+  def parentsOf(formulaName: String): Seq[TstpDerivationStep] = {
+    map(formulaName).parents.map(p => map(p))
   }
 
   val nonConjectureRootLabels: Set[String] = {
     def isRoot(key: String): Boolean = {
-      map(key).role != "conjecture" && map.forall((_, f) => !f.parentLabels.contains(key))
+      map(key).role != "conjecture" && map.forall((_, f) => !f.parents.contains(key))
     }
 
     map.keys.filter(isRoot).toSet
@@ -116,29 +120,29 @@ case class TstpDerivation private (private val map: Map[String, AnnotatedFormula
 
   def subDerivationRootedAt(
       derivationEndLabel: String
-  ): Either[StepWithMissingParents | InferenceCycle, Iterable[AnnotatedFormula]] = boundary {
+  ): Either[NonExistentStep, TstpDerivation] = boundary {
     import scala.collection.mutable
 
     val visited = mutable.Set[String]()
-    val reachableSteps = mutable.Buffer[AnnotatedFormula]()
+    val reachableSteps = mutable.Buffer[TstpDerivationStep]()
     def walk(label: String): Unit = {
       if !visited.contains(label) then {
         visited += label
         val formula = map.get(label).getOrElse {
-          break(Left(StepWithMissingParents(label)))
+          break(Left(NonExistentStep(label)))
         }
         reachableSteps += formula
-        formula.parentLabels.foreach(walk)
+        formula.parents.foreach(walk)
       }
     }
     walk(derivationEndLabel)
 
-    val usedStepsRootToLeafs = linearizeStrictPartialOrder(reachableSteps.toSet, x => parentsOf(x.name)).getOrElse {
-      break(Left(InferenceCycle()))
-    }
+    val usedStepsRootToLeafs = linearizeStrictPartialOrder(reachableSteps.toSet, x => parentsOf(x.name)).get
     val usedStepsLeafsToRoot = usedStepsRootToLeafs.reverse
+    val order = usedStepsLeafsToRoot.map(_.name)
+    val subMap = order.map(l => l -> map(l)).toMap
 
-    Right(usedStepsLeafsToRoot)
+    Right(TstpDerivation(subMap, order))
   }
 }
 
@@ -156,7 +160,8 @@ object TstpDerivation {
       tptp <- loadAsTptpFile(input)
       steps <- intoAnnotatedFormulaSteps(tptp)
       map <- intoUniqueMap(steps)
-    yield new TstpDerivation(map)
+      checkedDerivation <- intoCheckedTstpDerivation(map)
+    yield checkedDerivation
   }
 
   // ensures the input file is syntactically correct TPTP
@@ -195,50 +200,16 @@ object TstpDerivation {
 
     Right(map)
   }
-}
 
-/**
-* Checks if the given directed graph contains a cycle.
-*
-* @param nodes the set of nodes of the graph
-* @param successors a function that returns for a given node in the graph the set of the nodes it can via a single edge
-* @return true if the directed graph contains a cycle, false otherwise
-*/
-def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
-  linearizeStrictPartialOrder(nodes, successors).isLeft
-}
+  private def intoCheckedTstpDerivation(
+      map: Map[String, AnnotatedFormula]
+  ): Either[TstpDerivationImportError, TstpDerivation] = boundary {
+    val topologicalOrder = sortTopologically(map).getOrBreak
 
-/**
-* Represents a TstpDerivation with a designated root label which defines the
-* end derived formula. This could be a $false formula which would make
-* it a refutation, but coucld also be another formula. This allows picking
-* any subderivation as a derivation.
-*/
-case class RootedTstpDerivation private (
-    private val steps: Map[String, TstpDerivationStep],
-    private val leafsToRootTopologicalOrder: Seq[String],
-    private val rootLabel: String
-) {
-  def stepsIterator: Iterator[TstpDerivationStep] = steps.valuesIterator
-  def stepsTopologicallyOrderedFromLeafsToRoot: Iterator[TstpDerivationStep] = leafsToRootTopologicalOrder.iterator.map(s => steps(s))
-  def get(name: String): Option[TstpDerivationStep] = steps.get(name)
-  def root: TstpDerivationStep = steps(rootLabel)
-}
-
-object RootedTstpDerivation {
-  def fromDerivationAndRootLabel(
-      derivation: TstpDerivation,
-      rootLabel: String
-  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
-    val _ = derivation.get(rootLabel).getOrElse {
-      break(Left(UnexpectedInput("end derivation label does not exist in proof")))
-    }
-
-    val usedAnnotatedFormulas = derivation.subDerivationRootedAt(rootLabel).getOrBreak
-    val usedSteps = usedAnnotatedFormulas.map { a => a.name -> parseStep(a).getOrBreak }.toMap
+    val usedSteps = map.values.map { a => a.name -> parseStep(a).getOrBreak }.toMap
 
     val usedNegatedConjectures = usedSteps.values.collect { case s: TstpNegatedConjectureStep => s }
-    usedNegatedConjectures.find(c => derivation.hasNonConjectureParent(c.name)).map { s =>
+    usedNegatedConjectures.find(c => map.hasNonConjectureParent(c.name)).map { s =>
       break(Left(NegatedConjectureStepWithNonConjectureParent(s.name)))
     }
 
@@ -247,29 +218,38 @@ object RootedTstpDerivation {
     }
 
     val usedPlainInferences = usedSteps.values.collect { case a: TstpPlainInferenceStep => a }
-    usedPlainInferences.find(s => derivation.hasConjectureParent(s.name)).map { s =>
+    usedPlainInferences.find(s => map.hasConjectureParent(s.name)).map { s =>
       break(Left(PlainInferenceWithConjectureParent(s)))
     }
 
-    Right(RootedTstpDerivation(usedSteps, usedAnnotatedFormulas.map(_.name).toSeq, rootLabel))
+    Right(TstpDerivation(usedSteps, topologicalOrder))
   }
 
-  def fromInputFileRefutation(
-      file: InputFile
-  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
-    val derivation = TstpDerivation.fromInputFile(file).getOrBreak
-    val refutationStep = derivation.annotatedFormulas.filter(_.formula == Bottom()).singleOption.getOrElse {
-      break(Left(NoRefutationFound()))
+  private def sortTopologically(
+      map: Map[String, AnnotatedFormula]
+  ): Either[NonExistentStep | InferenceCycle, Iterable[String]] = boundary {
+    import scala.collection.mutable
+
+    val visited = mutable.Set[String]()
+    val reachableSteps = mutable.Buffer[AnnotatedFormula]()
+    def walk(label: String): Unit = {
+      if !visited.contains(label) then {
+        visited += label
+        val formula = map.get(label).getOrElse {
+          break(Left(NonExistentStep(label)))
+        }
+        reachableSteps += formula
+        formula.parentLabels.foreach(walk)
+      }
     }
-    RootedTstpDerivation.fromDerivationAndRootLabel(derivation, refutationStep.name)
-  }
+    map.keysIterator.foreach(walk)
 
-  def fromInputFileAndRootLabel(
-      file: InputFile,
-      rootLabel: String
-  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
-    val tptpProofDag = TstpDerivation.fromInputFile(file).getOrBreak
-    fromDerivationAndRootLabel(tptpProofDag, rootLabel)
+    val usedStepsRootToLeafs = linearizeStrictPartialOrder(reachableSteps.toSet, x => map.parentsOf(x.name)).getOrElse {
+      break(Left(InferenceCycle()))
+    }
+    val usedStepsLeafsToRoot = usedStepsRootToLeafs.reverse
+
+    Right(usedStepsLeafsToRoot.map(_.name))
   }
 
   private def parseStep(annotatedFormula: AnnotatedFormula): Either[TstpDerivationImportError, TstpDerivationStep] = boundary {
@@ -294,7 +274,7 @@ object RootedTstpDerivation {
   }
 
   private def parseFOLFormula(formula: Formula): Either[TstpDerivationImportError, FOLFormula] = {
-    if !(formula.isInstanceOf[FOLFormula]) then
+    if !formula.isInstanceOf[FOLFormula] then
       Left(UnexpectedInput(s"expected FOL formula, got ${formula.getClass}"))
     else
       Right(formula.asInstanceOf[FOLFormula])
@@ -430,14 +410,76 @@ object RootedTstpDerivation {
     ))
   }
 
-  extension (derivation: TstpDerivation) {
+  extension (map: Map[String, AnnotatedFormula]) {
+    def parentsOf(label: String): Seq[AnnotatedFormula] = {
+      map(label).parentLabels.map(p => map(p))
+    }
+
     def hasNonConjectureParent(formulaName: String): Boolean = {
-      derivation.parentsOf(formulaName).exists(p => p.role != "conjecture")
+      map.parentsOf(formulaName).exists(p => p.role != "conjecture")
     }
 
     def hasConjectureParent(formulaName: String): Boolean = {
-      derivation.parentsOf(formulaName).exists(p => p.role == "conjecture")
+      map.parentsOf(formulaName).exists(p => p.role == "conjecture")
     }
+  }
+}
+
+/**
+* Checks if the given directed graph contains a cycle.
+*
+* @param nodes the set of nodes of the graph
+* @param successors a function that returns for a given node in the graph the set of the nodes it can via a single edge
+* @return true if the directed graph contains a cycle, false otherwise
+*/
+def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
+  linearizeStrictPartialOrder(nodes, successors).isLeft
+}
+
+/**
+* Represents a TstpDerivation with a designated root label which defines the
+* end derived formula. This could be a $false formula which would make
+* it a refutation, but coucld also be another formula. This allows picking
+* any subderivation as a derivation.
+*/
+case class RootedTstpDerivation private (
+    private val derivation: TstpDerivation,
+    val rootLabel: String
+) {
+  val tstpDerivation: TstpDerivation =
+    derivation.subDerivationRootedAt(rootLabel).get
+
+  export tstpDerivation.*
+}
+
+object RootedTstpDerivation {
+  def fromDerivationAndRootLabel(
+      derivation: TstpDerivation,
+      rootLabel: String
+  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
+    val _ = derivation.get(rootLabel).getOrElse {
+      break(Left(UnexpectedInput("end derivation label does not exist in proof")))
+    }
+
+    Right(RootedTstpDerivation(derivation, rootLabel))
+  }
+
+  def fromInputFileRefutation(
+      file: InputFile
+  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
+    val derivation = TstpDerivation.fromInputFile(file).getOrBreak
+    val uniqueRefutationLabel = derivation.nonConjectureRefutationLabels.singleOption.getOrElse {
+      break(Left(NoRefutationFound()))
+    }
+    RootedTstpDerivation.fromDerivationAndRootLabel(derivation, uniqueRefutationLabel)
+  }
+
+  def fromInputFileAndRootLabel(
+      file: InputFile,
+      rootLabel: String
+  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
+    val tptpProofDag = TstpDerivation.fromInputFile(file).getOrBreak
+    fromDerivationAndRootLabel(tptpProofDag, rootLabel)
   }
 }
 

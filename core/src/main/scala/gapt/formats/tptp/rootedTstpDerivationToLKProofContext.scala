@@ -41,16 +41,15 @@ import gapt.proofs.lk.rules.WeakeningLeftRule
 import scala.util.boundary
 import boundary.break
 import scala.util.boundary.Label
-import gapt.proofs.lk.rules.ProofLink
 
 /**
 * Attempts to replay the inferences in the given RootedTstpDerivation into an Context and a ProofLink
 * such that instantiating the ProofLink in the context gives the full LKProof.
 */
-def rootedTstpDerivationToLKProofContext(
-    derivation: RootedTstpDerivation,
+def tstpDerivationToProofContext(
+    derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization, (ProofLink, Context)] = boundary { outer ?=>
+): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
@@ -68,7 +67,7 @@ def rootedTstpDerivationToLKProofContext(
     ProofDeclaration(FOLConst(name), cutProof)
   }
 
-  derivation.stepsTopologicallyOrderedFromLeafsToRoot.foreach { s =>
+  derivation.stepsTopologicallyOrdered.foreach { s =>
     s match {
       case _: TstpConjectureStep =>
       case s: TstpAxiomStep => {
@@ -117,12 +116,11 @@ def rootedTstpDerivationToLKProofContext(
     }
   }
 
-  val proofLink = ProofLink(derivation.root.name)(using context)
-  Right((proofLink, context.toImmutable))
+  Right(context.toImmutable)
 }
 
 private def constructTstpDerivationContext(
-    derivation: RootedTstpDerivation
+    derivation: TstpDerivation
 ): Either[IncorrectSkolemization, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
     case step: TstpSkolemizationStep => {
@@ -250,7 +248,7 @@ private def ensureCompatibleSkolemDefinitions(
 }
 
 private def ensureSkolemSymbolsDistinctFromInput(
-    derivation: RootedTstpDerivation,
+    derivation: TstpDerivation,
     verifiedSkolemDefinitions: Map[String, (FOLFunctionConst, Expr, Set[String])]
 ): Either[IncorrectSkolemization, Unit] = boundary {
   val inputSymbols = derivation.stepsIterator.collect {
