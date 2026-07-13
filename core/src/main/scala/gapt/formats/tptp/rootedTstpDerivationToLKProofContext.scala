@@ -174,7 +174,7 @@ object VerifiedSkolemization {
       skolemizationStep: TstpSkolemizationStep,
       parentFormula: FOLFormula
   ): Either[IncorrectSkolemization, VerifiedSkolemization] =
-    shallowSkolemizationCheck(skolemizationStep, parentFormula)
+    deepSkolemizationCheck(skolemizationStep, parentFormula)
 
   private def shallowSkolemizationCheck(
       skolemizationStep: TstpSkolemizationStep,
@@ -243,7 +243,7 @@ object VerifiedSkolemization {
     ) = skolemizationStep
 
     if claimedContextVariables.distinct != claimedContextVariables then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
+      reportIncorrectSkolemization(NonRectifiedFormula(name, claimedSkolemizedFormula)) //TODO: find better error
     }
 
     val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
@@ -288,6 +288,8 @@ object VerifiedSkolemization {
       case Ex(_, f)  => f
     }
 
+    val skolemFormulaPolarity = FindSkolemizableInstance.polarityAndContextAt(q_pos, parentFormula, pol)._1
+    println(s"===== $parentFormula $skolemFormulaPolarity $q_pos")
     val skolemizationProof = CreateSkolemizationProof(parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
     Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, skolemizationProof))
   }
@@ -449,7 +451,7 @@ object CreateSkolemizationProof {
       (unskolemized, skolemized, branch) match {
         case (a @ Neg(f), sa @ Neg(fs), 1) =>
           val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, !polarity)
-          val (b, sb) = swapPos(a, sa)
+          val (b, sb) = swapPos(fs, f) //NegLeftRule needs the auxiliary, not the primary formula
           val p1 = NegLeftRule(rp, sb)
           NegRightRule(p1, b)
         case (a @ And(f, g), sa @ And(fs, _), 1) =>

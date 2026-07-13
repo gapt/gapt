@@ -347,13 +347,13 @@ class TptpProofParserUnitTest extends Specification {
         tstpDerivationToProofContext(derivation) must beLeft
       }
 
-      "fail on skolemization step that has no outermost existential quantifier" in {
+      "succeed on skolemization step that has no existential quantifier (but a strong universal)" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ~(![Y]: p(X,Y))).
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
-        tstpDerivationToProofContext(derivation) must beLeft
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in {
@@ -419,6 +419,10 @@ class TptpProofParserUnitTest extends Specification {
         tstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: NonRectifiedFormula) =>
             (e.stepName must_== "s").and(e.formula must_== fof"!x!x?y p(y)")
+          case IncorrectSkolemization(e: NoStrongQuantifierFittingSkolemization) =>
+            (e.stepName must_== "s")
+          case _ =>
+            ko
         }
       }
 
@@ -430,7 +434,8 @@ class TptpProofParserUnitTest extends Specification {
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
         tstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: ContextVariableMismatch) => e.stepName must_== "s"
-          case IncorrectSkolemization(e: NoExistentialQuantifierAfterRootUniversalBlock) => e.stepName must_== "s"
+          case IncorrectSkolemization(e: NoStrongQuantifierFittingSkolemization) => e.stepName must_== "s"
+          case IncorrectSkolemization(e: NonRectifiedFormula) => e.stepName must_== "s"
         }
       }
 
