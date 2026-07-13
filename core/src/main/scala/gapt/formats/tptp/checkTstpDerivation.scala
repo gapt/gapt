@@ -76,13 +76,13 @@ type VerifiedBadReason =
     | OtherFailureReason
     | StepWithInvalidStatus
     | StepWithInvalidInferenceRule
-    | StepWithMissingParents
     | NegatedConjectureStepWithNonConjectureParent
     | NegatedConjectureWithoutParent
     | PlainInferenceWithConjectureParent
     | NegatedConjectureWithMultipleDistinctParents
     | DistinctFormulasWithSameName
     | NoRefutationFound
+    | NonExistentStep
 
 type UnknownReason =
   Throwable
@@ -149,30 +149,33 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
   val result = {
     try withTimeout(timeout) {
         boundary {
-          val refutation = RootedTstpDerivation.fromInputFileRefutation(inputFile).getOrBreak
-          refutation.stepsIterator.foreach {
+          val derivation = TstpDerivation.fromInputFile(inputFile).getOrBreak
+          val _ = derivation.nonConjectureRefutationLabels.headOption.getOrElse {
+            break(Left(NoRefutationFound()))
+          }
+          derivation.stepsIterator.foreach {
             case step: (TstpAxiomStep | TstpConjectureStep) =>
               val fileDirectiveResolver = resolver.relativeTo(os.Path(file.fileName) / os.up)
               checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver).getOrBreak
             case _ =>
           }
 
-          val usedNegatedConjectures = refutation.stepsIterator.collect { case s: TstpNegatedConjectureStep => s }
+          val usedNegatedConjectures = derivation.stepsIterator.collect { case s: TstpNegatedConjectureStep => s }
           usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
           }
 
-          val usedPlainInferences = refutation.stepsIterator.collect { case a: TstpPlainInferenceStep => a }
+          val usedPlainInferences = derivation.stepsIterator.collect { case a: TstpPlainInferenceStep => a }
           usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
           }
 
-          val usedSkolemizationSteps = refutation.stepsIterator.collect { case s: TstpSkolemizationStep => s }
+          val usedSkolemizationSteps = derivation.stepsIterator.collect { case s: TstpSkolemizationStep => s }
           usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
 
-          rootedTstpDerivationToLKProofContext(refutation)
+          tstpDerivationToProofContext(derivation)
         }
       }
     catch e => Left(e)

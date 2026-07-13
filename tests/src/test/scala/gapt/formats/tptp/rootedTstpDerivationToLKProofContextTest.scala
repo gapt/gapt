@@ -14,6 +14,7 @@ import org.specs2.mutable.Specification
 import scala.concurrent.duration.*
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLConst
+import gapt.proofs.lk.rules.ProofLink
 
 class rootedTstpDerivationIntoLKProofContextTest extends Specification with SequentMatchers {
   "rootedTstpDerivationIntoLKProof" should {
@@ -23,11 +24,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       |fof(c, conjecture, ![X]: p(X)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).""".stripMargin)
-      val sketch = RootedTstpDerivation.fromInputFileAndRootLabel(input, "cont").toOption.get
+      val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProofContext(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
 
-      lkProof must beRight.like { (proof, context) =>
+      lkProof must beRight.like { context =>
+        val proof = ProofLink(derivation.rootLabel)(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x), -(!x p(x)) :- ${Bottom()}")
       }
@@ -38,11 +40,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       |fof(a, axiom, ![X]: p(X)).
       |fof(c, conjecture, p(a)).
       |fof(end, plain, p(a), inference(instance, [status(thm)], [a])).""".stripMargin)
-      val sketch = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
+      val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProofContext(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation) }
 
-      lkProof must beRight.like { (proof, context) =>
+      lkProof must beRight.like { context =>
+        val proof = ProofLink(derivation.rootLabel)(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x) :- p(a)")
       }
@@ -54,11 +57,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       |fof(a1, axiom, ![X]: p(X)).
       |fof(c, conjecture, ![X]: p(X)).
       |fof(end, plain, ![X]: p(X), inference(instance, [status(thm)], [a1, a1])).""".stripMargin)
-      val sketch = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
+      val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProofContext(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
 
-      lkProof must beRight.like { (proof, context) =>
+      lkProof must beRight.like { context =>
+        val proof = ProofLink(derivation.rootLabel)(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x), !x p(x) :- !x p(x)")
       }
@@ -66,23 +70,25 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
 
     "work on example1_c" in {
       val input = ClasspathInputFile("proover_competition/Proofs/correct_example1_c_proof.p")
-      val sketch = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
+      val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProofContext(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
 
-      lkProof must beRight.like { (proof, context) =>
+      lkProof must beRight.like { context =>
+        val proof = ProofLink(derivation.rootLabel)(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"p(a) & ~p(b), -(?x -(p(x) -> !y p(y))) :- ${Bottom()}")
       }
     }
 
     "work on example2_c" in {
-      val input = ClasspathInputFile("proover_competition/Proofs/correct_example2_c_proof.p")
-      val sketch = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
+      val derivationFile = ClasspathInputFile("proover_competition/Proofs/correct_example2_c_proof.p")
+      val derivation = RootedTstpDerivation.fromInputFileRefutation(derivationFile).toOption.get
 
-      val lkProof = withTimeout(1.second) { rootedTstpDerivationToLKProofContext(sketch, Escargot) }
+      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
 
-      lkProof must beRight.like { (proof, context) =>
+      lkProof must beRight.like { context =>
+        val proof = ProofLink(derivation.rootLabel)(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x(p(x) -> p(f(x))), !x(p(x) -> p(f(x))), p(a), -p(f(f(a))), -p(f(f(a))) :- ${Bottom()}")
       }
@@ -98,8 +104,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(i, plain, ~p(sK0), inference(instance, [status(thm)], [nc])).
           |fof(f, plain, $false, inference(falsum, [status(thm)], [s, i])).
         """.stripMargin)
-        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "f").get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "succeeds on derivation that ends in a formula containing a skolem symbol without context variables" in {
@@ -107,8 +113,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(a, axiom, ?[X]: p(X)).
           |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
         """.stripMargin)
-        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "succeeds on derivation that ends in a formula containing a skolem symbol with context variables" in {
@@ -116,8 +122,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
           |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").toOption.get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "succeeds if two skolemizations with the same symbol happen if they are on the same formula" in {
@@ -131,8 +137,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(i, plain, $false, inference(and, [status(thm)], [ai, ncs1, ncs2])).
         """.stripMargin)
 
-        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "fails if two skolemization steps have incompatible definitions" in {
@@ -147,8 +153,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(i, plain, $false, inference(and, [status(thm)], [ai, ncs1, ncs2])).
         """.stripMargin)
 
-        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
-        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        tstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
             (skolemSymbol must_=== "sK0")
               .and(stepDefinitions must haveSize(2))
@@ -171,8 +177,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(i, plain, $false, inference(and, [status(thm)], [ai, ncs1, ncs2])).
         """.stripMargin)
 
-        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
-        rootedTstpDerivationToLKProofContext(derivation) must beLeft.like {
+        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        tstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
             (skolemSymbol must_=== "sK0")
               .and(stepDefinitions must haveSize(2))
@@ -194,8 +200,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(i, plain, $false, inference(and, [status(thm)], [ai, ncs1, ncs2])).
         """.stripMargin)
 
-        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "picks outermost bound variable to skolemize if there are multiple with the same name" in {
@@ -203,8 +209,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(a, axiom, ![X]: ?[Y]: ?[Y]: p(X, Y)).
           |fof(s, plain, ![X]: ?[Y]: p(X, Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "s").get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "succeed on input where a skolemization step introduces symbol that is used in plain inference, but not in conjecture or axiom" in {
@@ -217,8 +223,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(ai, plain, p(c), inference(instance, [status(thm)], [a])).
           |fof(end, plain, $false, inference(inf, [status(thm)], [p, ncs, ai])).
         """.stripMargin)
-        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).get
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "succeeds on skolemization step shose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in {
@@ -229,8 +235,8 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
           |fof(ncs, plain, ![Z]: ~p(Z, sK0(Z)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [nc])).
           |fof(ai, plain, $false, inference(instance, [status(thm)], [a, ncs])).
         """.stripMargin)
-        val derivation = RootedTstpDerivation.fromInputFileRefutation(input).get
-        rootedTstpDerivationToLKProofContext(derivation) must beRight
+        val derivation = TstpDerivation.fromInputFile(input).get
+        tstpDerivationToProofContext(derivation) must beRight
       }
     }
   }

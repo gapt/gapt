@@ -22,7 +22,6 @@ import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
 import gapt.formats.tptp.SkolemizationStepWithoutBinding
 import org.specs2.execute.PendingException
 import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
-import gapt.formats.tptp.StepWithMissingParents
 import gapt.formats.tptp.IncorrectSkolemization
 import gapt.formats.tptp.CannotHandleInput
 import gapt.formats.StringInputFile
@@ -30,6 +29,7 @@ import gapt.formats.tptp.StepWithInvalidInferenceRule
 import gapt.formats.tptp.FormulaMismatch
 import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
 import gapt.expr.formula.fol.FOLConst
+import gapt.formats.tptp.NonExistentStep
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
@@ -72,14 +72,16 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "verify a proof that contains unused incorrect conjecture to negated_conjecture inference but is otherwise correct" in {
+        "fail a proof that contains unused incorrect conjecture to negated_conjecture inference even if it is otherwise correct" in {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p(a), file('Problems/test1.p', a1)).
             |fof(a2, axiom, ~p(a), file('Problems/test1.p', a2)).
-            |fof(c, conjecture, p(a)).
+            |fof(c, conjecture, p(a), file('Problems/test1.p', c)).
             |fof(nc, negated_conjecture, p(a), inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, a2])).""".stripMargin)
-          checkDerivation(input) must_== SzsStatus.VerifiedGood
+          checkDerivation(input) must beLike {
+            case SzsStatus.VerifiedBad(r: IncorrectInference) => r.stepName must_== "nc"
+          }
         }
 
         "fail on negated conjecture step with thm status" in {
@@ -623,14 +625,16 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation(input) must_== SzsStatus.VerifiedGood
         }
 
-        "verify if an unused axiom step has missing file directive if derivation is otherwise correct" in {
+        "fail if an unused axiom step has missing file directive even if derivation is otherwise correct" in {
           val input = InputFile.fromString("""
             |fof(a1, axiom, p, file('Problems/test2.p', a)).
             |fof(unused, axiom, q).
             |fof(c, conjecture, p, file('Problems/test2.p', c)).
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-          checkDerivation(input) must_== SzsStatus.VerifiedGood
+          checkDerivation(input) must beLike {
+            case SzsStatus.VerifiedBad(r: OtherFailureReason.SourceMissing) => r.stepName must_== "unused"
+          }
         }
       }
 
@@ -812,7 +816,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont2, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithMissingParents]
+            case SzsStatus.VerifiedBad(reason: NonExistentStep) => reason.stepName must_== "a"
           }
         }
       }
@@ -879,13 +883,33 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
               .and(reason.validStatuses must_== Set("thm"))
         }
       }
-      "fail on fof inputs with higher-order formulas" in todo
-      "succeed on derivation that derives $false only from axioms" in todo
+
+      "fail if input has two $false proof steps, one induces a correct refutation, the other induces an incorrect refutation" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a, axiom, p, file('Problems/problem.p', a)).
+            |fof(c, conjecture, p, file('Problems/problem.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(refute1, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            |fof(refute2, plain, $false, inference(falsum, [status(thm)], [a])).
+            """.stripMargin)
+          case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, p).
+            |fof(c, conjecture, p).
+          """.stripMargin)
+        }
+
+        checkDerivation0("/input") must beLike {
+          case SzsStatus.VerifiedBad(r: IncorrectInference) => r.stepName must_== "refute2"
+        }
+      }
 
       "succeed if input has multiple $false proof steps whose induced refutations are all correct" in todo
       "give up if input has more than one $false proof step that are roots" in todo
       "fail if input has multiple $false proof steps and one of the induced refutations is incorrect" in todo
 
+      "fail on fof inputs with higher-order formulas" in todo
+      "succeed on derivation that derives $false only from axioms" in todo
       "give up if input has more than one conjecture" in todo
 
       "do X on axiom and conjecture steps that import different files" in todo("specify")

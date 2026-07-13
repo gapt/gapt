@@ -21,11 +21,7 @@ case class DistinctFormulasWithSameName(
 case class InferenceCycle() extends TstpDerivationImportError {
   def message: String = "inference cycle detected"
 }
-case class StepWithMissingParents(
-    stepName: String
-) extends TstpDerivationImportError {
-  def message = s"$stepName has parent labels that are not in the derivation"
-}
+
 case class StepWithInvalidStatus(
     stepName: String,
     actualStatuses: Iterable[String],
@@ -67,6 +63,12 @@ case class IncorrectSkolemization(
     reason: IncorrectSkolemizationReason
 ) extends TstpDerivationImportError {
   def message: String = reason.message
+}
+
+case class NonExistentStep(
+    stepName: String
+) extends TstpDerivationImportError {
+  def message: String = s"step with name $stepName does not exist"
 }
 
 sealed trait IncorrectSkolemizationReason {
