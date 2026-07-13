@@ -1,6 +1,6 @@
-fof(a0, axiom, ![X]: ('P'(X) => 'P'(s(X))), file('/Users/fachammer/dev/gapt/tests/src/test/resources/ProoVer_competition/Proofs/Problems/linear_example_15.p', a0)).
-fof(a1, axiom, 'P'('0'), file('/Users/fachammer/dev/gapt/tests/src/test/resources/ProoVer_competition/Proofs/Problems/linear_example_15.p', a1)).
-fof(c, conjecture, 'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))), file('/Users/fachammer/dev/gapt/tests/src/test/resources/ProoVer_competition/Proofs/Problems/linear_example_15.p', c)).
+fof(a0, axiom, ![X]: ('P'(X) => 'P'(s(X))), file('Problems/linear_example_15.p', a0)).
+fof(a1, axiom, 'P'('0'), file('Problems/linear_example_15.p', a1)).
+fof(c, conjecture, 'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))), file('Problems/linear_example_15.p', c)).
 fof(nc, negated_conjecture, ~ 'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))), inference(negated_conjecture, [status(cth)], [c])).
 fof(p0, plain, 'P'('0') => 'P'('0'), inference(logical_axiom, [status(thm)], [])).
 fof(p1, plain, 'P'(s('0')) => 'P'(s('0')), inference(logical_axiom, [status(thm)], [])).
