@@ -320,7 +320,7 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
           out / appName,
           s"""|#!/usr/bin/env sh
               |DIR="$$(cd "$$(dirname "$$0")" && pwd)"
-              |exec java -Xss128m -Xms64g -Xmx128g -jar "$$DIR/$jarName" "$$@"
+              |exec java -Xss128m -Xms4g -Xmx128g -jar "$$DIR/$jarName" "$$@"
         """.stripMargin.strip
         )
         (out / appName).setExecutable(true)
