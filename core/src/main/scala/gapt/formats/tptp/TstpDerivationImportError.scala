@@ -65,6 +65,13 @@ case class IncorrectSkolemization(
   def message: String = reason.message
 }
 
+case class InnerSkolemizationNotSupported(
+    skolemizationStep: TstpSkolemizationStep
+) extends TstpDerivationImportError {
+  def message: String =
+    s"step ${skolemizationStep.name} performas an inner skolemization which we don't support"
+}
+
 case class NonExistentStep(
     stepName: String
 ) extends TstpDerivationImportError {
@@ -165,13 +172,12 @@ case class NoConjectureFound() extends TstpDerivationImportError {
 }
 case class UnexpectedInput(message: String) extends TstpDerivationImportError
 
-//new by martin
-case class NoStrongQuantifierFittingSkolemization(stepName:String, inputFormula : FOLFormula, skolemizedFormula : FOLFormula, skVar:FOLVar, skTerm:FOLTerm)
-  extends IncorrectSkolemizationReason {
+case class NoStrongQuantifierFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
+    extends IncorrectSkolemizationReason {
   def message: String = s"could not find a strong quantifier s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
 }
 
-case class MultipleStrongQuantifiersFittingSkolemization(stepName:String, inputFormula : FOLFormula, skolemizedFormula : FOLFormula, skVar:FOLVar, skTerm:FOLTerm) 
-extends IncorrectSkolemizationReason {
+case class MultipleStrongQuantifiersFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
+    extends IncorrectSkolemizationReason {
   def message: String = s"could find multiple (non-unique) strong quantifiers s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
 }

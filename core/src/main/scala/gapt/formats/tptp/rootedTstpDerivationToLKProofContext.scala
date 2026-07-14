@@ -16,8 +16,6 @@ import gapt.proofs.context.mutable.MutableContext
 import gapt.proofs.context.update.{ProofDefinitionDeclaration, ProofNameDeclaration, Sort, Update}
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.{AndLeftRule, AndRightRule, CutRule, ExistsLeftRule, ExistsRightRule, ExistsSkLeftRule, ForallLeftRule, ForallRightRule, ForallSkRightRule, ImpLeftRule, ImpRightRule, LogicalAxiom, NegLeftRule, NegRightRule, OrLeftRule, OrRightRule, ProofLink, WeakeningLeftRule}
-import gapt.proofs.lk.rules.macros.ForallLeftBlock
-import gapt.proofs.lk.rules.macros.ForallRightBlock
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe
@@ -49,7 +47,7 @@ case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends 
 def tstpDerivationToProofContext(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
+): Either[IncorrectInference | IncorrectSkolemization | InnerSkolemizationNotSupported, Context] = boundary { outer ?=>
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
@@ -121,7 +119,7 @@ def tstpDerivationToProofContext(
 
 private def constructTstpDerivationContext(
     derivation: TstpDerivation
-): Either[IncorrectSkolemization, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
+): Either[IncorrectSkolemization | InnerSkolemizationNotSupported, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
     case step: TstpSkolemizationStep => {
       val parentFormula = derivation.get(step.parent).get.formula
@@ -173,60 +171,9 @@ object VerifiedSkolemization {
   def fromTstpSkolemizationStepAndParentFormula(
       skolemizationStep: TstpSkolemizationStep,
       parentFormula: FOLFormula
-  ): Either[IncorrectSkolemization, VerifiedSkolemization] =
+  ): Either[IncorrectSkolemization | InnerSkolemizationNotSupported, VerifiedSkolemization] =
     deepSkolemizationCheck(skolemizationStep, parentFormula)
 
-  private def shallowSkolemizationCheck(
-      skolemizationStep: TstpSkolemizationStep,
-      parentFormula: FOLFormula
-  ): Either[IncorrectSkolemization, VerifiedSkolemization] = boundary {
-    val TstpSkolemizationStep(
-      name,
-      claimedSkolemizedFormula,
-      parent,
-      source,
-      newSkolemSymbol,
-      claimedContextVariables,
-      claimedBoundVariable,
-      _
-    ) = skolemizationStep
-
-    val All.Block(actualContextVariables, mainSkolemizationFormula) = parentFormula
-
-    if actualContextVariables.distinct != actualContextVariables then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
-    }
-
-    val (actualBoundVariable, innerSkolemizationFormula) = mainSkolemizationFormula match {
-      case Ex(actualBoundVariable, inner) => (actualBoundVariable, inner)
-      case f =>
-        reportIncorrectSkolemization(NoExistentialQuantifierAfterRootUniversalBlock(name, claimedBoundVariable, f, parentFormula))
-    }
-
-    if claimedBoundVariable != actualBoundVariable then {
-      reportIncorrectSkolemization(BoundVariableMismatch(name, claimedBoundVariable, actualBoundVariable, parentFormula))
-    }
-
-    if claimedContextVariables != actualContextVariables then {
-      reportIncorrectSkolemization(ContextVariableMismatch(name, claimedContextVariables, actualContextVariables, claimedBoundVariable, parentFormula))
-    }
-
-    val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
-    val innerSubstituted = innerSkolemizationFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)
-    val expectedSkolemizedFormula = All.Block(actualContextVariables, innerSubstituted)
-
-    if expectedSkolemizedFormula != claimedSkolemizedFormula then {
-      reportIncorrectSkolemization(FormulaMismatch(name, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, expectedSkolemizedFormula, parentFormula))
-    }
-    val skolemDefinition = Abs.Block(actualContextVariables, mainSkolemizationFormula)
-
-    val axiom = LogicalAxiom(innerSubstituted)
-    val existsSkLeft = ExistsSkLeftRule(axiom, Ant(0), mainSkolemizationFormula, claimedSkolemTerm)
-    val forallLeft = ForallLeftBlock(existsSkLeft, parentFormula, actualContextVariables)
-    val skolemizationProof = ForallRightBlock(forallLeft, expectedSkolemizedFormula, actualContextVariables)
-
-    Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, skolemizationProof))
-  }
   private def deepSkolemizationCheck(
       skolemizationStep: TstpSkolemizationStep,
       parentFormula: FOLFormula
@@ -243,7 +190,7 @@ object VerifiedSkolemization {
     ) = skolemizationStep
 
     if claimedContextVariables.distinct != claimedContextVariables then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, claimedSkolemizedFormula)) //TODO: find better error
+      reportIncorrectSkolemization(NonRectifiedFormula(name, claimedSkolemizedFormula)) // TODO: find better error
     }
 
     val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
@@ -261,7 +208,7 @@ object VerifiedSkolemization {
     val actualContextVariables = parent_context.collect { case (Weak, x) => x.asInstanceOf[FOLVar] }
 
     if allContextQuantifierTypes.count(_ == Strong) > 0 then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula)) // TODO: check if this is necessary
+      break(Left(InnerSkolemizationNotSupported(skolemizationStep)))
     }
 
     if allContextVariables.distinct != allContextVariables then {
@@ -285,17 +232,15 @@ object VerifiedSkolemization {
     val skolemDefinition = Abs.Block(actualContextVariables, mainSkolemizationFormula)
 
     val (parentSKVar, innerFormula) = mainSkolemizationFormula match {
-      case All(v, f) => (v,f)
-      case Ex(v, f)  => (v,f)
+      case All(v, f) => (v, f)
+      case Ex(v, f)  => (v, f)
     }
+    assert(parentSKVar == claimedBoundVariable, s"parentSKVar ($parentSKVar) does not match claimedBoundVariable ($claimedBoundVariable)")
     val inferredSkolemizationFormula = HOLPosition.replace(parentFormula, q_pos, innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)).asInstanceOf[FOLFormula]
     if inferredSkolemizationFormula != claimedSkolemizedFormula then {
       reportIncorrectSkolemization(FormulaMismatch(name, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, inferredSkolemizationFormula, parentFormula))
     }
 
-
-    val skolemFormulaPolarity = FindSkolemizableInstance.polarityAndContextAt(q_pos, parentFormula, pol)._1
-    //println(s"===== $parentFormula $skolemFormulaPolarity $q_pos")
     val skolemizationProof = CreateSkolemizationProof(parentFormula, inferredSkolemizationFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
     val cutWithClaimedFormula = CutRule(skolemizationProof, LogicalAxiom(claimedSkolemizedFormula)) // fixes alpha equivalence
     Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, cutWithClaimedFormula))
@@ -458,7 +403,7 @@ object CreateSkolemizationProof {
       (unskolemized, skolemized, branch) match {
         case (a @ Neg(f), sa @ Neg(fs), 1) =>
           val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, !polarity)
-          val (b, sb) = swapPos(fs, f) //NegLeftRule needs the auxiliary, not the primary formula
+          val (b, sb) = swapPos(fs, f) // NegLeftRule needs the auxiliary, not the primary formula
           val p1 = NegLeftRule(rp, sb)
           NegRightRule(p1, b)
         case (a @ And(f, g), sa @ And(fs, _), 1) =>
