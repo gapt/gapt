@@ -89,7 +89,7 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
     "correctly identify the polarity of a formula" in {
       val parentFormula = fof"¬ ¬ P(x,y)"
       FindSkolemizableInstance.polarityAndContextAt(HOLPosition(List(1)), parentFormula, Negative)._1 must_== Positive
-      FindSkolemizableInstance.polarityAndContextAt(HOLPosition(List(1,1)), parentFormula, Negative)._1 must_== Negative
+      FindSkolemizableInstance.polarityAndContextAt(HOLPosition(List(1, 1)), parentFormula, Negative)._1 must_== Negative
     }
   }
 
@@ -104,28 +104,25 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
 
-
     "Create a skolemization proof for a ∀x ¬∀y P(x,y) / ∀x ¬P(x,f(x))" in {
       val unskolemized = fof"∀x ¬ ∀y P(x,y)"
       val skolemized = fof"∀x ¬ P(x,f(x))"
       val skTerm = fot"f(x)"
       val y = fov"y"
-      val pos = HOLPosition(List(1,1))
+      val pos = HOLPosition(List(1, 1))
       val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, fof"P(x,y)", pos, Negative)
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
-
 
     "Create a skolemization proof for a ∀x ¬¬ ∃y P(x,y) / ∀x ¬¬P(x,f(x))" in {
       val unskolemized = fof"∀x ¬ ¬ ∃y P(x,y)"
       val skolemized = fof"∀x ¬ ¬ P(x,f(x))"
       val skTerm = fot"f(x)"
       val y = fov"y"
-      val pos = HOLPosition(List(1,1,1))
+      val pos = HOLPosition(List(1, 1, 1))
       val p = CreateSkolemizationProof(unskolemized, skolemized, y, skTerm, fof"P(x,y)", pos, Negative)
       p.endSequent must_== fos"$unskolemized :- $skolemized"
     }
-
 
     "Create a skolemization proof for a ∀x∃y P(x,y) / ∀z P(z,f(z))" in {
       skipped("not sure if that should work")
@@ -394,7 +391,6 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       }
 
       "succeeds on skolemization step whose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in {
-        //skipped("we ignore alpha equivalence right now") //TODO: fix
         val input = InputFile.fromString(
           """
             |fof(a, axiom, ?[Y]:![X]: p(Y, X)).

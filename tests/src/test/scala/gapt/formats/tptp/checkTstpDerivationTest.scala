@@ -1,35 +1,38 @@
 package gapt.formats.tptp.check
 
+import gapt.expr.formula.fol.FOLConst
 import gapt.formats.InputFile
+import gapt.formats.StringInputFile
+import gapt.formats.tptp.CannotHandleInput
+import gapt.formats.tptp.DistinctFormulasWithSameName
+import gapt.formats.tptp.FormulaMismatch
+import gapt.formats.tptp.IncorrectInference
+import gapt.formats.tptp.IncorrectSkolemization
+import gapt.formats.tptp.InferenceCycle
+import gapt.formats.tptp.NegatedConjectureStepWithNonConjectureParent
+import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
+import gapt.formats.tptp.NegatedConjectureWithoutParent
+import gapt.formats.tptp.NoStrongQuantifierFittingSkolemization
+import gapt.formats.tptp.NonExistentStep
+import gapt.formats.tptp.PlainInferenceWithConjectureParent
+import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
+import gapt.formats.tptp.SkolemizationStepWithoutBinding
+import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
+import gapt.formats.tptp.StepWithInvalidInferenceRule
+import gapt.formats.tptp.StepWithInvalidStatus
 import org.specs2.Specification
+import org.specs2.execute.Pending
+import org.specs2.execute.PendingException
+import org.specs2.execute.Result
 import org.specs2.mutable
+import org.specs2.specification.core.Execution
+import org.specs2.specification.core.Fragment
+import org.specs2.specification.core.Fragments
 import org.specs2.specification.core.SpecStructure
 import os.Path
-import org.specs2.execute.Result
-import org.specs2.specification.core.Fragments
-import org.specs2.specification.core.Fragment
-import org.specs2.specification.core.Execution
-import org.specs2.execute.Pending
-import scala.concurrent.duration._
-import gapt.formats.tptp.IncorrectInference
-import gapt.formats.tptp.NegatedConjectureStepWithNonConjectureParent
-import gapt.formats.tptp.NegatedConjectureWithoutParent
-import gapt.formats.tptp.PlainInferenceWithConjectureParent
-import gapt.formats.tptp.DistinctFormulasWithSameName
-import gapt.formats.tptp.InferenceCycle
-import gapt.formats.tptp.StepWithInvalidStatus
-import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
-import gapt.formats.tptp.SkolemizationStepWithoutBinding
-import org.specs2.execute.PendingException
-import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
-import gapt.formats.tptp.IncorrectSkolemization
-import gapt.formats.tptp.CannotHandleInput
-import gapt.formats.StringInputFile
-import gapt.formats.tptp.StepWithInvalidInferenceRule
-import gapt.formats.tptp.{FormulaMismatch, NoStrongQuantifierFittingSkolemization}
-import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
-import gapt.expr.formula.fol.FOLConst
-import gapt.formats.tptp.NonExistentStep
+
+import scala.concurrent.duration.*
+import gapt.formats.tptp.InnerSkolemizationNotSupported
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
@@ -223,7 +226,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
 
         "fail on negated conjecture step with inference record parent" in todo // parents need not be labels, only accept if chain of thm
-        "handle input with multiple negated conjectures" in todo //TODO
+        "handle input with multiple negated conjectures" in todo // TODO
       }
 
       "plain inferences" in {
@@ -381,7 +384,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc_skolem, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a, nc_skolem])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch)) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch))                        => reason.stepName must_== "nc_skolem"
             case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: NoStrongQuantifierFittingSkolemization)) => reason.stepName must_== "nc_skolem"
           }
         }
@@ -470,7 +473,62 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "allow outer skolemization deeply nested inside the formula" in todo
+        "allow outer skolemization deeply nested inside the formula" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a, axiom, (![X]: ?[Y]: p(X, Y)) & (![X]: ?[Z]: q(X, Z)), file('Problems/problem.p', a)).
+              |fof(c, conjecture, ![X]:?[Y]: p(X, Y), file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ?[X]:![Y]: ~p(X,Y), inference(negated_conjecture, [status(cth)], [c])).
+              |fof(as, plain, (![X]: p(X, sK0(X))) & (![X]: ?[Z]: q(X, Z)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [as, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, (![X]: ?[Y]: p(X, Y)) & (![X]: ?[Z]: q(X, Z))).
+              |fof(c, conjecture, ![X]: ?[Y]: p(X, Y)).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedGood => ok
+          }
+        }
+
+        "allow outer skolemization deeply nested inside the formula even if bound variable is not uniqe" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a, axiom, (![X]: ?[Y]: p(X, Y)) & (![X]: ?[Y]: q(X, Y)), file('Problems/problem.p', a)).
+              |fof(c, conjecture, ![X]:?[Y]: p(X, Y), file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ?[X]:![Y]: ~p(X,Y), inference(negated_conjecture, [status(cth)], [c])).
+              |fof(as, plain, (![X]: ?[Y]: p(X, Y)) & (![X]: q(X, sK0(X))), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [as, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, (![X]: ?[Y]: p(X, Y)) & (![X]: ?[Z]: q(X, Z))).
+              |fof(c, conjecture, ![X]: ?[Y]: p(X, Y)).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedGood => ok
+          }
+        }
+
+        "give up on inner skolemization" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a, axiom, ![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W), file('Problems/problem.p', a)).
+              |fof(c, conjecture, ![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W), file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~(![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W)), inference(negated_conjecture, [status(cth)], [c])).
+              |fof(as, plain, ![X]: ?[Y]: ![Z]: p(X, Y, Z, sK0(X,Z)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(W, sK0(X, Z))], [a])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [as, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, ![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W)).
+              |fof(c, conjecture, ![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W)).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.Unknown(r: InnerSkolemizationNotSupported) => r.skolemizationStep.name must_== "as"
+          }
+        }
 
       }
 

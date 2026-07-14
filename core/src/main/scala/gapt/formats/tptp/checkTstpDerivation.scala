@@ -92,6 +92,7 @@ type UnknownReason =
     | UnexpectedInput
     | CannotHandleIncludeDirectives
     | FileNotFound
+    | InnerSkolemizationNotSupported
 
 enum SzsStatus {
   case VerifiedGood
