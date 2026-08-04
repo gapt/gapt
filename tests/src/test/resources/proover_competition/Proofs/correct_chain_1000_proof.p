@@ -1,5 +1,5 @@
-fof(a, axiom, p, file('Problems/correct_chain_1000.p', a)).
-fof(c, conjecture, p, file('Problems/correct_chain_1000.p', c)).
+fof(a, axiom, p, file('Problems/correctchain_1000.p', a)).
+fof(c, conjecture, p, file('Problems/correctchain_1000.p', c)).
 fof(nc, negated_conjecture, ~ p, inference(negated_conjecture, [status(cth)], [c])).
 fof(inf1000, plain, ~ p, inference(inf, [status(thm)], [nc])).
 fof(inf999, plain, ~ p, inference(inf, [status(thm)], [inf1000])).

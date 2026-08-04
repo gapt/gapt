@@ -1,0 +1,8 @@
+%------------------------------------------------------------------------------
+% File     : PRV032+1.p : ProoVer 2026
+%------------------------------------------------------------------------------
+% SZS output start ListOfFormulae
+fof(a1, axiom, p(a)).
+fof(a2, axiom, p(a) => q(a)).
+fof(c, conjecture, q(a)).
+% SZS output end ListOfFormulae

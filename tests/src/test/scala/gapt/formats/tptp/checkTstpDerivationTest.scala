@@ -1004,12 +1004,12 @@ class checkTstpDerivationExampleTest extends Specification {
     }
 
     def spec(check: InputFile => FileNameResolver ?=> SzsStatus): Fragments = {
-      val correctProofs = foreachPath(os.list(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
+      val correctProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.VerifiedGood)
       }
 
-      val incorrectProofs = foreachPath(os.list(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
+      val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.VerifiedBad])
       }
