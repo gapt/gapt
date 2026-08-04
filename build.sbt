@@ -61,7 +61,10 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-explain",
     "-Wunused:imports,privates,locals,implicits"
-  ),
+  ) ++ {
+    if (sys.props.get("build.ci").contains("true")) Seq("-Werror")
+    else Nil
+  },
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
   run / baseDirectory := file("."),
@@ -290,7 +293,6 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     mainClass := Some("gapt.cli.CLIMain"),
-    Compile / scalacOptions += "-Werror",
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
       "org.scala-lang" %% "scala3-repl" % scalaVersion.value
@@ -307,7 +309,6 @@ lazy val testing = project.in(file("testing")).dependsOn(core, examples)
   .settings(commonSettings: _*).settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
-    Compile / scalacOptions += "-Werror",
     publish / skip := true,
     packagedArtifacts := Map(),
     dependencyOverrides ++= dependencyConflictResolutions

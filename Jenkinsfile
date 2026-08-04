@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SBT_FLAGS = "-Dsbt.log.noformat=true"
+        SBT_FLAGS = "-Dsbt.log.noformat=true -Dbuild.ci=true"
     }
 
     stages {
