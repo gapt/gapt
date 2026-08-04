@@ -289,6 +289,13 @@ lazy val userManual = project.in(file("doc")).dependsOn(cli)
     dependencyOverrides ++= dependencyConflictResolutions
   )
 
+lazy val prooVerDistBaseDir = settingKey[File]("prooVerDistBaseDir")
+lazy val prooVerDistOutDir = settingKey[File]("prooVerDistOutDir")
+lazy val prooVerJarName = settingKey[String]("prooVerJarName")
+lazy val prooVerAppName = settingKey[String]("prooVerAppName")
+lazy val prooVerDistResources = settingKey[File]("prooVerDistResources")
+lazy val prooVerZip = settingKey[File]("prooVerZip")
+
 lazy val MainCLI = config("Main")
 lazy val ProoVerCLI = config("ProoVerCLI")
 lazy val cli = project.in(file("cli")).dependsOn(core, examples)
@@ -302,19 +309,26 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
     inConfig(ProoVerCLI)(baseAssemblySettings ++ Seq(
       assembly / mainClass := Some("gapt.cli.prooVerCLI"),
       assembly / assemblyOutputPath := target.value / "gapt-prooVer-cli.jar",
-      Test / test := (Test / test).dependsOn(prooVerDist).value,
-      prooVerDist := {
+      Test / test := (Test / test).dependsOn(prooVerDistNoTest).value,
+      prooVerDistBaseDir := file(".") / "target",
+      prooVerDistOutDir := prooVerDistBaseDir.value / "ProoVer",
+      prooVerZip := prooVerDistBaseDir.value / "gapt-ProoVer.zip",
+      prooVerJarName := "gapt.jar",
+      prooVerAppName := "gapt-check",
+      prooVerDistResources := file(".") / "cli" / "ProoVer",
+      prooVerDistNoTest := {
         val log = streams.value.log
 
         val jar = assembly.value
-        val baseDir = file(".") / "target"
-        val out = baseDir / "ProoVer"
-        val jarName = s"gapt.jar"
-        val appName = s"gapt-check"
-        val prooVerDistResources = file(".") / "cli" / "ProoVer"
+        val baseDir = prooVerDistBaseDir.value
+        val out = prooVerDistOutDir.value
+        val jarName = prooVerJarName.value
+        val appName = prooVerAppName.value
+        val distResources = prooVerDistResources.value
+        val zip = prooVerZip.value
 
         IO.delete(out)
-        IO.copyDirectory(prooVerDistResources, out)
+        IO.copyDirectory(distResources, out)
         IO.copyFile(jar, out / jarName)
         IO.write(
           out / appName,
@@ -327,12 +341,18 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
 
         log.info(s"Created ProoVer distribution folder: ${out.getAbsolutePath}")
 
-        val zip = baseDir / s"gapt-ProoVer.zip"
-
         IO.delete(zip)
         zipDist(out, zip)
 
         log.info(s"Created zip: ${zip.getAbsolutePath}")
+
+        zip
+      },
+      prooVerDist := {
+        val log = streams.value.log
+        val out = prooVerDistOutDir.value
+        val zip = prooVerZip.value
+        val appName = prooVerAppName.value
 
         IO.delete(out)
 
@@ -401,7 +421,8 @@ lazy val evalUserManual = TaskKey[Unit](
 )
 
 lazy val scripts = TaskKey[Unit]("scripts", "Creates scripts in target/")
-lazy val prooVerDist = TaskKey[File]("prooVerDist", "Creates the zip archive for the prooVer competition")
+lazy val prooVerDistNoTest = TaskKey[File]("prooVerDistNoTest", "Creates the zip archive for the prooVer competition without performing smoke tests")
+lazy val prooVerDist = TaskKey[File]("prooVerDist", "Creates the zip archive for the prooVer competition and performs smoke tests")
 
 def recursiveListFiles(f: File): Seq[File] =
   if (f.getName == "target") Seq()
