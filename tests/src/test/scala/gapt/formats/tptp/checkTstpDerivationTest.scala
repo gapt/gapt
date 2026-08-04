@@ -530,6 +530,23 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
+        "succeed on skolemization if skolem term depends on correct variables, but in different order" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a, axiom, ![X]: ![Y]: ?[Z]: p(X, Y, Z), file('Problems/problem.p', a)).
+              |fof(c, conjecture, ![X]: ![Y]: ?[Z]: p(X, Y, Z), file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~(![X]: ![Y]: ?[Z]: p(X, Y, Z)), inference(negated_conjecture, [status(cth)], [c])).
+              |fof(as, plain, ![X]: ![Y]: p(X, Y, sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [as, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, ![X]: ![Y]: ?[Z]: p(X, Y, Z)).
+              |fof(c, conjecture, ![X]: ![Y]: ?[Z]: p(X, Y, Z)).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must_== SzsStatus.VerifiedGood
+        }
+
       }
 
       "axiom file directive" in {

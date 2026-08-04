@@ -223,13 +223,13 @@ object VerifiedSkolemization {
       reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
     }
 
-    if claimedContextVariables != actualContextVariables then {
+    if claimedContextVariables.toSet != actualContextVariables.toSet then {
       reportIncorrectSkolemization(ContextVariableMismatch(name, claimedContextVariables, actualContextVariables, claimedBoundVariable, parentFormula))
     }
 
     val mainSkolemizationFormula = HOLPosition.toLambdaPosition(parentFormula)(q_pos).get(parentFormula).get.asInstanceOf[FOLFormula]
     // TODO: remove this ugly cast
-    val skolemDefinition = Abs.Block(actualContextVariables, mainSkolemizationFormula)
+    val skolemDefinition = Abs.Block(claimedContextVariables, mainSkolemizationFormula)
 
     val (parentSKVar, innerFormula) = mainSkolemizationFormula match {
       case All(v, f) => (v, f)
