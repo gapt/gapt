@@ -1,6 +1,7 @@
 <!---
 vim:spell spelllang=en:
 -->
+
 ## GAPT: General Architecture for Proof Theory
 
 [![Join the chat at https://gitter.im/gapt/gapt](https://badges.gitter.im/gapt/gapt.svg)](https://gitter.im/gapt/gapt?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -20,13 +21,16 @@ Contact: [mailing list](https://groups.google.com/forum/#!forum/gapt-group)
 ### Example
 
 One of the many features GAPT supports is an implementation of [Herbrand's
-theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how you can
+theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem). Here is how you can
 automatically generate a Herbrand disjunction in GAPT:
+
 ```scala
 Escargot.getExpansionProof(fof"P(c) ∨ P(d) → ∃x P(x)").map(_.deep)
 ```
+
 which returns the following Herbrand disjunction (the quantifier on the right
 has been expanded):
+
 ```
 Some( ⊢ P(c) ∨ P(d) → P(c) ∨ P(d))
 ```
@@ -41,16 +45,19 @@ into the [API documentation](http://logic.at/gapt/api/) for reference as well.
 
 There are [binary distributions](https://logic.at/gapt) available, you only
 need to have Java installed to run them:
+
 ```
 wget https://logic.at/gapt/downloads/gapt-2.19.0.tar.gz
 tar xf gapt-2.19.0.tar.gz
 cd gapt-2.19.0
 ./gapt.sh
 ```
+
 This will drop you into a scala REPL with GAPT pre-loaded.
 
 If you want to use GAPT in your project, all you have to do is add the following line to
 your SBT build file:
+
 ```scala
 libraryDependencies += "at.logic.gapt" %% "gapt" % "2.19.0"
 ```
@@ -64,9 +71,9 @@ for more details.
 
 ### System requirements
 
-* Java 8 (or later)
-* optional: external tools like [Vampire](https://vprover.github.io/), [SPASS](http://www.spass-prover.org/), [E](https://wwwlehre.dhbw-stuttgart.de/~sschulz/E/E.html) and others. See the [website](https://www.logic.at/gapt/) for a complete list.
-* for development: [sbt](http://www.scala-sbt.org/)
+- Java 8 (or later)
+- optional: external tools like [Vampire](https://vprover.github.io/), [SPASS](http://www.spass-prover.org/), [E](https://wwwlehre.dhbw-stuttgart.de/~sschulz/E/E.html) and others. See the [website](https://www.logic.at/gapt/) for a complete list.
+- for development: [sbt](http://www.scala-sbt.org/) and a JDK with version 21 or newer.
 
 ### License
 
