@@ -333,12 +333,12 @@ object TstpDerivation {
   ): Either[TstpDerivationImportError, TstpSkolemizationStep | TstpPlainInferenceStep] = boundary {
     val folFormula = parseFOLFormula(formula).getOrBreak
     val annotations = annotationsOption.getOrElse {
-      break(Left(UnexpectedInput(s"got plain inference without source: $name")))
+      break(Left(PlainInferenceWithoutSource(name)))
     }
     val inference = annotations.source match {
       case s: Source.Inference => s
       case s: Source.Internal  => break(Left(CannotHandleInput(name, "cannot handle internal sources")))
-      case _                   => break(Left(UnexpectedInput(s"got plain inference without inference record: $name")))
+      case _                   => break(Left(PlainInferenceWithoutSource(name)))
     }
 
     val optionalInfo = annotations.optionalInfo

@@ -32,6 +32,7 @@ import org.specs2.specification.core.SpecStructure
 import os.Path
 
 import scala.concurrent.duration.*
+import gapt.formats.tptp.PlainInferenceWithoutSource
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
@@ -323,6 +324,25 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc, negated_conjecture, ~(?[X]: p(X)), inference(negated_conjecture, [status(cth)], [c])).
             |fof(inf_p, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkDerivation(input) must_=== SzsStatus.VerifiedGood
+        }
+
+        "fail on plain inference step without source" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a1,axiom, p(a),file('Problems/PRV039+1.p',a1)).
+              |fof(c,conjecture, q(a), file('Problems/PRV039+1.p',c)).
+              |fof(neg,negated_conjecture, ~ q(a), inference(negated_conjecture,[status(cth)],[c])).
+              |fof(s, plain, q(a)).
+              |fof(bot,plain, $false, inference(consequence,[status(thm)],[neg,s])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p(a)).
+              |fof(c, conjecture, q(a)).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedBad(s: PlainInferenceWithoutSource) => s.stepName must_== "s"
+          }
         }
       }
 
