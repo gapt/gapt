@@ -32,7 +32,6 @@ import org.specs2.specification.core.SpecStructure
 import os.Path
 
 import scala.concurrent.duration.*
-import gapt.formats.tptp.InnerSkolemizationNotSupported
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
@@ -511,7 +510,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
-        "give up on inner skolemization" in {
+        "succeed on inner skolemization" in {
           given resolver: FileNameResolver = {
             case "/input" => Right("""
               |fof(a, axiom, ![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W), file('Problems/problem.p', a)).
@@ -525,9 +524,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
               |fof(c, conjecture, ![X]: ?[Y]: ![Z]: ?[W]: p(X, Y, Z, W)).
             """.stripMargin)
           }
-          checkDerivation0("/input") must beLike {
-            case SzsStatus.Unknown(r: InnerSkolemizationNotSupported) => r.skolemizationStep.name must_== "as"
-          }
+          checkDerivation0("/input") must_== SzsStatus.VerifiedGood
         }
 
         "succeed on skolemization if skolem term depends on correct variables, but in different order" in {
@@ -547,6 +544,36 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation0("/input") must_== SzsStatus.VerifiedGood
         }
 
+        "succeed on inner skolemization" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+            fof(a,axiom,
+                ! [X] :
+                ? [Y] : p(Y),
+                file('Problems/problem.p',a) ).
+            fof(c,conjecture,
+                ? [Y] : p(Y),
+                file('Problems/problem.p',c) ).
+            fof(neg,negated_conjecture,
+                ~ ? [Y] : p(Y),
+                inference(negated_conjecture,[status(cth)],[c]) ).
+            fof(sk,plain,
+                ! [X] : p(sK0),
+                inference(skolemize,[status(esa),new_symbols(skolem,[sK0]),skolemize(Y,sK0)],[a]) ).
+            fof(s,plain,
+                p(sK0),
+                inference(instantiate,[status(thm)],[sk]) ).
+            fof(bot,plain,
+                $false,
+                inference(consequence,[status(thm)],[neg,s]) ).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, ![X]: ?[Y]: p(Y)).
+              |fof(c, conjecture, ?[Y]: p(Y)).
+            """.stripMargin)
+          }
+          checkDerivation0("/input") must_== SzsStatus.VerifiedGood
+        }
       }
 
       "axiom file directive" in {

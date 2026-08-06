@@ -103,11 +103,12 @@ case class BoundVariableMismatch(
 case class ContextVariableMismatch(
     stepName: String,
     claimedContextVariables: Seq[FOLVar],
-    actualContextVariables: Seq[FOLVar],
+    actualOuterSkolemizationContextVariables: Seq[FOLVar],
+    actualInnerSkolemizationContextVariables: Seq[FOLVar],
     claimedBoundVariable: FOLVar,
     parentFormula: FOLFormula
 ) extends IncorrectSkolemizationReason {
-  def message: String = s"skolemization step $stepName claims to have context variables $claimedContextVariables, but the actual context variables for $claimedBoundVariable are $actualContextVariables in $parentFormula"
+  def message: String = s"skolemization step $stepName claims to have context variables $claimedContextVariables, but this neither matches the actual outer skolemization context variables ($actualOuterSkolemizationContextVariables) nor the inner skolemization context variables ($actualInnerSkolemizationContextVariables) for $claimedBoundVariable in $parentFormula"
 }
 
 case class FormulaMismatch(
