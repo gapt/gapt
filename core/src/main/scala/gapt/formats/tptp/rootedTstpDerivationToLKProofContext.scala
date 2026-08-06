@@ -195,40 +195,48 @@ object VerifiedSkolemization {
 
     val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
     val pol = Negative // TODO: we are assuming a negative context (i.e. if coming from an conjecture leaf, there was negated_conjecture before)
-    val possible_matches = FindSkolemizableInstance(parentFormula, claimedSkolemizedFormula, pol, claimedBoundVariable, newSkolemSymbol, claimedSkolemTerm)
-    if possible_matches.size == 0 then {
+    val possibleMatches = FindSkolemizableInstance(parentFormula, claimedSkolemizedFormula, pol, claimedBoundVariable, newSkolemSymbol, claimedSkolemTerm)
+    if possibleMatches.size == 0 then {
       reportIncorrectSkolemization(NoStrongQuantifierFittingSkolemization(name, parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm))
     }
-    if possible_matches.size > 1 then {
+    if possibleMatches.size > 1 then {
       reportIncorrectSkolemization(MultipleStrongQuantifiersFittingSkolemization(name, parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm))
     }
-    val (q_pos, sk_context, parent_context) = possible_matches(0)
+    val (quantifierPosition, skolemContext, parentContext) = possibleMatches(0)
+    // TODO: get rid of cast
+    val mainSkolemizationFormula = HOLPosition.toLambdaPosition(parentFormula)(quantifierPosition).get(parentFormula).get.asInstanceOf[FOLFormula]
 
-    val (allContextQuantifierTypes, allContextVariables) = parent_context unzip
-    val actualContextVariables = parent_context.collect { case (Weak, x) => x.asInstanceOf[FOLVar] }
-
-    if allContextQuantifierTypes.count(_ == Strong) > 0 then {
-      break(Left(InnerSkolemizationNotSupported(skolemizationStep)))
-    }
+    val (allContextQuantifierTypes, allContextVariables) = parentContext unzip
+    val outerSkolemizationContextVariables = parentContext.collect { case (Weak, x) => x.asInstanceOf[FOLVar] }
+    val innerSkolemizationContextVariables = freeVariables(mainSkolemizationFormula).toSeq
 
     if allContextVariables.distinct != allContextVariables then {
       reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
     }
 
-    if actualContextVariables.distinct != actualContextVariables then {
+    if outerSkolemizationContextVariables.distinct != outerSkolemizationContextVariables then {
       reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
     }
 
-    if actualContextVariables contains claimedBoundVariable then {
+    if outerSkolemizationContextVariables.contains(claimedBoundVariable) then {
       reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
     }
 
-    if claimedContextVariables.toSet != actualContextVariables.toSet then {
-      reportIncorrectSkolemization(ContextVariableMismatch(name, claimedContextVariables, actualContextVariables, claimedBoundVariable, parentFormula))
+    if claimedContextVariables.toSet != outerSkolemizationContextVariables.toSet
+      && claimedContextVariables.toSet != innerSkolemizationContextVariables.toSet
+    then {
+      reportIncorrectSkolemization(
+        ContextVariableMismatch(
+          name,
+          claimedContextVariables,
+          outerSkolemizationContextVariables,
+          innerSkolemizationContextVariables,
+          claimedBoundVariable,
+          parentFormula
+        )
+      )
     }
 
-    val mainSkolemizationFormula = HOLPosition.toLambdaPosition(parentFormula)(q_pos).get(parentFormula).get.asInstanceOf[FOLFormula]
-    // TODO: remove this ugly cast
     val skolemDefinition = Abs.Block(claimedContextVariables, mainSkolemizationFormula)
 
     val (parentSKVar, innerFormula) = mainSkolemizationFormula match {
@@ -236,12 +244,12 @@ object VerifiedSkolemization {
       case Ex(v, f)  => (v, f)
     }
     assert(parentSKVar == claimedBoundVariable, s"parentSKVar ($parentSKVar) does not match claimedBoundVariable ($claimedBoundVariable)")
-    val inferredSkolemizationFormula = HOLPosition.replace(parentFormula, q_pos, innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)).asInstanceOf[FOLFormula]
+    val inferredSkolemizationFormula = HOLPosition.replace(parentFormula, quantifierPosition, innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)).asInstanceOf[FOLFormula]
     if inferredSkolemizationFormula != claimedSkolemizedFormula then {
       reportIncorrectSkolemization(FormulaMismatch(name, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, inferredSkolemizationFormula, parentFormula))
     }
 
-    val skolemizationProof = CreateSkolemizationProof(parentFormula, inferredSkolemizationFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, q_pos, pol)
+    val skolemizationProof = CreateSkolemizationProof(parentFormula, inferredSkolemizationFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, quantifierPosition, pol)
     val cutWithClaimedFormula = CutRule(skolemizationProof, LogicalAxiom(claimedSkolemizedFormula)) // fixes alpha equivalence
     Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, cutWithClaimedFormula))
   }
