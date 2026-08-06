@@ -1007,6 +1007,24 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
+      "fail on hypothesis without file directive" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a, hypothesis, p).
+            |fof(c, conjecture, p, file('Problems/problem.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, p).
+            |fof(c, conjecture, p).
+          """.stripMargin)
+        }
+        checkDerivation0("/input") must beLike {
+          case SzsStatus.VerifiedBad(reason: OtherFailureReason.SourceMissing) => reason.stepName must_== "a"
+        }
+      }
+
       "succeed if input has multiple $false proof steps whose induced refutations are all correct" in todo
       "give up if input has more than one $false proof step that are roots" in todo
       "fail if input has multiple $false proof steps and one of the induced refutations is incorrect" in todo

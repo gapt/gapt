@@ -260,7 +260,7 @@ object TstpDerivation {
         break(Left(UnexpectedInput(s"unsupported input language $language. used in input $annotatedFormula")))
     }
     role match {
-      case "axiom" =>
+      case "axiom" | "hypothesis" =>
         parseAxiomStep(name, formula, annotations)
       case "conjecture" =>
         parseConjectureStep(name, formula, annotations)
