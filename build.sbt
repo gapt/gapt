@@ -351,7 +351,7 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
       prooVerDist := {
         val log = streams.value.log
         val out = prooVerDistOutDir.value
-        val zip = prooVerZip.value
+        val zip = prooVerDistNoTest.value
         val appName = prooVerAppName.value
 
         IO.delete(out)
