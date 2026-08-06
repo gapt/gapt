@@ -54,6 +54,11 @@ case class PlainInferenceWithConjectureParent(
 ) extends TstpDerivationImportError {
   def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
 }
+case class PlainInferenceWithoutSource(
+    stepName: String
+) extends TstpDerivationImportError {
+  def message: String = s"plain inference step with name $stepName has no source"
+}
 case class IncorrectInference(
     stepName: String
 ) extends TstpDerivationImportError {

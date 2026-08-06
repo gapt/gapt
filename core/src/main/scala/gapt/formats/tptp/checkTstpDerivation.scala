@@ -79,6 +79,7 @@ type VerifiedBadReason =
     | NegatedConjectureStepWithNonConjectureParent
     | NegatedConjectureWithoutParent
     | PlainInferenceWithConjectureParent
+    | PlainInferenceWithoutSource
     | NegatedConjectureWithMultipleDistinctParents
     | DistinctFormulasWithSameName
     | NoRefutationFound
