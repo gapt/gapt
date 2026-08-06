@@ -11,7 +11,7 @@ fof(c,conjecture,
     ? [Z] : p(Z),
     file('Problems/PRV091+1.p',c) ).
 
-fof(sk, plain, 
+fof(sk, plain,
     p(SK0),
     inference(skolemize,[status(esa),new_symbols(skolem,[SK0]),skolemize(Y,SK0)],[a1])).
 

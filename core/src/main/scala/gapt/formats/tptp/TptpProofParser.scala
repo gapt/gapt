@@ -368,6 +368,8 @@ object TstpDerivation {
     }
     val newSkolemSymbols = inference.usefulInfo.collect {
       case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term: FOLConst)) => term
+      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term: FOLVar)) =>
+        break(Left(NonConstantSkolemTerm(name, term)))
       case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) =>
         break(Left(CannotHandleInput(name, s"step $name: cannot handle new_symbols(skolem, term) if the term is complex. got term $term")))
       case TptpTerm("new_symbols", TptpTerm("skolem"), terms @ GeneralList(_, _*)) =>

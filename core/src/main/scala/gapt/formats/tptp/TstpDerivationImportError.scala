@@ -69,7 +69,12 @@ case class IncorrectSkolemization(
 ) extends TstpDerivationImportError {
   def message: String = reason.message
 }
-
+case class NonConstantSkolemTerm(
+    stepName: String,
+    term: FOLVar
+) extends TstpDerivationImportError {
+  def message: String = s"step $stepName: skolem term $term is not a constant, but a variable"
+}
 case class InnerSkolemizationNotSupported(
     skolemizationStep: TstpSkolemizationStep
 ) extends TstpDerivationImportError {
