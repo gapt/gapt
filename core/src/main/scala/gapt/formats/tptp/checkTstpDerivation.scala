@@ -84,6 +84,7 @@ type VerifiedBadReason =
     | DistinctFormulasWithSameName
     | NoRefutationFound
     | NonExistentStep
+    | NonConstantSkolemTerm
 
 type UnknownReason =
   Throwable
