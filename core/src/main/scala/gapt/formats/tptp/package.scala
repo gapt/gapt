@@ -91,9 +91,9 @@ package object tptp {
   object TptpStatus {
     def detect(p: ResolutionProof) = p match {
       case Factor(_, _, _) | Subst(_, _) | Resolution(_, _, _, _) | Paramod(_, _, _, _, _, _) => THM
-      case _: PropositionalResolutionRule | _: WeakQuantResolutionRule => THM
-      case _: StrongQuantifierRule => ESA
-      case _: InitialClause => UnknownStatus
+      case _: PropositionalResolutionRule | _: WeakQuantResolutionRule                        => THM
+      case _: StrongQuantifierRule                                                            => ESA
+      case _: InitialClause                                                                   => UnknownStatus
     }
   }
 
@@ -103,8 +103,8 @@ package object tptp {
     def apply(sym: String, args: Expr*)(implicit dummyImplicit: DummyImplicit): Expr =
       TptpTerm(sym, args)
     def unapplySeq(expr: Expr): Option[(String, Seq[Expr])] = expr match {
-      case Apps(Const(sym, _, _), args) => Some((sym, args))
-      case _                            => None
+      case Apps(VarOrConst(sym, _, _), args) => Some((sym, args))
+      case _                                 => None
     }
   }
   def TptpAtom(sym: String, args: Seq[Expr]): Atom =
