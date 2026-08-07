@@ -11,6 +11,7 @@ import boundary.break
 import gapt.expr.formula.Formula
 import gapt.utils.TimeOutException
 import java.nio.file.Paths
+import gapt.utils.Logger
 
 enum OtherFailureReason {
   case SourceMissing(stepName: String)
@@ -144,7 +145,10 @@ extension [R <: FileNameResolver](r: R) {
     else r((root / os.RelPath(fileName)).toString)
 }
 
+val logger = Logger("time.checkTstpDerivation")
+
 def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using resolver: FileNameResolver): SzsStatus = {
+  logger.info(s"checking TSTP derivation ${file.fileName}")
   val input = resolver(file.fileName) match {
     case Left(e)      => return SzsStatus.Unknown(e)
     case Right(input) => input
@@ -153,15 +157,21 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
   val result = {
     try withTimeout(timeout) {
         boundary {
-          val derivation = TstpDerivation.fromInputFile(inputFile).getOrBreak
+          val derivation = logger.time("TstpDerivation.fromInputFile") {
+            TstpDerivation.fromInputFile(inputFile).getOrBreak
+          }
           val _ = derivation.nonConjectureRefutationLabels.headOption.getOrElse {
             break(Left(NoRefutationFound()))
           }
-          derivation.stepsIterator.foreach {
-            case step: (TstpAxiomStep | TstpConjectureStep) =>
-              val fileDirectiveResolver = resolver.relativeTo(os.Path(file.fileName) / os.up)
-              checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver).getOrBreak
-            case _ =>
+          logger.time("check file directives") {
+            val memoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
+            derivation.stepsIterator.foreach {
+              case step: (TstpAxiomStep | TstpConjectureStep) => {
+                val fileDirectiveResolver = resolver.relativeTo(os.Path(file.fileName) / os.up)
+                checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver, memoTable).getOrBreak
+              }
+              case _ =>
+            }
           }
 
           val usedNegatedConjectures = derivation.stepsIterator.collect { case s: TstpNegatedConjectureStep => s }
@@ -179,7 +189,9 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
 
-          tstpDerivationToProofContext(derivation)
+          logger.time("tstpDerivationToProofContext") {
+            tstpDerivationToProofContext(derivation)
+          }
         }
       }
     catch e => Left(e)
@@ -201,7 +213,7 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
 
 private def checkStepHasCorrectFileDirective(
     s: TstpAxiomStep | TstpConjectureStep
-)(using resolver: FileNameResolver): Either[VerifiedBadReason, Unit] = boundary {
+)(using resolver: FileNameResolver, parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile]): Either[VerifiedBadReason, Unit] = boundary {
   val annotations = s.annotationsOption.getOrElse {
     break(Left(SourceMissing(s.name)))
   }
@@ -213,16 +225,19 @@ private def checkStepHasCorrectFileDirective(
       break(Left(FileDirectiveMissing(s.name)))
   }
 
-  val tptpFileContent = resolver(fileName).getOrElse {
-    break(Left(FileDirectiveFileNotFound(s.name, fileName)))
-  }
-  val tptpFile = {
-    try TptpImporter.loadWithoutIncludes(InputFile.fromString(tptpFileContent))
-    catch {
-      case _: IllegalArgumentException =>
-        break(Left(FileDirectiveInvalidSyntax(s.name, fileName)))
+  val tptpFile = parseTptpMemoTable.getOrElseUpdate(
+    fileName, {
+      val tptpFileContent = resolver(fileName).getOrElse {
+        break(Left(FileDirectiveFileNotFound(s.name, fileName)))
+      }
+      try TptpImporter.loadWithoutIncludes(InputFile.fromString(tptpFileContent))
+      catch {
+        case _: IllegalArgumentException =>
+          break(Left(FileDirectiveInvalidSyntax(s.name, fileName)))
+      }
     }
-  }
+  )
+
   val fileDirectiveFormulas = tptpFile.inputs.collect {
     case a: AnnotatedFormula if a.name == label => a
   }
