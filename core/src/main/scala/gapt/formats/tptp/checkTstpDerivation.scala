@@ -72,6 +72,8 @@ type VerifiedBadReason =
     | SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm
     | SkolemizationStepWithoutBinding
     | SkolemizationStepWithoutNewSymbols
+    | SkolemizationStepWithoutParent
+    | SkolemizationStepWithMultipleParents
     | InferenceCycle
     | OtherFailureReason
     | StepWithInvalidStatus
@@ -94,7 +96,6 @@ type UnknownReason =
     | UnexpectedInput
     | CannotHandleIncludeDirectives
     | FileNotFound
-    | InnerSkolemizationNotSupported
 
 enum SzsStatus {
   case VerifiedGood

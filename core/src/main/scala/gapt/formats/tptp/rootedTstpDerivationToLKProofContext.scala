@@ -47,7 +47,7 @@ case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends 
 def tstpDerivationToProofContext(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization | InnerSkolemizationNotSupported, Context] = boundary { outer ?=>
+): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
@@ -119,7 +119,7 @@ def tstpDerivationToProofContext(
 
 private def constructTstpDerivationContext(
     derivation: TstpDerivation
-): Either[IncorrectSkolemization | InnerSkolemizationNotSupported, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
+): Either[IncorrectSkolemization, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
     case step: TstpSkolemizationStep => {
       val parentFormula = derivation.get(step.parent).get.formula
@@ -171,7 +171,7 @@ object VerifiedSkolemization {
   def fromTstpSkolemizationStepAndParentFormula(
       skolemizationStep: TstpSkolemizationStep,
       parentFormula: FOLFormula
-  ): Either[IncorrectSkolemization | InnerSkolemizationNotSupported, VerifiedSkolemization] =
+  ): Either[IncorrectSkolemization, VerifiedSkolemization] =
     deepSkolemizationCheck(skolemizationStep, parentFormula)
 
   private def deepSkolemizationCheck(

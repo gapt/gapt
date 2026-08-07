@@ -362,9 +362,9 @@ object TstpDerivation {
       optionalInfo: Seq[GeneralTerm]
   ): Either[TstpDerivationImportError, TstpSkolemizationStep] = boundary {
     val parent = inference.parentLabels match {
-      case Seq()         => break(Left(CannotHandleInput(name, s"step $name: cannot handle skolemization step without parents")))
-      case Seq(_, _, _*) => break(Left(CannotHandleInput(name, s"step $name: cannot handle skolemization step with multiple parent labels")))
-      case Seq(label)    => label
+      case Seq()                   => break(Left(SkolemizationStepWithoutParent(name)))
+      case parents @ Seq(_, _, _*) => break(Left(SkolemizationStepWithMultipleParents(name, parents)))
+      case Seq(label)              => label
     }
     val newSkolemSymbols = inference.usefulInfo.collect {
       case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term: FOLConst)) => term
