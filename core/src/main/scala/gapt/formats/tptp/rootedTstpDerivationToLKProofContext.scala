@@ -29,6 +29,7 @@ import boundary.break
 import scala.util.boundary.Label
 import gapt.formats.tptp.FindSkolemizableInstance.QuantifierType.{Strong, Weak}
 import gapt.logic.Polarity.{Negative, Positive}
+import gapt.utils.Logger
 
 case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends Update {
   def link = ProofLink(lhs, proof.endSequent)
@@ -39,6 +40,8 @@ case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends 
   override def toString: String =
     s"VariableCapturingProofDeclaration($lhs, ${proof.endSequent})"
 }
+
+val logger = Logger("time.tstpDerivationToProofContext")
 
 /**
 * Attempts to replay the inferences in the given RootedTstpDerivation into a Context and a ProofLink
@@ -109,7 +112,9 @@ def tstpDerivationToProofContext(
         val parentFormulas = s.parents.map(p => derivation.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
-        context += proofDeclaration(s.name, proof, s.parents)
+        logger.time(s"add plain inference proof declaration for step ${s.name}") {
+          context += proofDeclaration(s.name, proof, s.parents)
+        }
       }
     }
   }

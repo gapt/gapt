@@ -7,6 +7,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.TimeoutException
+import gapt.utils.LogHandler.VerbosityLevel
+import gapt.utils.LogHandler
 
 val usage = """
 |./gapt-check <PROOF>
@@ -14,8 +16,18 @@ val usage = """
 |Checks the correctness of a given proof.
 |PROOF is a path to a TSTP proof file""".stripMargin.strip
 
+class ProoVerLogHandler extends LogHandler {
+  override def timeBegin(domain: String, verbosity: VerbosityLevel, key: String): Unit = {
+    message(domain, verbosity, s"start $key")
+  }
+  override def message(domain: String, verbosity: VerbosityLevel, msg: => Any): Unit = {
+    if domain.startsWith("time.") then
+      Console.err.println(s"[$domain] $msg")
+  }
+}
+
 @main
-def prooVerCLI(args: String*): Unit = {
+def prooVerCLI(args: String*): Unit = LogHandler.use(ProoVerLogHandler()) {
   try {
     val future = Future {
       val input = args match {
@@ -38,7 +50,7 @@ def prooVerCLI(args: String*): Unit = {
 
       checkTstpDerivation(OnDiskInputFile(path))
     }
-    val szsStatus = Await.result(future, 28.seconds)
+    val szsStatus = Await.result(future, Duration.Inf)
     Console.out.println(szsStatus.statusLine)
   } catch {
     case e: TimeoutException => Console.out.println(SzsStatus.Timeout.statusLine)
