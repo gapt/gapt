@@ -49,13 +49,20 @@ val logger = Logger("time.tstpDerivationToProofContext")
 */
 def tstpDerivationToProofContext(
     derivation: TstpDerivation,
-    prover: ResolutionProver = Escargot
+    prover: ResolutionProver = Escargot,
+    buildContext: Boolean = true
 ): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
+  val lock = new Object()
+  def addToContext(update: => Update) = lock.synchronized {
+    if buildContext then context += update
+  }
+
   def replayProof(inferenceName: String, sequentToProve: Sequent[FOLFormula]): LKProof = {
-    prover.getLKProof(sequentToProve).getOrElse {
+    val replayContext = if buildContext then context else context.newMutable
+    prover.getLKProof(sequentToProve)(using replayContext).getOrElse {
       break(Left(IncorrectInference(inferenceName)))
     }
   }
@@ -68,11 +75,11 @@ def tstpDerivationToProofContext(
     VariableCapturingProofDeclaration(FOLConst(name), cutProof)
   }
 
-  derivation.stepsTopologicallyOrdered.foreach { s =>
+  def handleStep(s: TstpDerivationStep) = {
     s match {
       case _: TstpConjectureStep =>
       case s: TstpAxiomStep => {
-        context += proofDeclaration(s.name, LogicalAxiom(s.formula), Seq.empty)
+        addToContext(proofDeclaration(s.name, LogicalAxiom(s.formula), Seq.empty))
       }
 
       case s: TstpNegatedConjectureStep => {
@@ -100,23 +107,28 @@ def tstpDerivationToProofContext(
         val weakenedProof = WeakeningLeftRule(negatedConjectureToFormulaProof, iffProof.conclusion.succedent.head)
         val cutProof = CutRule(iffProof, weakenedProof)
 
-        context += proofDeclaration(s.name, cutProof, Seq.empty)
+        addToContext(proofDeclaration(s.name, cutProof, Seq.empty))
       }
 
       case s: TstpSkolemizationStep => {
         val skolemizationStep = verifiedSkolemizationsByStepName(s.name)
-        context += proofDeclaration(s.name, skolemizationStep.proof, Seq(s.parent))
+        addToContext(proofDeclaration(s.name, skolemizationStep.proof, Seq(s.parent)))
       }
 
       case s: TstpPlainInferenceStep => {
         val parentFormulas = s.parents.map(p => derivation.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
-        logger.time(s"add plain inference proof declaration for step ${s.name}") {
-          context += proofDeclaration(s.name, proof, s.parents)
-        }
+        addToContext(proofDeclaration(s.name, proof, s.parents))
       }
     }
+  }
+
+  if buildContext then {
+    derivation.stepsTopologicallyOrdered.foreach(handleStep)
+  } else {
+    import scala.collection.parallel.CollectionConverters._
+    derivation.stepsIterator.toSeq.par.foreach(handleStep)
   }
 
   Right(context.toImmutable)
