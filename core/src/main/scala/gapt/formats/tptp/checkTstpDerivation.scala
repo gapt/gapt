@@ -190,7 +190,7 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
           }
 
           logger.time("tstpDerivationToProofContext") {
-            tstpDerivationToProofContext(derivation)
+            tstpDerivationToProofContext(derivation, buildContext = false)
           }
         }
       }
