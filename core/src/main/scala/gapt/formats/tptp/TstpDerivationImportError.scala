@@ -75,11 +75,16 @@ case class NonConstantSkolemTerm(
 ) extends TstpDerivationImportError {
   def message: String = s"step $stepName: skolem term $term is not a constant, but a variable"
 }
-case class InnerSkolemizationNotSupported(
-    skolemizationStep: TstpSkolemizationStep
+case class SkolemizationStepWithoutParent(
+    stepName: String
 ) extends TstpDerivationImportError {
-  def message: String =
-    s"step ${skolemizationStep.name} performas an inner skolemization which we don't support"
+  def message: String = s"skolemization inference with name $stepName has no parent"
+}
+case class SkolemizationStepWithMultipleParents(
+    stepName: String,
+    parents: Seq[String]
+) extends TstpDerivationImportError {
+  def message: String = s"skolemization inference with name $stepName has multiple parents ${parents.mkString(", ")}"
 }
 
 case class NonExistentStep(

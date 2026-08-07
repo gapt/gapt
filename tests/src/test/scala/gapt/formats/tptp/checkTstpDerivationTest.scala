@@ -33,6 +33,8 @@ import os.Path
 
 import scala.concurrent.duration.*
 import gapt.formats.tptp.PlainInferenceWithoutSource
+import gapt.formats.tptp.SkolemizationStepWithMultipleParents
+import gapt.formats.tptp.SkolemizationStepWithoutParent
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
@@ -594,6 +596,68 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
           checkDerivation0("/input") must_== SzsStatus.VerifiedGood
         }
+
+        "fail on skolemization step without parents" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              fof(a,axiom,
+                  ? [Y] : p(Y),
+                  file('Problems/problem.p',a) ).
+              fof(c,conjecture,
+                  $true,
+                  file('Problems/problem.p',c) ).
+              fof(neg,negated_conjecture,
+                  $false,
+                  inference(negated_conjecture,[status(cth)],[c]) ).
+              fof(sk,plain,
+                  p(sK0),
+                  inference(skolemize,[status(esa),new_symbols(skolem,[sK0]),skolemize(Y,sK0)],[]) ).
+              fof(bot,plain,
+                  $false,
+                  inference(consequence,[status(thm)],[neg]) ).
+              """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, ?[Y]: p(Y)).
+              |fof(c, conjecture, $true).
+            """.stripMargin)
+          }
+
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedBad(r: SkolemizationStepWithoutParent) => r.stepName must_== "sk"
+          }
+        }
+
+        "fail on skolemization step with multiple parents" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              fof(a,axiom,
+                  ? [Y] : p(Y),
+                  file('Problems/problem.p',a) ).
+              fof(c,conjecture,
+                  $true,
+                  file('Problems/problem.p',c) ).
+              fof(neg,negated_conjecture,
+                  $false,
+                  inference(negated_conjecture,[status(cth)],[c]) ).
+              fof(sk,plain,
+                  p(sK0),
+                  inference(skolemize,[status(esa),new_symbols(skolem,[sK0]),skolemize(Y,sK0)],[a,neg]) ).
+              fof(bot,plain,
+                  $false,
+                  inference(consequence,[status(thm)],[neg]) ).
+              """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, ?[Y]: p(Y)).
+              |fof(c, conjecture, $true).
+            """.stripMargin)
+          }
+
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.VerifiedBad(r: SkolemizationStepWithMultipleParents) =>
+              (r.stepName must_== "sk").and(r.parents must_== Seq("a", "neg"))
+          }
+
+        }
       }
 
       "axiom file directive" in {
@@ -1045,6 +1109,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
+      "do X on skolemization step with the same parent twice" in todo("specify")
       "succeed if input has multiple $false proof steps whose induced refutations are all correct" in todo
       "give up if input has more than one $false proof step that are roots" in todo
       "fail if input has multiple $false proof steps and one of the induced refutations is incorrect" in todo
