@@ -338,13 +338,13 @@ class TptpProofParserUnitTest extends Specification {
         tstpDerivationToProofContext(derivation) must beLeft
       }
 
-      "fail on skolemization step in which the bound variable occurs in an inner existential quantifier" in {
+      "succeed on skolemization step in which the bound variable occurs in an inner existential quantifier" in {
         val input = InputFile.fromString("""
           |fof(a, axiom, ![X]: ?[Y, Z]: p(X, Y, Z)).
           |fof(s, plain, ![X]: ?[Y]: p(X, Y, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
         """.stripMargin)
         val derivation = TstpDerivation.fromInputFile(input).toOption.get
-        tstpDerivationToProofContext(derivation) must beLeft
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "succeed on skolemization step that has no existential quantifier (but a strong universal)" in {
@@ -407,7 +407,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
-        tstpDerivationToProofContext(derivation) must beLeft
+        tstpDerivationToProofContext(derivation) must beRight
       }
 
       "fail on skolemization step with non-distinct context variables" in {
@@ -433,9 +433,9 @@ class TptpProofParserUnitTest extends Specification {
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
         tstpDerivationToProofContext(derivation) must beLeft.like {
-          case IncorrectSkolemization(e: ContextVariableMismatch) => e.stepName must_== "s"
+          case IncorrectSkolemization(e: ContextVariableMismatch)                => e.stepName must_== "s"
           case IncorrectSkolemization(e: NoStrongQuantifierFittingSkolemization) => e.stepName must_== "s"
-          case IncorrectSkolemization(e: NonRectifiedFormula) => e.stepName must_== "s"
+          case IncorrectSkolemization(e: NonRectifiedFormula)                    => e.stepName must_== "s"
         }
       }
 
