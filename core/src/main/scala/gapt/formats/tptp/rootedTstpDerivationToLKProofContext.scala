@@ -55,8 +55,7 @@ def tstpDerivationToProofContext(
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
-  val lock = new Object()
-  def addToContext(update: => Update) = lock.synchronized {
+  def addToContext(update: => Update) = {
     context += update
   }
 
