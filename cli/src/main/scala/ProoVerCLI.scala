@@ -50,7 +50,7 @@ def prooVerCLI(args: String*): Unit = LogHandler.use(ProoVerLogHandler()) {
 
       checkTstpDerivation(OnDiskInputFile(path))
     }
-    val szsStatus = Await.result(future, Duration.Inf)
+    val szsStatus = Await.result(future, 28.seconds)
     Console.out.println(szsStatus.statusLine)
   } catch {
     case e: TimeoutException => Console.out.println(SzsStatus.Timeout.statusLine)
