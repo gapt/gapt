@@ -190,7 +190,10 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
           }
 
           logger.time("tstpDerivationToProofContext") {
-            tstpDerivationToProofContext(derivation, buildContext = false)
+            findIncorrectInference(derivation) match {
+              case None        => Right(())
+              case Some(error) => Left(error)
+            }
           }
         }
       }
