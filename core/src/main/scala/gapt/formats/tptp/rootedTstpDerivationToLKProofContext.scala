@@ -30,6 +30,7 @@ import scala.util.boundary.Label
 import gapt.formats.tptp.FindSkolemizableInstance.QuantifierType.{Strong, Weak}
 import gapt.logic.Polarity.{Negative, Positive}
 import gapt.utils.Logger
+import scala.concurrent.ExecutionContext
 
 case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends Update {
   def link = ProofLink(lhs, proof.endSequent)
@@ -49,23 +50,23 @@ val logger = Logger("time.tstpDerivationToProofContext")
 */
 def tstpDerivationToProofContext(
     derivation: TstpDerivation,
-    prover: ResolutionProver = Escargot,
-    buildContext: Boolean = true
+    prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
   val lock = new Object()
   def addToContext(update: => Update) = lock.synchronized {
-    if buildContext then context += update
+    context += update
   }
 
-  def replayProof(inferenceName: String, sequentToProve: Sequent[FOLFormula]): LKProof = {
-    val replayContext = if buildContext then context else context.newMutable
-    prover.getLKProof(sequentToProve)(using replayContext).getOrElse {
-      break(Left(IncorrectInference(inferenceName)))
+  def replayProof(inferenceName: String, sequentToProve: Sequent[FOLFormula]): LKProof =
+    logger.time(s"replaying proof step $inferenceName") {
+      val replayContext = context
+      prover.getLKProof(sequentToProve)(using replayContext).getOrElse {
+        break(Left(IncorrectInference(inferenceName)))
+      }
     }
-  }
 
   def proofDeclaration(name: String, proof: LKProof, parents: Seq[String]): VariableCapturingProofDeclaration = {
     val cutProof = parents.foldLeft(proof) { (proof, parent) =>
@@ -124,14 +125,102 @@ def tstpDerivationToProofContext(
     }
   }
 
-  if buildContext then {
-    derivation.stepsTopologicallyOrdered.foreach(handleStep)
-  } else {
-    import scala.collection.parallel.CollectionConverters._
-    derivation.stepsIterator.toSeq.par.foreach(handleStep)
-  }
+  derivation.stepsTopologicallyOrdered.foreach(handleStep)
 
   Right(context.toImmutable)
+}
+
+def findIncorrectInference(derivation: TstpDerivation, prover: ResolutionProver = Escargot): Option[IncorrectInference | IncorrectSkolemization] = {
+  val errors: Either[IncorrectInference | IncorrectSkolemization, Unit] = boundary {
+    val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
+    given context: MutableContext = ctx.newMutable
+
+    def isValid(inferenceName: String, sequentToProve: Sequent[FOLFormula]): Boolean = {
+      logger.time(s"replaying proof step $inferenceName") {
+        val replayContext = context.newMutable
+        prover.isValid(sequentToProve)(using replayContext)
+      }
+    }
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    import scala.util.{Success, Failure}
+    import scala.util.control.NonFatal
+    import scala.concurrent.{Future, Await, Promise}
+    import scala.concurrent.duration.Duration
+    import java.util.concurrent.atomic.AtomicInteger
+    def firstCompletedMatching[A](input: Iterable[Future[A]])(predicate: A => Boolean): Future[Option[A]] = {
+      val futures = input
+
+      if futures.isEmpty then
+        Future.successful(None)
+      else {
+        val result = Promise[Option[A]]()
+        val remaining = new AtomicInteger(futures.size)
+
+        def completedWithoutMatch(): Unit =
+          if remaining.decrementAndGet() == 0 then
+            result.trySuccess(None)
+
+        futures.foreach { future =>
+          future.onComplete {
+            case Success(value) =>
+              try {
+                if predicate(value) then
+                  result.trySuccess(Some(value))
+                else
+                  completedWithoutMatch()
+              } catch {
+                case NonFatal(error) =>
+                  result.tryFailure(error)
+              }
+
+            case Failure(e) =>
+              result.tryFailure(e)
+          }
+        }
+
+        result.future
+      }
+    }
+
+    val futures: Seq[Future[(TstpDerivationStep, Boolean)]] = derivation.stepsIterator.toSeq.flatMap {
+      case s: TstpPlainInferenceStep => {
+        val parentFormulas = s.parents.map(p => derivation.get(p).get.formula)
+        val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
+        Seq(Future {
+          (s, isValid(s.name, sequentToProve))
+        })
+      }
+      case s: TstpNegatedConjectureStep => {
+        val parentFormula = derivation.get(s.parent).get.formula
+        
+        Seq(
+          Future {
+            val negatedConjectureToFormulaProof =
+              isValid(s.name, Neg(parentFormula) +: Sequent() :+ s.formula)
+            (s, negatedConjectureToFormulaProof)
+          },
+          Future {
+            val formulaToNegatedConjectureProof =
+              isValid(s.name, s.formula +: Sequent() :+ Neg(parentFormula))
+            (s, formulaToNegatedConjectureProof)
+          }
+        )
+      }
+      case _ => Seq.empty
+    }
+    val incorrectStep = firstCompletedMatching(futures)((_, p) => !p)
+    val result = Await.result(incorrectStep, Duration.Inf)
+    result match {
+      case None            => Right(())
+      case Some((step, _)) => Left(IncorrectInference(step.name))
+    }
+  }
+
+  errors match {
+    case Left(error) => Some(error)
+    case Right(_)    => None
+  }
 }
 
 private def constructTstpDerivationContext(
