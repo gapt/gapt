@@ -174,18 +174,18 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
             }
           }
 
-          val usedNegatedConjectures = derivation.stepsIterator.collect { case s: TstpNegatedConjectureStep => s }
-          usedNegatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
+          val negatedConjectures = derivation.stepsIterator.collect { case s: TstpNegatedConjectureStep => s }
+          negatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
           }
 
-          val usedPlainInferences = derivation.stepsIterator.collect { case a: TstpPlainInferenceStep => a }
-          usedPlainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm"))).map { s =>
+          val plainInferences = derivation.stepsIterator.collect { case a: TstpPlainInferenceStep => a }
+          plainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
           }
 
-          val usedSkolemizationSteps = derivation.stepsIterator.collect { case s: TstpSkolemizationStep => s }
-          usedSkolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
+          val skolemizationSteps = derivation.stepsIterator.collect { case s: TstpSkolemizationStep => s }
+          skolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
             break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
           }
 
