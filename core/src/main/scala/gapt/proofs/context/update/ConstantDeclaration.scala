@@ -10,7 +10,7 @@ import gapt.proofs.context.facet.Constants
 case class ConstantDeclaration(const: Const) extends Update {
   override def apply(ctx: Context): State = {
     ctx.check(const.ty)
-    for (p <- const.params) require(p.isInstanceOf[TVar])
+    for (p <- const.params) require(p.isInstanceOf[TVar], s"Parameter $p of const ${const} is not a TVar.")
     require(typeVariables(const).toSet.subsetOf(const.params.toSet))
     ctx.state.update[Constants](_ + const)
   }
