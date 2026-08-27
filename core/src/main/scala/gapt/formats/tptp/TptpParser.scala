@@ -27,6 +27,7 @@ import scala.util.boundary
 import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
+import gapt.formats.tptp.check.{RootedTstpDerivation, TstpDerivation, tstpDerivationToProofContext, TstpDerivationImportError}
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._

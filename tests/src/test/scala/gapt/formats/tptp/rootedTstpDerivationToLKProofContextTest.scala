@@ -1,10 +1,9 @@
-package gapt.formats.tptp
+package gapt.formats.tptp.check
 
 import gapt.expr.formula.Bottom
 import gapt.expr.stringInterpolationForExpressions
 import gapt.formats.ClasspathInputFile
 import gapt.formats.InputFile
-import gapt.formats.tptp.RootedTstpDerivation
 import gapt.proofs.SequentMatchers
 import gapt.provers.escargot.Escargot
 import gapt.utils.EitherHelpers.RichEither
@@ -16,8 +15,8 @@ import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLConst
 import gapt.proofs.lk.rules.ProofLink
 import gapt.expr.formula.hol.HOLPosition
-import gapt.formats.tptp.FindSkolemizableInstance.QuantifierType.{Strong, Weak}
 import gapt.logic.Polarity.{Positive, Negative}
+import gapt.formats.tptp.check.FindSkolemizableInstance.QuantifierType.{Strong, Weak}
 
 class rootedTstpDerivationIntoLKProofContextTest extends Specification with SequentMatchers {
   "FindSkolemizableInstance" should {

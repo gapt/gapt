@@ -3,23 +3,6 @@ package gapt.formats.tptp.check
 import gapt.expr.formula.fol.FOLConst
 import gapt.formats.InputFile
 import gapt.formats.StringInputFile
-import gapt.formats.tptp.CannotHandleInput
-import gapt.formats.tptp.DistinctFormulasWithSameName
-import gapt.formats.tptp.FormulaMismatch
-import gapt.formats.tptp.IncorrectInference
-import gapt.formats.tptp.IncorrectSkolemization
-import gapt.formats.tptp.InferenceCycle
-import gapt.formats.tptp.NegatedConjectureStepWithNonConjectureParent
-import gapt.formats.tptp.NegatedConjectureWithMultipleDistinctParents
-import gapt.formats.tptp.NegatedConjectureWithoutParent
-import gapt.formats.tptp.NoStrongQuantifierFittingSkolemization
-import gapt.formats.tptp.NonExistentStep
-import gapt.formats.tptp.PlainInferenceWithConjectureParent
-import gapt.formats.tptp.SkolemSymbolIsAConstantExistingInTheInput
-import gapt.formats.tptp.SkolemizationStepWithoutBinding
-import gapt.formats.tptp.SkolemizationStepWithoutNewSymbols
-import gapt.formats.tptp.StepWithInvalidInferenceRule
-import gapt.formats.tptp.StepWithInvalidStatus
 import org.specs2.Specification
 import org.specs2.execute.Pending
 import org.specs2.execute.PendingException
@@ -32,9 +15,6 @@ import org.specs2.specification.core.SpecStructure
 import os.Path
 
 import scala.concurrent.duration.*
-import gapt.formats.tptp.PlainInferenceWithoutSource
-import gapt.formats.tptp.SkolemizationStepWithMultipleParents
-import gapt.formats.tptp.SkolemizationStepWithoutParent
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
 val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"

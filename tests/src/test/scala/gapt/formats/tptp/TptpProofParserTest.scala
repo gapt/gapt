@@ -12,6 +12,7 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.stringInterpolationForExpressions
+import gapt.formats.tptp.check._
 
 class TptpProofParserTest extends Specification {
 
