@@ -670,108 +670,6 @@ private def checkStepHasCorrectFileDirective(
   Right(())
 }
 
-extension (annotations: Option[Annotations]) {
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    val ann = annotations.getOrElse { break(false) }
-    val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
-    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse { break(false) }
-
-    statuses.contains(inferenceStatus)
-  }
-}
-
-extension (step: TstpDerivationStep) {
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    step.annotationsOption.hasUnambiguousStatusAmong(statuses)
-  }
-}
-
-extension (gt: GeneralTerm) {
-  def asStatus: Option[String] = gt match {
-    case TptpTerm("status", TptpTerm(value)) => Some(value)
-    case _                                   => None
-  }
-}
-
-extension (usefulInfo: Seq[GeneralTerm]) {
-  def statusSet: Set[String] =
-    usefulInfo.flatMap(_.asStatus).toSet
-}
-
-extension (inference: Source.Inference) {
-  def statuses: Set[String] =
-    inference.usefulInfo.statusSet
-}
-
-extension (step: TstpPlainInferenceStep) {
-  def statuses: Set[String] = step.source.statuses
-}
-
-extension (step: TstpNegatedConjectureStep) {
-  def statuses: Set[String] = step.source.statuses
-}
-
-extension (step: TstpSkolemizationStep) {
-  def statuses: Set[String] = step.source.statuses
-}
-
-extension (annotatedFormula: AnnotatedFormula) {
-  def parentLabels: Seq[String] = boundary {
-    val annotations = annotatedFormula.annotations.getOrElse { break(Seq.empty) }
-    annotations.source.parentLabels
-  }
-}
-
-extension (source: Source) {
-  def asInferenceOption: Option[Source.Inference] = source match {
-    case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
-    case _                                               => None
-  }
-
-  def parentLabels: Seq[String] = source match {
-    case Source.Name(name)                                => Seq(name)
-    case Source.Inference(_, _, parents)                  => parents.flatMap(_.source.parentLabels)
-    case Source.Internal(_, _, parents)                   => parents.flatMap(_.source.parentLabels)
-    case Source.File(_, _)                                => Seq.empty // for now we treat file sources as axioms that don't have parents
-    case Source.Theory(_, _)                              => Seq.empty
-    case Source.Creator(_, _, parents)                    => parents.flatMap(_.source.parentLabels)
-    case Source.Unknown                                   => Seq.empty
-    case Source.List(sources)                             => sources.flatMap(_.parentLabels)
-    case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
-    case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
-    case Source.General(term)                             => throw IllegalArgumentException(s"parent must be a simple term. got: $term")
-  }
-}
-
-extension (step: TstpDerivationStep) {
-  def annotationsOption: Option[Annotations] = step match {
-    case s: TstpConjectureStep =>
-      s.annotationsOption
-    case s: TstpAxiomStep =>
-      s.annotationsOption
-    case s: TstpPlainInferenceStep =>
-      Some(s.annotations)
-    case s: TstpNegatedConjectureStep =>
-      Some(s.annotations)
-    case s: TstpSkolemizationStep =>
-      Some(s.annotations)
-  }
-}
-
-extension [T](a: IterableOnce[T]) {
-  def single: T = a.iterator.take(2).toSeq match {
-    case Seq()  => throw new NoSuchElementException
-    case Seq(x) => x
-    case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
-  }
-
-  def singleOption: Option[T] = a.iterator.take(2).toSeq match {
-    case Seq()  => None
-    case Seq(x) => Some(x)
-    case _      => None
-  }
-}
-
 case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends Update {
   def link = ProofLink(lhs, proof.endSequent)
 
@@ -881,11 +779,8 @@ def checkIncorrectInferences(
     }
   }
 
-  def firstCompletedMatching[A](input: Iterable[Future[A]])(predicate: A => Boolean): Future[Option[A]] = {
-    val futures = input
-
-    if futures.isEmpty then
-      Future.successful(None)
+  def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A => Boolean): Future[Option[A]] = {
+    if futures.isEmpty then Future.successful(None)
     else {
       val result = Promise[Option[A]]()
       val remaining = new AtomicInteger(futures.size)
@@ -898,15 +793,11 @@ def checkIncorrectInferences(
         future.onComplete {
           case Success(value) =>
             try {
-              if predicate(value) then
-                result.trySuccess(Some(value))
-              else
-                completedWithoutMatch()
+              if predicate(value) then result.trySuccess(Some(value))
+              else completedWithoutMatch()
             } catch {
-              case NonFatal(error) =>
-                result.tryFailure(error)
+              case NonFatal(error) => result.tryFailure(error)
             }
-
           case Failure(e) =>
             result.tryFailure(e)
         }
@@ -1298,6 +1189,108 @@ object CreateSkolemizationProof {
           throw IllegalArgumentException(s"Unhandled case ($unskolemized, $skolemized, $pathToSk, $polarity)")
       }
     }
+  }
+}
+
+extension (annotations: Option[Annotations]) {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
+    val ann = annotations.getOrElse { break(false) }
+    val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
+    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse { break(false) }
+
+    statuses.contains(inferenceStatus)
+  }
+}
+
+extension (step: TstpDerivationStep) {
+  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
+    step.annotationsOption.hasUnambiguousStatusAmong(statuses)
+  }
+}
+
+extension (gt: GeneralTerm) {
+  def asStatus: Option[String] = gt match {
+    case TptpTerm("status", TptpTerm(value)) => Some(value)
+    case _                                   => None
+  }
+}
+
+extension (usefulInfo: Seq[GeneralTerm]) {
+  def statusSet: Set[String] =
+    usefulInfo.flatMap(_.asStatus).toSet
+}
+
+extension (inference: Source.Inference) {
+  def statuses: Set[String] =
+    inference.usefulInfo.statusSet
+}
+
+extension (step: TstpPlainInferenceStep) {
+  def statuses: Set[String] = step.source.statuses
+}
+
+extension (step: TstpNegatedConjectureStep) {
+  def statuses: Set[String] = step.source.statuses
+}
+
+extension (step: TstpSkolemizationStep) {
+  def statuses: Set[String] = step.source.statuses
+}
+
+extension (annotatedFormula: AnnotatedFormula) {
+  def parentLabels: Seq[String] = boundary {
+    val annotations = annotatedFormula.annotations.getOrElse { break(Seq.empty) }
+    annotations.source.parentLabels
+  }
+}
+
+extension (source: Source) {
+  def asInferenceOption: Option[Source.Inference] = source match {
+    case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
+    case _                                               => None
+  }
+
+  def parentLabels: Seq[String] = source match {
+    case Source.Name(name)                                => Seq(name)
+    case Source.Inference(_, _, parents)                  => parents.flatMap(_.source.parentLabels)
+    case Source.Internal(_, _, parents)                   => parents.flatMap(_.source.parentLabels)
+    case Source.File(_, _)                                => Seq.empty // for now we treat file sources as axioms that don't have parents
+    case Source.Theory(_, _)                              => Seq.empty
+    case Source.Creator(_, _, parents)                    => parents.flatMap(_.source.parentLabels)
+    case Source.Unknown                                   => Seq.empty
+    case Source.List(sources)                             => sources.flatMap(_.parentLabels)
+    case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
+    case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
+    case Source.General(term)                             => throw IllegalArgumentException(s"parent must be a simple term. got: $term")
+  }
+}
+
+extension (step: TstpDerivationStep) {
+  def annotationsOption: Option[Annotations] = step match {
+    case s: TstpConjectureStep =>
+      s.annotationsOption
+    case s: TstpAxiomStep =>
+      s.annotationsOption
+    case s: TstpPlainInferenceStep =>
+      Some(s.annotations)
+    case s: TstpNegatedConjectureStep =>
+      Some(s.annotations)
+    case s: TstpSkolemizationStep =>
+      Some(s.annotations)
+  }
+}
+
+extension [T](a: IterableOnce[T]) {
+  def single: T = a.iterator.take(2).toSeq match {
+    case Seq()  => throw new NoSuchElementException
+    case Seq(x) => x
+    case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
+  }
+
+  def singleOption: Option[T] = a.iterator.take(2).toSeq match {
+    case Seq()  => None
+    case Seq(x) => Some(x)
+    case _      => None
   }
 }
 
