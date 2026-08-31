@@ -28,32 +28,34 @@ class ProoVerLogHandler extends LogHandler {
 
 @main
 def prooVerCLI(args: String*): Unit = LogHandler.use(ProoVerLogHandler()) {
-  try {
-    val future = Future {
-      val input = args match {
-        case Seq() => {
-          Console.err.println(usage)
+  val szsStatus =
+    try {
+      val future = Future {
+        val input = args match {
+          case Seq() => {
+            Console.err.println(usage)
+            sys.exit(1)
+          }
+          case Seq("--help") => {
+            Console.out.println(usage)
+            sys.exit(0)
+          }
+          case Seq(file) => file
+        }
+
+        val path = os.Path(input, os.pwd)
+        if !os.exists(path) then {
+          Console.err.println(s"file not found: $path")
           sys.exit(1)
         }
-        case Seq("--help") => {
-          Console.out.println(usage)
-          sys.exit(0)
-        }
-        case Seq(file) => file
+
+        checkTstpDerivation(OnDiskInputFile(path))
       }
 
-      val path = os.Path(input, os.pwd)
-      if !os.exists(path) then {
-        Console.err.println(s"file not found: $path")
-        sys.exit(1)
-      }
-
-      checkTstpDerivation(OnDiskInputFile(path))
+      Await.result(future, 28.seconds)
+    } catch {
+      case e: TimeoutException => SzsStatus.Timeout
+      case e                   => SzsStatus.Unknown(UnexpectedException(e))
     }
-    val szsStatus = Await.result(future, 28.seconds)
-    Console.out.println(szsStatus.statusLine)
-  } catch {
-    case e: TimeoutException => Console.out.println(SzsStatus.Timeout.statusLine)
-    case e                   => Console.out.println(SzsStatus.Unknown(e).statusLine)
-  }
+  Console.out.println(szsStatus.statusLine)
 }
