@@ -49,6 +49,7 @@ def simulateProoVerCompetition() = {
   enum DerivationStatus {
     case Correct
     case Incorrect
+    case Removed
   }
   enum SolverResult {
     case VerifiedGood
@@ -71,6 +72,9 @@ def simulateProoVerCompetition() = {
         || derivationPath.baseName.startsWith("incorrect_")
       then {
         DerivationStatus.Incorrect
+      } else if derivationPath.baseName.startsWith("removed_")
+      then {
+        DerivationStatus.Removed
       } else {
         Console.println(s"Unknown derivation status for ${derivationPath.baseName}")
         sys.exit(1)
@@ -147,6 +151,7 @@ def simulateProoVerCompetition() = {
     val derivationStatusText = result.derivationStatus match {
       case DerivationStatus.Correct   => "😇"
       case DerivationStatus.Incorrect => "😈"
+      case DerivationStatus.Removed   => "😶"
     }
     val padding = " " * (30 - result.derivation.baseName.length)
     Console.println(s"${result.derivation.baseName}$padding ${derivationStatusText}: ${scoreMark(result.score)} ${result.solverResult}, score: ${result.score}, time: ${formatDuration(result.duration)}")
