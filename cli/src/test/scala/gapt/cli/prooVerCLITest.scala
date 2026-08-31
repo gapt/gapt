@@ -110,14 +110,14 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
       val (exitCode, stdout, _) = proofCheckerProcess(example.toString).!!!
       (exitCode must_== 0)
         .and(stdout must startWith("% SZS status VerifiedBad"))
-        .and(stdout.linesIterator.take(2).size must_== 1)
+        .and(stdout.linesIterator.take(2).toSeq must haveSize(1))
     }
 
     def unknownVerification(example: Path): Result = {
       val (exitCode, stdout, _) = proofCheckerProcess(example.toString).!!!
       (exitCode must_== 0)
         .and(stdout must startWith("% SZS status Unknown"))
-        .and(stdout.linesIterator.take(2).size must_== 1)
+        .and(stdout.linesIterator.take(2).toSeq must haveSize(1))
     }
 
     def foreachPath(paths: Seq[Path])(f: Path => Fragment): Fragments = {

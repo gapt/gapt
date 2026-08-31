@@ -649,7 +649,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.SourceMissing) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: SourceMissing) => reason.stepName must_== "a"
           }
         }
 
@@ -661,7 +661,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveMissing) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveMissing) => reason.stepName must_== "a"
           }
         }
 
@@ -673,7 +673,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveLabelMissing) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveLabelMissing) => reason.stepName must_== "a"
           }
         }
 
@@ -685,7 +685,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileNotFound) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileNotFound) => reason.stepName must_== "a"
           }
         }
 
@@ -697,7 +697,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveInvalidSyntax) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveInvalidSyntax) => reason.stepName must_== "a"
           }
         }
 
@@ -709,7 +709,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "a"
           }
         }
 
@@ -721,7 +721,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "a"
           }
         }
 
@@ -733,7 +733,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleFormulasWithSameLabel) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileHasMultipleFormulasWithSameLabel) => reason.stepName must_== "a"
           }
         }
 
@@ -745,7 +745,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveStepDoesNotMatchRole) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveStepDoesNotMatchRole) => reason.stepName must_== "a"
           }
         }
 
@@ -777,7 +777,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleFormulasWithSameLabel) =>
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileHasMultipleFormulasWithSameLabel) =>
               (reason.stepName must_== "a1").and(reason.label must_== "a").and(reason.fileName must_== "Problems/test8.p")
           }
         }
@@ -800,7 +800,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(r: OtherFailureReason.SourceMissing) => r.stepName must_== "unused"
+            case SzsStatus.VerifiedBad(r: SourceMissing) => r.stepName must_== "unused"
           }
         }
       }
@@ -814,7 +814,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.SourceMissing) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: SourceMissing) => reason.stepName must_== "c"
           }
         }
 
@@ -826,7 +826,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveMissing) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveMissing) => reason.stepName must_== "c"
           }
         }
 
@@ -838,7 +838,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveLabelMissing) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveLabelMissing) => reason.stepName must_== "c"
           }
         }
 
@@ -850,7 +850,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileNotFound) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileNotFound) => reason.stepName must_== "c"
           }
         }
 
@@ -862,7 +862,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveInvalidSyntax) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveInvalidSyntax) => reason.stepName must_== "c"
           }
         }
 
@@ -874,7 +874,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileDoesNotHaveLabel) => reason.stepName must_== "c"
           }
         }
 
@@ -886,7 +886,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula) => reason.stepName must_== "c"
           }
         }
 
@@ -898,7 +898,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveFileHasMultipleFormulasWithSameLabel) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveFileHasMultipleFormulasWithSameLabel) => reason.stepName must_== "c"
           }
         }
 
@@ -910,7 +910,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
             """.stripMargin)
           checkDerivation(input) must beLike {
-            case SzsStatus.VerifiedBad(reason: OtherFailureReason.FileDirectiveStepDoesNotMatchRole) =>
+            case SzsStatus.VerifiedBad(reason: FileDirectiveStepDoesNotMatchRole) =>
               (reason.stepName must_== "c").and(reason.expectedRole must_== "conjecture").and(reason.actualRole must_== "axiom")
           }
         }
@@ -1085,7 +1085,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           """.stripMargin)
         }
         checkDerivation0("/input") must beLike {
-          case SzsStatus.VerifiedBad(reason: OtherFailureReason.SourceMissing) => reason.stepName must_== "a"
+          case SzsStatus.VerifiedBad(reason: SourceMissing) => reason.stepName must_== "a"
         }
       }
 

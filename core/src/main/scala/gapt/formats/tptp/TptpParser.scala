@@ -27,7 +27,7 @@ import scala.util.boundary
 import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
-import gapt.formats.tptp.check.{RootedTstpDerivation, TstpDerivation, tstpDerivationToProofContext, TstpDerivationImportError}
+import gapt.formats.tptp.check.{RootedTstpDerivation, TstpDerivation, tstpDerivationToProofContext, TstpDerivationError}
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -252,10 +252,10 @@ object TptpImporter {
   def loadWithIncludes(file: InputFile): TptpFile =
     loadWithIncludes(file, pwd)
 
-  def loadAsTptpDerivation(file: InputFile): Either[TstpDerivationImportError, TstpDerivation] =
+  def loadAsTptpDerivation(file: InputFile): Either[TstpDerivationError, TstpDerivation] =
     TstpDerivation.fromInputFile(file)
 
-  def loadAsLKRefutation(file: InputFile): Either[TstpDerivationImportError, LKProof] = boundary {
+  def loadAsLKRefutation(file: InputFile): Either[TstpDerivationError, LKProof] = boundary {
     val rootedTptpDerivation = RootedTstpDerivation.fromInputFileRefutation(file).getOrBreak
     given context: Context = tstpDerivationToProofContext(rootedTptpDerivation.tstpDerivation).getOrBreak
     Right(instantiateProof(ProofLink(rootedTptpDerivation.rootLabel)))

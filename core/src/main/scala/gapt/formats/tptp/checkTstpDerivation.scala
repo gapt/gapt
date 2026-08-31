@@ -85,59 +85,6 @@ import scala.util.control.NonFatal
 
 import boundary.break
 
-enum OtherFailureReason {
-  case SourceMissing(stepName: String)
-  case FileDirectiveMissing(stepName: String)
-  case FileDirectiveLabelMissing(stepName: String)
-  case FileDirectiveFileNotFound(stepName: String, fileName: String)
-  case FileDirectiveInvalidSyntax(stepName: String, fileName: String)
-  case FileDirectiveFileDoesNotHaveLabel(
-      stepName: String,
-      fileName: String,
-      label: String
-  )
-  case FileDirectiveFileHasMultipleFormulasWithSameLabel(
-      stepName: String,
-      fileName: String,
-      label: String
-  )
-  case FileDirectiveStepDoesNotMatchRole(
-      stepName: String,
-      fileName: String,
-      label: String,
-      expectedRole: String,
-      actualRole: String
-  )
-  case FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
-      stepName: String,
-      fileName: String,
-      label: String,
-      expected: Formula,
-      actual: Formula
-  )
-
-  def message: String = this match
-    case s: SourceMissing =>
-      s"step ${s.stepName} is missing a source"
-    case s: FileDirectiveMissing =>
-      s"step ${s.stepName} is missing a file directive"
-    case s: FileDirectiveLabelMissing =>
-      s"step ${s.stepName} is missing a file directive label"
-    case s: FileDirectiveFileNotFound =>
-      s"step ${s.stepName} has a file source (${s.fileName}) that could not be found"
-    case s: FileDirectiveInvalidSyntax =>
-      s"step ${s.stepName} has a file source (${s.fileName}) with invalid TPTP syntax"
-    case s: FileDirectiveFileDoesNotHaveLabel =>
-      s"step ${s.stepName} has a file source (${s.fileName}) that does not have the label '${s.label}' referred to in the file directive"
-    case s: FileDirectiveFileHasMultipleFormulasWithSameLabel =>
-      s"step ${s.stepName} has a file source (${s.fileName}) that has multiple distinct formulas with the same label '${s.label}'"
-    case s: FileDirectiveStepDoesNotMatchRole =>
-      s"step ${s.stepName} has a file source (${s.fileName}) that points to a formula with name ${s.label} that does not have the same role as the step. expected: ${s.expectedRole}, actual: ${s.actualRole}"
-    case s: FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula =>
-      s"step ${s.stepName} has a file source (${s.fileName}) that points to a formula with name ${s.label} that is not alpha-equivalent to the claimed formula. expected: ${s.expected}, actual: ${s.actual}"
-}
-
-import OtherFailureReason._
 type VerifiedBadReason =
   IncorrectInference
     | IncorrectSkolemization
@@ -147,7 +94,7 @@ type VerifiedBadReason =
     | SkolemizationStepWithoutParent
     | SkolemizationStepWithMultipleParents
     | InferenceCycle
-    | OtherFailureReason
+    | FileDirectiveError
     | StepWithInvalidStatus
     | StepWithInvalidInferenceRule
     | NegatedConjectureStepWithNonConjectureParent
@@ -160,8 +107,8 @@ type VerifiedBadReason =
     | NonExistentStep
     | NonConstantSkolemTerm
 
-type UnknownReason =
-  Throwable
+type VerifiedUnknownReason =
+  UnexpectedException
     | InputSyntaxError
     | CannotHandleInput
     | NoConjectureFound
@@ -172,15 +119,14 @@ type UnknownReason =
 enum SzsStatus {
   case VerifiedGood
   case VerifiedBad(reason: VerifiedBadReason)
-  case Unknown(reason: UnknownReason)
+  case Unknown(reason: VerifiedUnknownReason)
   case Timeout
 
   def status: String = this match {
-    case VerifiedGood                                   => "VerifiedGood"
-    case VerifiedBad(reason: TstpDerivationImportError) => s"VerifiedBad : ${reason.message}"
-    case VerifiedBad(reason: OtherFailureReason)        => s"VerifiedBad : ${reason.toString}"
-    case Unknown(_)                                     => "Unknown"
-    case Timeout                                        => "Timeout"
+    case VerifiedGood        => "VerifiedGood"
+    case VerifiedBad(reason) => s"VerifiedBad : ${reason.message.replace("\n", "\\n")}"
+    case Unknown(reason)     => s"Unknown : ${reason.message.replace("\n", "\\n")}"
+    case Timeout             => "Timeout"
   }
   def isGood: Boolean = this == VerifiedGood
   def isBad: Boolean = this.isInstanceOf[VerifiedBad]
@@ -189,30 +135,13 @@ enum SzsStatus {
   def statusLine: String = s"% SZS status $status"
 }
 
-case class FileNotFound(fileName: String)
-trait FileNameResolver {
-  def apply(fileName: String): Either[FileNotFound, String]
-}
-
-object FileNameResolver {
-  val empty: FileNameResolver = fileName => Left(FileNotFound(fileName))
-  val absolute: FileNameResolver = fileName => {
-    val path =
-      if Paths.get(fileName).isAbsolute() then os.Path(fileName)
-      else os.Path(fileName, os.pwd)
-
-    if os.exists(path) then Right(os.read(path))
-    else Left(FileNotFound(fileName))
-  }
-  given FileNameResolver = absolute
-}
-
 sealed trait TstpDerivationStep {
   def name: String
   def role: String
   def formula: FOLFormula
   def parents: Seq[String]
 }
+
 case class TstpConjectureStep(
     name: String,
     formula: FOLFormula,
@@ -221,6 +150,7 @@ case class TstpConjectureStep(
   def parents: Seq[String] = Seq.empty
   def role: String = "conjecture"
 }
+
 case class TstpAxiomStep(
     name: String,
     formula: FOLFormula,
@@ -229,6 +159,7 @@ case class TstpAxiomStep(
   def parents: Seq[String] = Seq.empty
   def role: String = "axiom"
 }
+
 case class TstpPlainInferenceStep(
     name: String,
     formula: FOLFormula,
@@ -238,6 +169,7 @@ case class TstpPlainInferenceStep(
 ) extends TstpDerivationStep {
   def role: String = "plain"
 }
+
 case class TstpNegatedConjectureStep(
     name: String,
     formula: FOLFormula,
@@ -248,6 +180,7 @@ case class TstpNegatedConjectureStep(
   def role: String = "negated_conjecture"
   def parents: Seq[String] = Seq(parent)
 }
+
 case class TstpSkolemizationStep(
     name: String,
     formula: FOLFormula,
@@ -330,7 +263,7 @@ object TstpDerivation {
   * @param input
   * @return the TstpDerivation or an Error if there was an issue
   */
-  def fromInputFile(input: InputFile): Either[TstpDerivationImportError, TstpDerivation] = {
+  def fromInputFile(input: InputFile): Either[TstpDerivationError, TstpDerivation] = {
     for
       tptp <- loadAsTptpFile(input)
       steps <- intoAnnotatedFormulaSteps(tptp)
@@ -378,7 +311,7 @@ object TstpDerivation {
 
   private def intoCheckedTstpDerivation(
       map: Map[String, AnnotatedFormula]
-  ): Either[TstpDerivationImportError, TstpDerivation] = boundary {
+  ): Either[TstpDerivationError, TstpDerivation] = boundary {
     val topologicalOrder = sortTopologically(map).getOrBreak
 
     val usedSteps = map.values.map { a => a.name -> parseStep(a).getOrBreak }.toMap
@@ -427,7 +360,7 @@ object TstpDerivation {
     Right(usedStepsLeafsToRoot.map(_.name))
   }
 
-  private def parseStep(annotatedFormula: AnnotatedFormula): Either[TstpDerivationImportError, TstpDerivationStep] = boundary {
+  private def parseStep(annotatedFormula: AnnotatedFormula): Either[TstpDerivationError, TstpDerivationStep] = boundary {
     val AnnotatedFormula(language, name, role, formula, annotations) = annotatedFormula
     language match {
       case "fof" | "cnf" => // we only support these languages for now
@@ -448,7 +381,7 @@ object TstpDerivation {
     }
   }
 
-  private def parseFOLFormula(formula: Formula): Either[TstpDerivationImportError, FOLFormula] = {
+  private def parseFOLFormula(formula: Formula): Either[TstpDerivationError, FOLFormula] = {
     if !formula.isInstanceOf[FOLFormula] then
       Left(UnexpectedInput(s"expected FOL formula, got ${formula.getClass}"))
     else
@@ -459,7 +392,7 @@ object TstpDerivation {
       name: String,
       formula: Formula,
       annotations: Option[Annotations]
-  ): Either[TstpDerivationImportError, TstpAxiomStep] = boundary {
+  ): Either[TstpDerivationError, TstpAxiomStep] = boundary {
     val fol = parseFOLFormula(formula).getOrBreak
     Right(TstpAxiomStep(name, fol, annotations))
   }
@@ -468,7 +401,7 @@ object TstpDerivation {
       name: String,
       formula: Formula,
       annotations: Option[Annotations]
-  ): Either[TstpDerivationImportError, TstpConjectureStep] = boundary {
+  ): Either[TstpDerivationError, TstpConjectureStep] = boundary {
     val fol = parseFOLFormula(formula).getOrBreak
     Right(TstpConjectureStep(name, fol, annotations))
   }
@@ -477,7 +410,7 @@ object TstpDerivation {
       name: String,
       formula: Formula,
       annotationsOption: Option[Annotations]
-  ): Either[TstpDerivationImportError, TstpNegatedConjectureStep] = boundary { l ?=>
+  ): Either[TstpDerivationError, TstpNegatedConjectureStep] = boundary { l ?=>
     val folFormula = parseFOLFormula(formula).getOrBreak(using l)
     val annotations = annotationsOption.getOrElse {
       break(Left(UnexpectedInput("got negated conjecture without source")))
@@ -505,7 +438,7 @@ object TstpDerivation {
       name: String,
       formula: Formula,
       annotationsOption: Option[Annotations]
-  ): Either[TstpDerivationImportError, TstpSkolemizationStep | TstpPlainInferenceStep] = boundary {
+  ): Either[TstpDerivationError, TstpSkolemizationStep | TstpPlainInferenceStep] = boundary {
     val folFormula = parseFOLFormula(formula).getOrBreak
     val annotations = annotationsOption.getOrElse {
       break(Left(PlainInferenceWithoutSource(name)))
@@ -535,7 +468,7 @@ object TstpDerivation {
       formula: FOLFormula,
       inference: Source.Inference,
       optionalInfo: Seq[GeneralTerm]
-  ): Either[TstpDerivationImportError, TstpSkolemizationStep] = boundary {
+  ): Either[TstpDerivationError, TstpSkolemizationStep] = boundary {
     val parent = inference.parentLabels match {
       case Seq()                   => break(Left(SkolemizationStepWithoutParent(name)))
       case parents @ Seq(_, _, _*) => break(Left(SkolemizationStepWithMultipleParents(name, parents)))
@@ -633,7 +566,7 @@ object RootedTstpDerivation {
   def fromDerivationAndRootLabel(
       derivation: TstpDerivation,
       rootLabel: String
-  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
+  ): Either[TstpDerivationError, RootedTstpDerivation] = boundary {
     val _ = derivation.get(rootLabel).getOrElse {
       break(Left(UnexpectedInput("end derivation label does not exist in proof")))
     }
@@ -643,7 +576,7 @@ object RootedTstpDerivation {
 
   def fromInputFileRefutation(
       file: InputFile
-  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
+  ): Either[TstpDerivationError, RootedTstpDerivation] = boundary {
     val derivation = TstpDerivation.fromInputFile(file).getOrBreak
     val uniqueRefutationLabel = derivation.nonConjectureRefutationLabels.singleOption.getOrElse {
       break(Left(NoRefutationFound()))
@@ -654,7 +587,7 @@ object RootedTstpDerivation {
   def fromInputFileAndRootLabel(
       file: InputFile,
       rootLabel: String
-  ): Either[TstpDerivationImportError, RootedTstpDerivation] = boundary {
+  ): Either[TstpDerivationError, RootedTstpDerivation] = boundary {
     val tptpProofDag = TstpDerivation.fromInputFile(file).getOrBreak
     fromDerivationAndRootLabel(tptpProofDag, rootLabel)
   }
@@ -670,6 +603,22 @@ extension [R <: FileNameResolver](r: R) {
 }
 
 val logger = Logger("time.checkTstpDerivation")
+trait FileNameResolver {
+  def apply(fileName: String): Either[FileNotFound, String]
+}
+
+object FileNameResolver {
+  val empty: FileNameResolver = fileName => Left(FileNotFound(fileName))
+  val absolute: FileNameResolver = fileName => {
+    val path =
+      if Paths.get(fileName).isAbsolute() then os.Path(fileName)
+      else os.Path(fileName, os.pwd)
+
+    if os.exists(path) then Right(os.read(path))
+    else Left(FileNotFound(fileName))
+  }
+  given FileNameResolver = absolute
+}
 
 def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using resolver: FileNameResolver): SzsStatus = {
   logger.info(s"checking TSTP derivation ${file.fileName}")
@@ -726,9 +675,9 @@ def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using r
         case _: TimeOutException => SzsStatus.Timeout
         case t: Throwable => {
           t.printStackTrace()
-          SzsStatus.Unknown(t)
+          SzsStatus.Unknown(UnexpectedException(t))
         }
-        case r: UnknownReason          => SzsStatus.Unknown(r)
+        case r: VerifiedUnknownReason  => SzsStatus.Unknown(r)
         case reason: VerifiedBadReason => SzsStatus.VerifiedBad(reason)
       }
     case Right(_) => SzsStatus.VerifiedGood
@@ -1423,20 +1372,23 @@ object CreateSkolemizationProof {
   }
 }
 
-sealed trait TstpDerivationImportError {
+sealed trait TstpDerivationError {
   def message: String
 }
+
 case class InputSyntaxError(
     cause: IllegalArgumentException
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   override def message: String = cause.getMessage
 }
+
 case class DistinctFormulasWithSameName(
     label: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   override def message: String = s"there are multiple distinct formulas with the same name: $label"
 }
-case class InferenceCycle() extends TstpDerivationImportError {
+
+case class InferenceCycle() extends TstpDerivationError {
   def message: String = "inference cycle detected"
 }
 
@@ -1444,70 +1396,81 @@ case class StepWithInvalidStatus(
     stepName: String,
     actualStatuses: Iterable[String],
     validStatuses: Iterable[String]
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
 }
+
 case class StepWithInvalidInferenceRule(
     stepName: String,
     actualInferenceName: String,
     expectedInferenceName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   override def message: String = s"$stepName has invalid inference name '$actualInferenceName'. Expected '$expectedInferenceName'"
 }
+
 case class NegatedConjectureStepWithNonConjectureParent(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"step with name $stepName has a non-conjecture parent"
 }
+
 case class NegatedConjectureWithoutParent(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"negated conjecture step with name $stepName has no parent"
 }
-case class NegatedConjectureWithMultipleDistinctParents() extends TstpDerivationImportError {
+
+case class NegatedConjectureWithMultipleDistinctParents() extends TstpDerivationError {
   def message: String = "got negated conjecture with multiple distinct parents"
 }
+
 case class PlainInferenceWithConjectureParent(
     step: TstpPlainInferenceStep
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
 }
+
 case class PlainInferenceWithoutSource(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"plain inference step with name $stepName has no source"
 }
+
 case class IncorrectInference(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"inference step with name $stepName is incorrect"
 }
+
 case class IncorrectSkolemization(
     reason: IncorrectSkolemizationReason
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = reason.message
 }
+
 case class NonConstantSkolemTerm(
     stepName: String,
     term: FOLVar
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"step $stepName: skolem term $term is not a constant, but a variable"
 }
+
 case class SkolemizationStepWithoutParent(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"skolemization inference with name $stepName has no parent"
 }
+
 case class SkolemizationStepWithMultipleParents(
     stepName: String,
     parents: Seq[String]
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"skolemization inference with name $stepName has multiple parents ${parents.mkString(", ")}"
 }
 
 case class NonExistentStep(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"step with name $stepName does not exist"
 }
 
@@ -1579,32 +1542,39 @@ case class NonRectifiedFormula(
 
 case class SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"skolemization step with name $stepName has differing skolem terms"
 }
+
 case class SkolemizationStepWithoutNewSymbols(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"skolemization step with name $stepName has no new symbols"
 }
+
 case class SkolemizationStepWithoutBinding(
     stepName: String
-) extends TstpDerivationImportError {
+) extends TstpDerivationError {
   def message: String = s"skolemization step with name $stepName has no skolemize(_,_) binding"
 }
-case class CannotHandleIncludeDirectives() extends TstpDerivationImportError {
+
+case class CannotHandleIncludeDirectives() extends TstpDerivationError {
   def message: String = "cannot handle include directives"
 }
-case class CannotHandleInput(stepName: String, reason: String) extends TstpDerivationImportError {
+
+case class CannotHandleInput(stepName: String, reason: String) extends TstpDerivationError {
   def message: String = s"cannot handle input step with name $stepName: $reason"
 }
-case class NoRefutationFound() extends TstpDerivationImportError {
+
+case class NoRefutationFound() extends TstpDerivationError {
   def message: String = "no refutation found as there is no unique $false formula in the derivation"
 }
-case class NoConjectureFound() extends TstpDerivationImportError {
+
+case class NoConjectureFound() extends TstpDerivationError {
   def message: String = s"no conjecture found: $message"
 }
-case class UnexpectedInput(message: String) extends TstpDerivationImportError
+
+case class UnexpectedInput(message: String) extends TstpDerivationError
 
 case class NoStrongQuantifierFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
     extends IncorrectSkolemizationReason {
@@ -1614,4 +1584,69 @@ case class NoStrongQuantifierFittingSkolemization(stepName: String, inputFormula
 case class MultipleStrongQuantifiersFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
     extends IncorrectSkolemizationReason {
   def message: String = s"could find multiple (non-unique) strong quantifiers s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
+}
+
+sealed trait FileDirectiveError extends TstpDerivationError
+case class SourceMissing(stepName: String) extends FileDirectiveError {
+  override def message: String = s"step $stepName is missing a source"
+}
+
+case class FileDirectiveMissing(stepName: String) extends FileDirectiveError {
+  override def message: String = s"step $stepName is missing a file directive"
+}
+
+case class FileDirectiveLabelMissing(stepName: String) extends FileDirectiveError {
+  override def message: String = s"step $stepName is missing a file directive label"
+}
+
+case class FileDirectiveFileNotFound(stepName: String, fileName: String) extends FileDirectiveError {
+  override def message: String = s"step $stepName has a file source (${fileName}) that could not be found"
+}
+
+case class FileDirectiveInvalidSyntax(stepName: String, fileName: String) extends FileDirectiveError {
+  override def message: String = s"step $stepName has a file source (${fileName}) with invalid TPTP syntax"
+}
+
+case class FileDirectiveFileDoesNotHaveLabel(
+    stepName: String,
+    fileName: String,
+    label: String
+) extends FileDirectiveError {
+  override def message: String = s"step $stepName has a file source (${fileName}) that does not have the label '$label'"
+}
+
+case class FileDirectiveFileHasMultipleFormulasWithSameLabel(
+    stepName: String,
+    fileName: String,
+    label: String
+) extends FileDirectiveError {
+  override def message: String = s"step $stepName has a file source (${fileName}) that has multiple distinct formulas with the same label '$label'"
+}
+
+case class FileDirectiveStepDoesNotMatchRole(
+    stepName: String,
+    fileName: String,
+    label: String,
+    expectedRole: String,
+    actualRole: String
+) extends FileDirectiveError {
+  override def message: String = s"step ${stepName} has a file source (${fileName}) that points to a formula with name ${label} that does not have the same role as the step. expected: ${expectedRole}, actual: ${actualRole}"
+}
+
+case class FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
+    stepName: String,
+    fileName: String,
+    label: String,
+    expected: Formula,
+    actual: Formula
+) extends FileDirectiveError {
+  override def message: String = s"step ${stepName} has a file source (${fileName}) that points to a formula with name ${label} that is not alpha-equivalent to the claimed formula. expected: ${expected}, actual: ${actual}"
+}
+
+case class FileNotFound(fileName: String) extends TstpDerivationError {
+  override def message: String = s"file not found: $fileName"
+}
+
+case class UnexpectedException(e: Throwable) extends TstpDerivationError {
+  override def message: String = s"unexpected exception: ${e.getMessage}"
 }

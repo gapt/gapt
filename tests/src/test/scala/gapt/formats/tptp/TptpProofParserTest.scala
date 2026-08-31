@@ -217,7 +217,7 @@ class TptpProofParserUnitTest extends Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
         )
         RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
-          (x: TstpDerivationImportError) => x must beAnInstanceOf[SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm]
+          (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm]
         }
       }
 
@@ -226,7 +226,7 @@ class TptpProofParserUnitTest extends Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc]))."
         )
         RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
-          (x: TstpDerivationImportError) => x must beAnInstanceOf[SkolemizationStepWithoutBinding]
+          (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithoutBinding]
         }
       }
 
@@ -235,7 +235,7 @@ class TptpProofParserUnitTest extends Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
         )
         RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
-          (x: TstpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
+          (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
 
@@ -309,7 +309,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
         RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
-          (x: TstpDerivationImportError) => x must beAnInstanceOf[UnexpectedInput]
+          (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
 
