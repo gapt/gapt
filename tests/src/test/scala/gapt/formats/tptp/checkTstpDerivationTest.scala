@@ -1118,8 +1118,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
     }
   }
 
-  val timeout = 1.second
-  spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i, timeout)(using r))
+  spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i)(using r))
 }
 
 class checkTstpDerivationExampleTest extends Specification {
@@ -1151,10 +1150,9 @@ class checkTstpDerivationExampleTest extends Specification {
       correctProofs ^ incorrectProofs
     }
 
-    val timeout = 25.seconds
     s2"""
     |checkProof1
-    |${spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i, timeout)(using r))}
+    |${spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i)(using r))}
   """.stripMargin
   }
 }

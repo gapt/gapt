@@ -60,12 +60,9 @@ import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
-import gapt.utils.Logger
 import gapt.utils.Maybe
-import gapt.utils.TimeOutException
 import gapt.utils.getOrBreak
 import gapt.utils.linearizeStrictPartialOrder
-import gapt.utils.withTimeout
 
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
@@ -74,7 +71,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.Promise
-import scala.concurrent.duration.*
 import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
@@ -522,164 +518,6 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
   linearizeStrictPartialOrder(nodes, successors).isLeft
 }
 
-extension [R <: FileNameResolver](r: R) {
-  def extend(f: FileNameResolver): FileNameResolver = fileName =>
-    boundary { Right(f(fileName).getOrElse { r(fileName).getOrBreak }) }
-
-  def relativeTo(root: os.Path): FileNameResolver = fileName =>
-    if Paths.get(fileName).isAbsolute() then r(fileName)
-    else r((root / os.RelPath(fileName)).toString)
-}
-
-val logger = Logger("time.checkTstpDerivation")
-trait FileNameResolver {
-  def apply(fileName: String): Either[FileNotFound, String]
-}
-
-object FileNameResolver {
-  val empty: FileNameResolver = fileName => Left(FileNotFound(fileName))
-  val absolute: FileNameResolver = fileName => {
-    val path =
-      if Paths.get(fileName).isAbsolute() then os.Path(fileName)
-      else os.Path(fileName, os.pwd)
-
-    if os.exists(path) then Right(os.read(path))
-    else Left(FileNotFound(fileName))
-  }
-  given FileNameResolver = absolute
-}
-
-def checkTstpDerivation(file: InputFile, timeout: Duration = 25.seconds)(using resolver: FileNameResolver): SzsStatus = {
-  logger.info(s"checking TSTP derivation ${file.fileName}")
-  val input = resolver(file.fileName) match {
-    case Left(e)      => return SzsStatus.Unknown(e)
-    case Right(input) => input
-  }
-  val inputFile = InputFile.fromString(input)
-  val result = {
-    try withTimeout(timeout) {
-        boundary {
-          val derivation = logger.time("TstpDerivation.fromInputFile") {
-            TstpDerivation.fromInputFile(inputFile).getOrBreak
-          }
-          val _ = derivation.nonConjectureRefutationLabels.headOption.getOrElse {
-            break(Left(NoRefutationFound()))
-          }
-          logger.time("check file directives") {
-            val memoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
-            derivation.stepsIterator.foreach {
-              case step: (TstpAxiomStep | TstpConjectureStep) => {
-                val fileDirectiveResolver = resolver.relativeTo(os.Path(file.fileName) / os.up)
-                checkStepHasCorrectFileDirective(step)(using fileDirectiveResolver, memoTable).getOrBreak
-              }
-              case _ =>
-            }
-          }
-
-          val negatedConjectures = derivation.stepsIterator.collect { case s: TstpNegatedConjectureStep => s }
-          negatedConjectures.find(s => !s.hasUnambiguousStatusAmong(Set("cth"))).map { s =>
-            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
-          }
-
-          val plainInferences = derivation.stepsIterator.collect { case a: TstpPlainInferenceStep => a }
-          plainInferences.find(c => !c.hasUnambiguousStatusAmong(Set("thm"))).map { s =>
-            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
-          }
-
-          val skolemizationSteps = derivation.stepsIterator.collect { case s: TstpSkolemizationStep => s }
-          skolemizationSteps.find(s => !s.hasUnambiguousStatusAmong(Set("esa"))).map { s =>
-            break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
-          }
-
-          logger.time("tstpDerivationToProofContext") {
-            checkIncorrectInferences(derivation)
-          }
-        }
-      }
-    catch e => Left(e)
-  }
-
-  result match {
-    case Left(reason) => reason match {
-        case _: TimeOutException => SzsStatus.Timeout
-        case t: Throwable => {
-          t.printStackTrace()
-          SzsStatus.Unknown(UnexpectedException(t))
-        }
-        case r: VerifiedUnknownReason  => SzsStatus.Unknown(r)
-        case reason: VerifiedBadReason => SzsStatus.VerifiedBad(reason)
-      }
-    case Right(_) => SzsStatus.VerifiedGood
-  }
-}
-
-private def checkStepHasCorrectFileDirective(
-    s: TstpAxiomStep | TstpConjectureStep
-)(using resolver: FileNameResolver, parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile]): Either[VerifiedBadReason, Unit] = boundary {
-  val annotations = s.annotationsOption.getOrElse {
-    break(Left(SourceMissing(s.name)))
-  }
-  val (fileName, label) = annotations.source match {
-    case Source.File(fileName, Some(label)) => (fileName, label)
-    case Source.File(_, None) =>
-      break(Left(FileDirectiveLabelMissing(s.name)))
-    case _ =>
-      break(Left(FileDirectiveMissing(s.name)))
-  }
-
-  val tptpFile = parseTptpMemoTable.getOrElseUpdate(
-    fileName, {
-      val tptpFileContent = resolver(fileName).getOrElse {
-        break(Left(FileDirectiveFileNotFound(s.name, fileName)))
-      }
-      try TptpImporter.loadWithoutIncludes(InputFile.fromString(tptpFileContent))
-      catch {
-        case _: IllegalArgumentException =>
-          break(Left(FileDirectiveInvalidSyntax(s.name, fileName)))
-      }
-    }
-  )
-
-  val fileDirectiveFormulas = tptpFile.inputs.collect {
-    case a: AnnotatedFormula if a.name == label => a
-  }
-  val fileDirectiveFormula = fileDirectiveFormulas match {
-    case Seq() =>
-      break(Left(FileDirectiveFileDoesNotHaveLabel(s.name, fileName, label)))
-    case Seq(_, _, _*) =>
-      break(Left(FileDirectiveFileHasMultipleFormulasWithSameLabel(s.name, fileName, label)))
-    case Seq(a @ AnnotatedFormula(language, name, "hypothesis", formula, annotations)) =>
-      AnnotatedFormula(language, name, "axiom", formula, annotations) // hypothesis is a synonym for axiom
-    case Seq(a) => a
-  }
-
-  if fileDirectiveFormula.role != s.role then {
-    break(Left(FileDirectiveStepDoesNotMatchRole(s.name, fileName, label, s.role, fileDirectiveFormula.role)))
-  }
-
-  if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
-    break(Left(FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
-      s.name,
-      fileName,
-      label,
-      fileDirectiveFormula.formula,
-      s.formula
-    )))
-  }
-
-  Right(())
-}
-
-case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends Update {
-  def link = ProofLink(lhs, proof.endSequent)
-
-  override def apply(ctx: Context): State =
-    ctx + ProofNameDeclaration(lhs, proof.endSequent, freeVariables(proof.endSequent)) + ProofDefinitionDeclaration(lhs, proof) state
-
-  override def toString: String =
-    s"VariableCapturingProofDeclaration($lhs, ${proof.endSequent})"
-}
-
 /**
 * Attempts to replay the inferences in the given TstpDerivation into a Context containing
 * LKProofs for every inference step in the TstpDerivation
@@ -696,12 +534,20 @@ def tstpDerivationToProofContext(
   }
 
   def replayProof(inferenceName: String, sequentToProve: Sequent[FOLFormula]): LKProof =
-    logger.time(s"replaying proof step $inferenceName") {
-      val replayContext = context
-      prover.getLKProof(sequentToProve)(using replayContext).getOrElse {
-        break(Left(IncorrectInference(inferenceName)))
-      }
+    val replayContext = context
+    prover.getLKProof(sequentToProve)(using replayContext).getOrElse {
+      break(Left(IncorrectInference(inferenceName)))
     }
+
+  case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends Update {
+    def link = ProofLink(lhs, proof.endSequent)
+
+    override def apply(ctx: Context): State =
+      ctx + ProofNameDeclaration(lhs, proof.endSequent, freeVariables(proof.endSequent)) + ProofDefinitionDeclaration(lhs, proof) state
+
+    override def toString: String =
+      s"VariableCapturingProofDeclaration($lhs, ${proof.endSequent})"
+  }
 
   def proofDeclaration(name: String, proof: LKProof, parents: Seq[String]): VariableCapturingProofDeclaration = {
     val cutProof = parents.foldLeft(proof) { (proof, parent) =>
@@ -765,7 +611,13 @@ def tstpDerivationToProofContext(
   Right(context.toImmutable)
 }
 
-def checkIncorrectInferences(
+/**
+* Attempts to replay the inferences in the given TstpDerivation, but does not create
+* a context or LKProofs of the inferences for performance. Use this, if you are
+* interested in whether the given derivation is correct or not, but do not care
+* about the replayed proofs
+*/
+def checkDerivationHasNoIncorrectInferences(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization, Unit] = boundary {
@@ -773,10 +625,8 @@ def checkIncorrectInferences(
   val context: MutableContext = ctx.newMutable
 
   def isValid(inferenceName: String, sequentToProve: Sequent[FOLFormula]): Boolean = {
-    logger.time(s"replaying proof step $inferenceName") {
-      val replayContext = context.newMutable
-      prover.isValid(sequentToProve)(using replayContext)
-    }
+    val replayContext = context.newMutable
+    prover.isValid(sequentToProve)(using replayContext)
   }
 
   def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A => Boolean): Future[Option[A]] = {
@@ -1066,7 +916,6 @@ object FindSkolemizableInstance {
       val lambda_pos = HOLPosition.toLambdaPosition(unskolemized)(inner_pos)
       val body = lambda_pos.get(unskolemized).get
       val reskolemized = HOLPosition.replace(unskolemized, pos, body.substitute(skVar -> skTerm))
-//      println(s"$skolemized == $reskolemized")
       reskolemized == skolemized
     })
     def getContext(x: HOLPosition, f: FOLFormula) = polarityAndContextAt(x, f, polarity)._2
@@ -1190,6 +1039,146 @@ object CreateSkolemizationProof {
       }
     }
   }
+}
+
+trait FileNameResolver {
+  def apply(fileName: String): Either[FileNotFound, String]
+}
+
+extension [R <: FileNameResolver](r: R) {
+  def extend(f: FileNameResolver): FileNameResolver = fileName =>
+    boundary { Right(f(fileName).getOrElse { r(fileName).getOrBreak }) }
+
+  def relativeTo(root: os.Path): FileNameResolver = fileName =>
+    if Paths.get(fileName).isAbsolute() then r(fileName)
+    else r((root / os.RelPath(fileName)).toString)
+}
+
+object FileNameResolver {
+  val empty: FileNameResolver = fileName => Left(FileNotFound(fileName))
+  val absolute: FileNameResolver = fileName => {
+    val path =
+      if Paths.get(fileName).isAbsolute() then os.Path(fileName)
+      else os.Path(fileName, os.pwd)
+
+    if os.exists(path) then Right(os.read(path))
+    else Left(FileNotFound(fileName))
+  }
+  given FileNameResolver = absolute
+}
+
+/**
+* Checks whether a given input file is a correct TSTP derivation according to the
+* rules of the ProoVer competiton 2026. Returns the corresponding SZS status:
+* - VerifiedGood: All proof steps are checked to be correct
+* - VerifiedBad: There was a mistake in the proof
+* - VerifiedUnknown: We could not determine whether the input is a correct proof or not
+*
+* @param file The input file to check.
+* @param resolver The resolver to use for resolving file names.
+* @return The [[SzsStatus]] of the check.
+*/
+def checkTstpDerivation(file: InputFile)(using resolver: FileNameResolver): SzsStatus = {
+  val result =
+    try {
+      for
+        input <- resolver(file.fileName)
+        inputFile = InputFile.fromString(input)
+        derivation <- TstpDerivation.fromInputFile(inputFile)
+        _ <- checkDerivationHasRefutation(derivation)
+        _ <- checkDerivationHasCorrectFileDirectives(derivation, file.fileName)
+        _ <- checkDerivationHasCorrectStatuses(derivation)
+        _ <- checkDerivationHasNoIncorrectInferences(derivation)
+      yield ()
+    } catch e => Left(UnexpectedException(e))
+
+  result match {
+    case Left(r: VerifiedUnknownReason)  => SzsStatus.Unknown(r)
+    case Left(reason: VerifiedBadReason) => SzsStatus.VerifiedBad(reason)
+    case Right(_)                        => SzsStatus.VerifiedGood
+  }
+}
+
+def checkDerivationHasRefutation(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = boundary {
+  derivation.nonConjectureRefutationLabels.headOption.getOrElse {
+    break(Left(NoRefutationFound()))
+  }
+  Right(())
+}
+
+def checkDerivationHasCorrectStatuses(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = boundary {
+  derivation.stepsIterator.foreach {
+    case s: TstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Set("cth")) =>
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
+    case s: TstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Set("thm")) =>
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
+    case s: TstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Set("esa")) =>
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
+    case _ =>
+  }
+  Right(())
+}
+
+def checkDerivationHasCorrectFileDirectives(derivation: TstpDerivation, fileName: String)(using resolver: FileNameResolver): Either[TstpDerivationError, Unit] = boundary {
+  val parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
+  val innerResolver = resolver.relativeTo(os.Path(fileName) / os.up)
+  derivation.stepsIterator.foreach {
+    case s: (TstpAxiomStep | TstpConjectureStep) => {
+      val annotations = s.annotationsOption.getOrElse {
+        break(Left(SourceMissing(s.name)))
+      }
+      val (fileName, label) = annotations.source match {
+        case Source.File(fileName, Some(label)) =>
+          (fileName, label)
+        case Source.File(_, None) =>
+          break(Left(FileDirectiveLabelMissing(s.name)))
+        case _ =>
+          break(Left(FileDirectiveMissing(s.name)))
+      }
+
+      val tptpFile = parseTptpMemoTable.getOrElseUpdate(
+        fileName, {
+          val tptpFileContent = innerResolver(fileName).getOrElse {
+            break(Left(FileDirectiveFileNotFound(s.name, fileName)))
+          }
+          try TptpImporter.loadWithoutIncludes(InputFile.fromString(tptpFileContent))
+          catch {
+            case _: IllegalArgumentException =>
+              break(Left(FileDirectiveInvalidSyntax(s.name, fileName)))
+          }
+        }
+      )
+
+      val fileDirectiveFormulas = tptpFile.inputs.collect {
+        case a: AnnotatedFormula if a.name == label => a
+      }
+      val fileDirectiveFormula = fileDirectiveFormulas match {
+        case Seq() =>
+          break(Left(FileDirectiveFileDoesNotHaveLabel(s.name, fileName, label)))
+        case Seq(_, _, _*) =>
+          break(Left(FileDirectiveFileHasMultipleFormulasWithSameLabel(s.name, fileName, label)))
+        case Seq(a @ AnnotatedFormula(language, name, "hypothesis", formula, annotations)) =>
+          AnnotatedFormula(language, name, "axiom", formula, annotations) // hypothesis is a synonym for axiom
+        case Seq(a) => a
+      }
+
+      if fileDirectiveFormula.role != s.role then {
+        break(Left(FileDirectiveStepDoesNotMatchRole(s.name, fileName, label, s.role, fileDirectiveFormula.role)))
+      }
+
+      if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
+        break(Left(FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
+          s.name,
+          fileName,
+          label,
+          fileDirectiveFormula.formula,
+          s.formula
+        )))
+      }
+    }
+    case _ =>
+  }
+  Right(())
 }
 
 extension (annotations: Option[Annotations]) {
