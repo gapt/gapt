@@ -60,7 +60,6 @@ import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
-import gapt.utils.EitherHelpers.RichEither
 import gapt.utils.Logger
 import gapt.utils.Maybe
 import gapt.utils.TimeOutException
@@ -227,32 +226,8 @@ case class TstpDerivation private (
     }.toSet
   }
 
-  def subDerivationRootedAt(
-      derivationEndLabel: String
-  ): Either[NonExistentStep, TstpDerivation] = boundary {
-    import scala.collection.mutable
-
-    val visited = mutable.Set[String]()
-    val reachableSteps = mutable.Buffer[TstpDerivationStep]()
-    def walk(label: String): Unit = {
-      if !visited.contains(label) then {
-        visited += label
-        val formula = map.get(label).getOrElse {
-          break(Left(NonExistentStep(label)))
-        }
-        reachableSteps += formula
-        formula.parents.foreach(walk)
-      }
-    }
-    walk(derivationEndLabel)
-
-    val usedStepsRootToLeafs = linearizeStrictPartialOrder(reachableSteps.toSet, x => parentsOf(x.name)).get
-    val usedStepsLeafsToRoot = usedStepsRootToLeafs.reverse
-    val order = usedStepsLeafsToRoot.map(_.name)
-    val subMap = order.map(l => l -> map(l)).toMap
-
-    Right(TstpDerivation(subMap, order))
-  }
+  val nonConjectureRootRefutationLabels: Set[String] =
+    nonConjectureRootLabels.intersect(nonConjectureRefutationLabels)
 }
 
 object TstpDerivation {
@@ -315,23 +290,23 @@ object TstpDerivation {
   ): Either[TstpDerivationError, TstpDerivation] = boundary {
     val topologicalOrder = sortTopologically(map).getOrBreak
 
-    val usedSteps = map.values.map { a => a.name -> parseStep(a).getOrBreak }.toMap
+    val steps = map.values.map { a => a.name -> parseStep(a).getOrBreak }.toMap
 
-    val usedNegatedConjectures = usedSteps.values.collect { case s: TstpNegatedConjectureStep => s }
-    usedNegatedConjectures.find(c => map.hasNonConjectureParent(c.name)).map { s =>
+    val negatedConjectures = steps.values.collect { case s: TstpNegatedConjectureStep => s }
+    negatedConjectures.find(c => map.hasNonConjectureParent(c.name)).map { s =>
       break(Left(NegatedConjectureStepWithNonConjectureParent(s.name)))
     }
 
-    if usedNegatedConjectures.size > 1 then {
+    if negatedConjectures.size > 1 then {
       break(Left(UnexpectedInput("got more than one negated conjecture")))
     }
 
-    val usedPlainInferences = usedSteps.values.collect { case a: TstpPlainInferenceStep => a }
-    usedPlainInferences.find(s => map.hasConjectureParent(s.name)).map { s =>
+    val plainInferences = steps.values.collect { case a: TstpPlainInferenceStep => a }
+    plainInferences.find(s => map.hasConjectureParent(s.name)).map { s =>
       break(Left(PlainInferenceWithConjectureParent(s)))
     }
 
-    Right(TstpDerivation(usedSteps, topologicalOrder))
+    Right(TstpDerivation(steps, topologicalOrder))
   }
 
   private def sortTopologically(
