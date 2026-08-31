@@ -130,9 +130,7 @@ class TptpProofParserUnitTest extends Specification {
     "do X if no conjecture is given" in todo
     "do X if multiple conjectures are given" in todo
     "fail if given derivation which ends in a conjecture" in todo
-  }
 
-  "RootedTstpDerivation" should {
     "parse skolemization steps" in {
       def simpleSkolemConstantDerivation(skolemizationStep: String) = InputFile.fromString(s"""
       |fof(a, axiom, ![X]: p(X)).
@@ -147,7 +145,7 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beRight.like {
+        TstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
               case s: TstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLConst("sK0"))
@@ -162,21 +160,21 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft
+        TstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with multiple new_symbols(skolem, _)" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), new_symbols(skolem, [sK1]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft
+        TstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization with new_symbols that is not a constant" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0(X)]), skolemize(X, sK0)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft.like {
+        TstpDerivation.fromInputFile(input) must beLeft.like {
           case _: CannotHandleInput => ok
         }
       }
@@ -186,7 +184,7 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft.like {
+        TstpDerivation.fromInputFile(input) must beLeft.like {
           case _: CannotHandleInput => ok
         }
       }
@@ -195,28 +193,28 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, []), skolemize(X, sK0)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft
+        TstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with no parents" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], []))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft
+        TstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with multiple parents" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc, a]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft
+        TstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with differing new_symbols and skolemize terms" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
+        TstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm]
         }
       }
@@ -225,7 +223,7 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
+        TstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithoutBinding]
         }
       }
@@ -234,7 +232,7 @@ class TptpProofParserUnitTest extends Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
         )
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
+        TstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
@@ -248,7 +246,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        RootedTstpDerivation.fromInputFileRefutation(input) must beRight.like {
+        TstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
               case s: TstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 1))
@@ -268,7 +266,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(axiom_instance, plain, p(sK0(a, b), a, b), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        RootedTstpDerivation.fromInputFileRefutation(input) must beRight.like {
+        TstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
               case s: TstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
@@ -288,7 +286,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(axiom_instance, plain, p(sK0(b, a), a, b), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        RootedTstpDerivation.fromInputFileRefutation(input) must beRight.like {
+        TstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
               case s: TstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
@@ -308,7 +306,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft {
+        TstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
@@ -323,7 +321,7 @@ class TptpProofParserUnitTest extends Specification {
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        RootedTstpDerivation.fromInputFileRefutation(input) must beLeft.like {
+        TstpDerivation.fromInputFile(input) must beLeft.like {
           case x: CannotHandleInput => x.stepName must_=== "ca"
         }
       }
@@ -509,7 +507,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(i, plain, q(c, b(c)) & p(c, b(c), a(c)), inference(and, [status(thm)], [a, s])).
         """.stripMargin)
 
-        RootedTstpDerivation.fromInputFileAndRootLabel(input, "s") must beRight
+        TstpDerivation.fromInputFile(input) must beRight
       }
 
       "suceed on correct skolemization step with context variables" in {
@@ -522,7 +520,7 @@ class TptpProofParserUnitTest extends Specification {
           |fof(i, plain, $false, inference(and, [status(thm)], [as, ncs])).
         """.stripMargin)
 
-        RootedTstpDerivation.fromInputFileRefutation(input) must beRight
+        TstpDerivation.fromInputFile(input) must beRight
       }
     }
 

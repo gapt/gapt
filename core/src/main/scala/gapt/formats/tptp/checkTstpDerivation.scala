@@ -104,6 +104,7 @@ type VerifiedBadReason =
     | NegatedConjectureWithMultipleDistinctParents
     | DistinctFormulasWithSameName
     | NoRefutationFound
+    | AmbiguousRefutationLabelsFound
     | NonExistentStep
     | NonConstantSkolemTerm
 
@@ -546,53 +547,6 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
   linearizeStrictPartialOrder(nodes, successors).isLeft
 }
 
-/**
-* Represents a TstpDerivation with a designated root label which defines the
-* end derived formula. This could be a $false formula which would make
-* it a refutation, but coucld also be another formula. This allows picking
-* any subderivation as a derivation.
-*/
-case class RootedTstpDerivation private (
-    private val derivation: TstpDerivation,
-    val rootLabel: String
-) {
-  val tstpDerivation: TstpDerivation =
-    derivation.subDerivationRootedAt(rootLabel).get
-
-  export tstpDerivation.*
-}
-
-object RootedTstpDerivation {
-  def fromDerivationAndRootLabel(
-      derivation: TstpDerivation,
-      rootLabel: String
-  ): Either[TstpDerivationError, RootedTstpDerivation] = boundary {
-    val _ = derivation.get(rootLabel).getOrElse {
-      break(Left(UnexpectedInput("end derivation label does not exist in proof")))
-    }
-
-    Right(RootedTstpDerivation(derivation, rootLabel))
-  }
-
-  def fromInputFileRefutation(
-      file: InputFile
-  ): Either[TstpDerivationError, RootedTstpDerivation] = boundary {
-    val derivation = TstpDerivation.fromInputFile(file).getOrBreak
-    val uniqueRefutationLabel = derivation.nonConjectureRefutationLabels.singleOption.getOrElse {
-      break(Left(NoRefutationFound()))
-    }
-    RootedTstpDerivation.fromDerivationAndRootLabel(derivation, uniqueRefutationLabel)
-  }
-
-  def fromInputFileAndRootLabel(
-      file: InputFile,
-      rootLabel: String
-  ): Either[TstpDerivationError, RootedTstpDerivation] = boundary {
-    val tptpProofDag = TstpDerivation.fromInputFile(file).getOrBreak
-    fromDerivationAndRootLabel(tptpProofDag, rootLabel)
-  }
-}
-
 extension [R <: FileNameResolver](r: R) {
   def extend(f: FileNameResolver): FileNameResolver = fileName =>
     boundary { Right(f(fileName).getOrElse { r(fileName).getOrBreak }) }
@@ -854,8 +808,8 @@ case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends 
 }
 
 /**
-* Attempts to replay the inferences in the given RootedTstpDerivation into a Context and a ProofLink
-* such that instantiating the ProofLink in the context gives the full LKProof.
+* Attempts to replay the inferences in the given TstpDerivation into a Context containing
+* LKProofs for every inference step in the TstpDerivation
 */
 def tstpDerivationToProofContext(
     derivation: TstpDerivation,
@@ -1568,6 +1522,10 @@ case class CannotHandleInput(stepName: String, reason: String) extends TstpDeriv
 
 case class NoRefutationFound() extends TstpDerivationError {
   def message: String = "no refutation found as there is no unique $false formula in the derivation"
+}
+
+case class AmbiguousRefutationLabelsFound(labels: Seq[String]) extends TstpDerivationError {
+  def message: String = s"no refutation found as there are multiple $$false formulas in the derivation: ${labels.mkString(", ")}"
 }
 
 case class NoConjectureFound() extends TstpDerivationError {
