@@ -111,6 +111,7 @@ type VerifiedUnknownReason =
     | UnexpectedInput
     | CannotHandleIncludeDirectives
     | FileNotFound
+    | StepsWithOverloadedSymbols
 
 enum SzsStatus {
   case VerifiedGood
@@ -525,7 +526,7 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
 def tstpDerivationToProofContext(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
+): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Context] = boundary { outer ?=>
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   given context: MutableContext = ctx.newMutable
 
@@ -620,7 +621,7 @@ def tstpDerivationToProofContext(
 def checkDerivationHasNoIncorrectInferences(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization, Unit] = boundary {
+): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] = boundary {
   val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
   val context: MutableContext = ctx.newMutable
 
@@ -692,7 +693,8 @@ def checkDerivationHasNoIncorrectInferences(
 
 private def constructTstpDerivationContext(
     derivation: TstpDerivation
-): Either[IncorrectSkolemization, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
+): Either[IncorrectSkolemization | StepsWithOverloadedSymbols, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
+
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
     case step: TstpSkolemizationStep => {
       val parentFormula = derivation.get(step.parent).get.formula
@@ -728,7 +730,33 @@ private def constructTstpDerivationContext(
     }
   }
 
+  checkDerivationHasNoOverloadedSymbols(derivation).getOrBreak
+
   Right((context.toImmutable, verifiedSkolemizationsByStepName))
+}
+
+private def checkDerivationHasNoOverloadedSymbols(
+    derivation: TstpDerivation
+): Either[StepsWithOverloadedSymbols, Unit] = boundary {
+  import scala.collection.mutable
+  val symbolTable = mutable.Map.empty[String, mutable.Set[(Const, TstpDerivationStep)]]
+
+  derivation.stepsIterator.foreach { s =>
+    constants.all(s.formula).foreach { c =>
+      symbolTable.getOrElseUpdate(c.name, mutable.Set.empty) += ((c, s))
+    }
+  }
+
+  symbolTable.foreach { (symbolName, constSteps) =>
+    val constToSteps = constSteps.groupMap(_._1)(_._2)
+    if (constToSteps.size > 1) then
+      break(Left(StepsWithOverloadedSymbols(
+        symbolName,
+        constToSteps.values.flatten.toSet
+      )))
+  }
+
+  Right(())
 }
 
 type SkolemDefinition = Expr
@@ -1564,4 +1592,8 @@ case class FileNotFound(fileName: String) extends TstpDerivationError {
 
 case class UnexpectedException(e: Throwable) extends TstpDerivationError {
   override def message: String = s"unexpected exception: ${e.getMessage}"
+}
+
+case class StepsWithOverloadedSymbols(symbolName: String, steps: Set[TstpDerivationStep]) extends TstpDerivationError {
+  override def message: String = s"cannot handle overloaded symbols. symbol $symbolName occurs overloaded in the following steps: ${steps.map(_.name).mkString(", ")}"
 }

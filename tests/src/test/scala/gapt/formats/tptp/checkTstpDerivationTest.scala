@@ -1042,6 +1042,46 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
           checkDerivation(input) must beAnInstanceOf[SzsStatus.Unknown]
         }
+
+        "return unknown on input with overloaded symbols" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a, axiom, p & p(a), file('Problems/problem.p', a)).
+              |fof(c, conjecture, p & p(a), file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~(p & (p(a))), inference(negated_conjecture, [status(cth)], [c])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p & p(a)).
+              |fof(c, conjecture, p & p(a)).
+            """.stripMargin)
+          }
+
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.Unknown(StepsWithOverloadedSymbols(symbolName, steps)) =>
+              (symbolName must_== "p").and(steps.map(_.name) must_== Set("a", "c", "nc"))
+          }
+        }
+
+        "return unknown on input with overloaded symbols among different steps" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a, axiom, p, file('Problems/problem.p', a)).
+              |fof(c, conjecture, p(a), file('Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p).
+              |fof(c, conjecture, p(a)).
+            """.stripMargin)
+          }
+
+          checkDerivation0("/input") must beLike {
+            case SzsStatus.Unknown(StepsWithOverloadedSymbols(symbolName, steps)) =>
+              (symbolName must_== "p").and(steps.map(_.name) must_== Set("a", "c", "nc"))
+          }
+        }
       }
 
       "fail on plain inference with esa status if inference name is not skolemize" in {
