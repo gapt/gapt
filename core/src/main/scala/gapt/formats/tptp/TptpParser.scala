@@ -259,7 +259,7 @@ object TptpImporter {
 
   def loadAsLKRefutation(file: InputFile): Either[TstpDerivationError, LKProof] = boundary {
     val derivation = TstpDerivation.fromInputFile(file).getOrBreak
-    val uniqueRefutationLabel = derivation.nonConjectureRefutationLabels.toSeq match {
+    val uniqueRefutationLabel = derivation.nonConjectureRootRefutationLabels.toSeq match {
       case Seq()      => break(Left(NoRefutationFound()))
       case Seq(label) => label
       case labels     => break(Left(AmbiguousRefutationLabelsFound(labels)))
