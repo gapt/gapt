@@ -22,12 +22,14 @@ import gapt.utils.getOrBreak
 
 import scala.util.{Failure, Success}
 import scala.util.Try
+import scala.util.boundary
+import boundary.break
 import gapt.proofs.lk.LKProof
 import scala.util.boundary
 import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
-import gapt.formats.tptp.check.{RootedTstpDerivation, TstpDerivation, tstpDerivationToProofContext, TstpDerivationError}
+import gapt.formats.tptp.check.{TstpDerivation, tstpDerivationToProofContext, TstpDerivationError, NoRefutationFound, AmbiguousRefutationLabelsFound}
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -256,9 +258,14 @@ object TptpImporter {
     TstpDerivation.fromInputFile(file)
 
   def loadAsLKRefutation(file: InputFile): Either[TstpDerivationError, LKProof] = boundary {
-    val rootedTptpDerivation = RootedTstpDerivation.fromInputFileRefutation(file).getOrBreak
-    given context: Context = tstpDerivationToProofContext(rootedTptpDerivation.tstpDerivation).getOrBreak
-    Right(instantiateProof(ProofLink(rootedTptpDerivation.rootLabel)))
+    val derivation = TstpDerivation.fromInputFile(file).getOrBreak
+    val uniqueRefutationLabel = derivation.nonConjectureRefutationLabels.toSeq match {
+      case Seq()      => break(Left(NoRefutationFound()))
+      case Seq(label) => label
+      case labels     => break(Left(AmbiguousRefutationLabelsFound(labels)))
+    }
+    given context: Context = tstpDerivationToProofContext(derivation).getOrBreak
+    Right(instantiateProof(ProofLink(uniqueRefutationLabel)))
   }
 
   def main(args: Array[String]): Unit =

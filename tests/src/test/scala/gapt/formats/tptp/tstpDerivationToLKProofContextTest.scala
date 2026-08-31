@@ -18,7 +18,7 @@ import gapt.expr.formula.hol.HOLPosition
 import gapt.logic.Polarity.{Positive, Negative}
 import gapt.formats.tptp.check.FindSkolemizableInstance.QuantifierType.{Strong, Weak}
 
-class rootedTstpDerivationIntoLKProofContextTest extends Specification with SequentMatchers {
+class tstpDerivationIntoLKProofContextTest extends Specification with SequentMatchers {
   "FindSkolemizableInstance" should {
     "correctly detect strong quantifier instances in ∀x (P(x) → ∀x Q(x))" in {
       val f1 = fof"∀x (P(x) → ∀x Q(x))"
@@ -155,19 +155,19 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
     }
   }
 
-  "rootedTstpDerivationIntoLKProof" should {
+  "tstpDerivationToProofContext" should {
     "return proof with negated conjecture in antecedent" in {
       val input = InputFile.fromString("""
       |fof(a, axiom, ![X]: p(X)).
       |fof(c, conjecture, ![X]: p(X)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).""".stripMargin)
-      val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
+      val derivation = TstpDerivation.fromInputFile(input).get
 
-      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
+      val context = withTimeout(1.second) { tstpDerivationToProofContext(derivation, Escargot) }
 
-      lkProof must beRight.like { context =>
-        val proof = ProofLink(derivation.rootLabel)(using context)
+      context must beRight.like { context =>
+        val proof = ProofLink("cont")(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x), -(!x p(x)) :- ${Bottom()}")
       }
@@ -178,12 +178,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       |fof(a, axiom, ![X]: p(X)).
       |fof(c, conjecture, p(a)).
       |fof(end, plain, p(a), inference(instance, [status(thm)], [a])).""".stripMargin)
-      val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
+      val derivation = TstpDerivation.fromInputFile(input).get
 
-      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation) }
+      val context = withTimeout(1.second) { tstpDerivationToProofContext(derivation) }
 
-      lkProof must beRight.like { context =>
-        val proof = ProofLink(derivation.rootLabel)(using context)
+      context must beRight.like { context =>
+        val proof = ProofLink("end")(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x) :- p(a)")
       }
@@ -195,12 +195,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
       |fof(a1, axiom, ![X]: p(X)).
       |fof(c, conjecture, ![X]: p(X)).
       |fof(end, plain, ![X]: p(X), inference(instance, [status(thm)], [a1, a1])).""".stripMargin)
-      val derivation = RootedTstpDerivation.fromInputFileAndRootLabel(input, "end").toOption.get
+      val derivation = TstpDerivation.fromInputFile(input).get
 
-      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
+      val context = withTimeout(1.second) { tstpDerivationToProofContext(derivation, Escargot) }
 
-      lkProof must beRight.like { context =>
-        val proof = ProofLink(derivation.rootLabel)(using context)
+      context must beRight.like { context =>
+        val proof = ProofLink("end")(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x), !x p(x) :- !x p(x)")
       }
@@ -208,12 +208,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
 
     "work on example1_c" in {
       val input = ClasspathInputFile("proover_competition/Proofs/correct_example1_c_proof.p")
-      val derivation = RootedTstpDerivation.fromInputFileRefutation(input).toOption.get
+      val derivation = TstpDerivation.fromInputFile(input).toOption.get
 
-      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
+      val context = withTimeout(1.second) { tstpDerivationToProofContext(derivation, Escargot) }
 
-      lkProof must beRight.like { context =>
-        val proof = ProofLink(derivation.rootLabel)(using context)
+      context must beRight.like { context =>
+        val proof = ProofLink("f1")(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"p(a) & ~p(b), -(?x -(p(x) -> !y p(y))) :- ${Bottom()}")
       }
@@ -221,12 +221,12 @@ class rootedTstpDerivationIntoLKProofContextTest extends Specification with Sequ
 
     "work on example2_c" in {
       val derivationFile = ClasspathInputFile("proover_competition/Proofs/correct_example2_c_proof.p")
-      val derivation = RootedTstpDerivation.fromInputFileRefutation(derivationFile).toOption.get
+      val derivation = TstpDerivation.fromInputFile(derivationFile).get
 
-      val lkProof = withTimeout(1.second) { tstpDerivationToProofContext(derivation.tstpDerivation, Escargot) }
+      val context = withTimeout(1.second) { tstpDerivationToProofContext(derivation, Escargot) }
 
-      lkProof must beRight.like { context =>
-        val proof = ProofLink(derivation.rootLabel)(using context)
+      context must beRight.like { context =>
+        val proof = ProofLink("s5")(using context)
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x(p(x) -> p(f(x))), !x(p(x) -> p(f(x))), p(a), -p(f(f(a))), -p(f(f(a))) :- ${Bottom()}")
       }
