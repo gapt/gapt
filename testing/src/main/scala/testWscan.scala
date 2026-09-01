@@ -76,15 +76,13 @@ def runWscanTestExample(example: ClauseSetPredicateEliminationProblem, timeout: 
 
 def median(xs: Iterable[Long]): Long =
   val sorted = xs.toSeq.sorted
-  val lowerIndex = Math.floorDivExact(xs.size, 2)
-  val upperIndex = Math.ceilDivExact(xs.size, 2)
-  (sorted(lowerIndex) + sorted(upperIndex)) / 2
+  val midIndex = xs.size / 2
+  sorted(midIndex)
 
 def medianDouble(xs: Iterable[Double]): Double =
   val sorted = xs.toSeq.sorted
-  val lowerIndex = Math.floorDivExact(xs.size, 2)
-  val upperIndex = Math.ceilDivExact(xs.size, 2)
-  (sorted(lowerIndex) + sorted(upperIndex)) / 2
+  val midIndex = xs.size / 2
+  sorted(midIndex)
 
 def minMaxMedAvg[T](xs: Iterable[T])(by: T => Long): (Long, Long, Long, Double) = {
   val min = by(xs.minBy(by))
