@@ -29,7 +29,7 @@ import scala.util.boundary
 import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
-import gapt.formats.tptp.check.{TstpDerivation, tstpDerivationToProofContext, TstpDerivationError, NoRefutationFound, AmbiguousRefutationLabelsFound}
+import gapt.formats.tptp.check.{TstpDerivation, buildTstpDerivationToProofContext, TstpDerivationError, NoRefutationFound, AmbiguousRefutationLabelsFound}
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -264,7 +264,7 @@ object TptpImporter {
       case Seq(label) => label
       case labels     => break(Left(AmbiguousRefutationLabelsFound(labels)))
     }
-    given context: Context = tstpDerivationToProofContext(derivation).getOrBreak
+    given context: Context = buildTstpDerivationToProofContext(derivation).getOrBreak
     Right(instantiateProof(ProofLink(uniqueRefutationLabel)))
   }
 
