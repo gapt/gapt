@@ -1,6 +1,7 @@
 package gapt.formats.tptp.check
 
 import gapt.expr.Abs
+import gapt.expr.App
 import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.Var
@@ -79,6 +80,7 @@ import scala.util.boundary.Label
 import scala.util.control.NonFatal
 
 import boundary.break
+import gapt.utils.NameGenerator
 
 type VerifiedBadReason =
   IncorrectInference
@@ -196,7 +198,7 @@ case class TstpSkolemizationStep(
 * Represents all the information inside a TstpDerivation.
 * It guarantees that the parent relationship is acyclic.
 */
-case class TstpDerivation private (
+case class TstpDerivation private[check] (
     private val map: Map[String, TstpDerivationStep],
     private val topologicallyOrderedFromSinksToSources: Iterable[String]
 ) {
@@ -523,11 +525,13 @@ def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
 * Attempts to replay the inferences in the given TstpDerivation into a Context containing
 * LKProofs for every inference step in the TstpDerivation
 */
-def tstpDerivationToProofContext(
+def buildTstpDerivationToProofContext(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Context] = boundary { outer ?=>
-  val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
+): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
+  val verifiedSkolemizationsByStepName = verifiedSkolemizations(derivation).getOrBreak
+  val deoverloadedDerivation = deoverloadSymbols(derivation)
+  val ctx = buildTstpDerivationContext(deoverloadedDerivation, verifiedSkolemizationsByStepName)
   given context: MutableContext = ctx.newMutable
 
   def addToContext(update: => Update) = {
@@ -566,7 +570,7 @@ def tstpDerivationToProofContext(
       }
 
       case s: TstpNegatedConjectureStep => {
-        val parentFormula = derivation.get(s.parent).get.formula
+        val parentFormula = deoverloadedDerivation.get(s.parent).get.formula
 
         // in the following we construct a proof of Neg(conjecture) :- s.formula
         // which is the only thing that is necessary for the refutation.
@@ -599,7 +603,7 @@ def tstpDerivationToProofContext(
       }
 
       case s: TstpPlainInferenceStep => {
-        val parentFormulas = s.parents.map(p => derivation.get(p).get.formula)
+        val parentFormulas = s.parents.map(p => deoverloadedDerivation.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
         addToContext(proofDeclaration(s.name, proof, s.parents))
@@ -607,7 +611,7 @@ def tstpDerivationToProofContext(
     }
   }
 
-  derivation.stepsTopologicallyOrdered.foreach(handleStep)
+  deoverloadedDerivation.stepsTopologicallyOrdered.foreach(handleStep)
 
   Right(context.toImmutable)
 }
@@ -622,7 +626,9 @@ def checkDerivationHasNoIncorrectInferences(
     derivation: TstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] = boundary {
-  val (ctx, verifiedSkolemizationsByStepName) = constructTstpDerivationContext(derivation).getOrBreak
+  val verifiedSkolemizationsByStepName = verifiedSkolemizations(derivation).getOrBreak
+  val deoverloadedDerivation = deoverloadSymbols(derivation)
+  val ctx = buildTstpDerivationContext(deoverloadedDerivation, verifiedSkolemizationsByStepName)
   val context: MutableContext = ctx.newMutable
 
   def isValid(inferenceName: String, sequentToProve: Sequent[FOLFormula]): Boolean = {
@@ -630,44 +636,14 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A => Boolean): Future[Option[A]] = {
-    if futures.isEmpty then Future.successful(None)
-    else {
-      val result = Promise[Option[A]]()
-      val remaining = new AtomicInteger(futures.size)
-
-      def completedWithoutMatch(): Unit =
-        if remaining.decrementAndGet() == 0 then
-          result.trySuccess(None)
-
-      futures.foreach { future =>
-        future.onComplete {
-          case Success(value) =>
-            try {
-              if predicate(value) then result.trySuccess(Some(value))
-              else completedWithoutMatch()
-            } catch {
-              case NonFatal(error) => result.tryFailure(error)
-            }
-          case Failure(e) =>
-            result.tryFailure(e)
-        }
-      }
-
-      result.future
-    }
-  }
-
-  val futures: Seq[Future[(TstpDerivationStep, Boolean)]] = derivation.stepsIterator.toSeq.flatMap {
+  val futures: Seq[Future[(TstpDerivationStep, Boolean)]] = deoverloadedDerivation.stepsIterator.toSeq.flatMap {
     case s: TstpPlainInferenceStep => {
-      val parentFormulas = s.parents.map(p => derivation.get(p).get.formula)
+      val parentFormulas = s.parents.map(p => deoverloadedDerivation.get(p).get.formula)
       val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
-      Seq(Future {
-        (s, isValid(s.name, sequentToProve))
-      })
+      Seq(Future { (s, isValid(s.name, sequentToProve)) })
     }
     case s: TstpNegatedConjectureStep => {
-      val parentFormula = derivation.get(s.parent).get.formula
+      val parentFormula = deoverloadedDerivation.get(s.parent).get.formula
       Seq(
         Future {
           val negatedConjectureToFormulaProof =
@@ -691,10 +667,37 @@ def checkDerivationHasNoIncorrectInferences(
   }
 }
 
-private def constructTstpDerivationContext(
-    derivation: TstpDerivation
-): Either[IncorrectSkolemization | StepsWithOverloadedSymbols, (ImmutableContext, Map[String, VerifiedSkolemization])] = boundary {
+private def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A => Boolean): Future[Option[A]] = {
+  if futures.isEmpty then Future.successful(None)
+  else {
+    val result = Promise[Option[A]]()
+    val remaining = new AtomicInteger(futures.size)
 
+    def completedWithoutMatch(): Unit =
+      if remaining.decrementAndGet() == 0 then
+        result.trySuccess(None)
+
+    futures.foreach { future =>
+      future.onComplete {
+        case Success(value) =>
+          try {
+            if predicate(value) then result.trySuccess(Some(value))
+            else completedWithoutMatch()
+          } catch {
+            case NonFatal(error) => result.tryFailure(error)
+          }
+        case Failure(e) =>
+          result.tryFailure(e)
+      }
+    }
+
+    result.future
+  }
+}
+
+private def verifiedSkolemizations(
+    derivation: TstpDerivation
+): Either[IncorrectSkolemization, Map[String, VerifiedSkolemization]] = boundary {
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
     case step: TstpSkolemizationStep => {
       val parentFormula = derivation.get(step.parent).get.formula
@@ -706,9 +709,48 @@ private def constructTstpDerivationContext(
   }.toMap
 
   val verifiedSkolemDefinitions = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
-
   val _ = ensureSkolemSymbolsDistinctFromInput(derivation, verifiedSkolemDefinitions).getOrBreak
+  Right(verifiedSkolemizationsByStepName)
+}
 
+private def deoverloadSymbols(derivation: TstpDerivation): TstpDerivation = {
+  import scala.collection.mutable
+  val constTable = mutable.Map.empty[String, mutable.Set[(Const, TstpDerivationStep)]]
+
+  derivation.stepsIterator.foreach { s =>
+    constants.all(s.formula).foreach { c =>
+      constTable.getOrElseUpdate(c.name, mutable.Set.empty).add((c, s))
+    }
+  }
+
+  val renamingTable = mutable.Map.empty[Const, String]
+  val nameGenerator = new NameGenerator(Iterable.empty)
+  constTable.foreach { (symbolName, constSteps) =>
+    val constToSteps = constSteps.groupMap(_._1)(_._2)
+    constToSteps.keys.foreach { const =>
+      assert(const.name == symbolName)
+      renamingTable.getOrElseUpdate(const, nameGenerator.fresh(const.name))
+    }
+  }
+
+  def renamedFormula(formula: FOLFormula): FOLFormula =
+    renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
+
+  derivation.copy(
+    map = derivation.stepsIterator.map { s =>
+      val step = s match {
+        case s: TstpAxiomStep             => s.copy(formula = renamedFormula(s.formula))
+        case s: TstpConjectureStep        => s.copy(formula = renamedFormula(s.formula))
+        case s: TstpNegatedConjectureStep => s.copy(formula = renamedFormula(s.formula))
+        case s: TstpPlainInferenceStep    => s.copy(formula = renamedFormula(s.formula))
+        case s: TstpSkolemizationStep     => s.copy(formula = renamedFormula(s.formula))
+      }
+      (s.name, step)
+    }.toMap
+  )
+}
+
+private def buildTstpDerivationContext(derivation: TstpDerivation, verifiedSkolemizationsByStepName: Map[String, VerifiedSkolemization]): ImmutableContext = {
   val context: MutableContext = MutableContext.default()
   context += Sort(Ti)
 
@@ -722,41 +764,23 @@ private def constructTstpDerivationContext(
       addConstantToContextIfNotPresent(c)
     }
   }
-  verifiedSkolemDefinitions.foreach {
-    case (_, (symbol, definition, _)) => {
+
+  verifiedSkolemizationsByStepName.foreach {
+    case (_, skolemization) => {
       import gapt.proofs.context.facet.skolemFunsFacet
-      addConstantToContextIfNotPresent(symbol)
-      context += { ctx => ctx.state.update[SkolemFunctions](_ + (symbol, definition)) }
+      addConstantToContextIfNotPresent(skolemization.skolemSymbol)
+      context += { ctx => ctx.state.update[SkolemFunctions](_ + (skolemization.skolemSymbol, skolemization.skolemDefinition)) }
     }
   }
 
-  checkDerivationHasNoOverloadedSymbols(derivation).getOrBreak
-
-  Right((context.toImmutable, verifiedSkolemizationsByStepName))
+  context.toImmutable
 }
 
-private def checkDerivationHasNoOverloadedSymbols(
-    derivation: TstpDerivation
-): Either[StepsWithOverloadedSymbols, Unit] = boundary {
-  import scala.collection.mutable
-  val symbolTable = mutable.Map.empty[String, mutable.Set[(Const, TstpDerivationStep)]]
-
-  derivation.stepsIterator.foreach { s =>
-    constants.all(s.formula).foreach { c =>
-      symbolTable.getOrElseUpdate(c.name, mutable.Set.empty) += ((c, s))
-    }
-  }
-
-  symbolTable.foreach { (symbolName, constSteps) =>
-    val constToSteps = constSteps.groupMap(_._1)(_._2)
-    if (constToSteps.size > 1) then
-      break(Left(StepsWithOverloadedSymbols(
-        symbolName,
-        constToSteps.values.flatten.toSet
-      )))
-  }
-
-  Right(())
+def renameConsts(renaming: PartialFunction[Const, String])(expr: Expr): Expr = expr match {
+  case v: Var         => v
+  case c: Const       => Const(renaming.applyOrElse(c, _ => c.name), c.ty, c.params)
+  case App(head, arg) => App(renameConsts(renaming)(head), renameConsts(renaming)(arg))
+  case Abs(v, body)   => Abs(v, renameConsts(renaming)(body))
 }
 
 type SkolemDefinition = Expr
@@ -881,6 +905,20 @@ private def ensureCompatibleSkolemDefinitions(
   Right(verifiedSkolemDefinitions)
 }
 
+private def incompatibleSkolemDefinitions(
+    skolemizationsByStepName: Map[String, VerifiedSkolemization]
+): Map[String, VerifiedSkolemization] = {
+  skolemizationsByStepName.toSeq.combinations(2).foldLeft(Map.empty) {
+    case (acc, Seq((leftStep, leftSkolemization), (rightStep, rightSkolemization))) => {
+      val leftSymbol = leftSkolemization.skolemSymbol
+      val rightSymbol = rightSkolemization.skolemSymbol
+      assert(leftSymbol.name == rightSymbol.name, s"skolem symbol names do not match: ${leftSymbol.name} != ${rightSymbol.name}")
+      acc ++ Set((leftStep, leftSkolemization), (rightStep, rightSkolemization))
+    }
+    case _ => throw new AssertionError("cannot happen as we only select 2 combinations")
+  }
+}
+
 private def ensureSkolemSymbolsDistinctFromInput(
     derivation: TstpDerivation,
     verifiedSkolemDefinitions: Map[String, (FOLFunctionConst, Expr, Set[String])]
@@ -903,20 +941,6 @@ private def ensureSkolemSymbolsDistinctFromInput(
   }
 
   Right(())
-}
-
-private def incompatibleSkolemDefinitions(
-    skolemizationsByStepName: Map[String, VerifiedSkolemization]
-): Map[String, VerifiedSkolemization] = {
-  skolemizationsByStepName.toSeq.combinations(2).foldLeft(Map.empty) {
-    case (acc, Seq((leftStep, leftSkolemization), (rightStep, rightSkolemization))) => {
-      val leftSymbol = leftSkolemization.skolemSymbol
-      val rightSymbol = rightSkolemization.skolemSymbol
-      assert(leftSymbol.name == rightSymbol.name, s"skolem symbol names do not match: ${leftSymbol.name} != ${rightSymbol.name}")
-      acc ++ Set((leftStep, leftSkolemization), (rightStep, rightSkolemization))
-    }
-    case _ => throw new AssertionError("cannot happen as we only select 2 combinations")
-  }
 }
 
 private def reportIncorrectSkolemization[T](
