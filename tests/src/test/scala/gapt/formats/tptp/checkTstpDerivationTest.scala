@@ -1214,8 +1214,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
   "TstpDerivation" should {
     "handle nested inference sources" in {
       val input = InputFile.fromString("""
-        |fof(a1, axiom, p).
-        |fof(c, conjecture, p).
+        |fof(a1, axiom, p, file('problem.p', a1)).
+        |fof(c, conjecture, p, file('problem.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
@@ -1224,8 +1224,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "succeed for input where conjecture contains universal quantifier" in {
       val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X)).
-        |fof(c, conjecture, ![X]: p(X)).
+        |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+        |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
         |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
         |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
@@ -1239,8 +1239,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "compute all roots" in {
       val input = InputFile.fromString("""
-        |fof(a, axiom, p).
-        |fof(c, conjecture, p).
+        |fof(a, axiom, p, file('problem.p', a)).
+        |fof(c, conjecture, p, file('problem.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(root1, plain, $false, inference(falsum, [status(thm)], [nc, a])).
         |fof(root2, plain, ~p | q, inference(or, [status(thm)], [nc])).""".stripMargin)
@@ -1251,9 +1251,9 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "include axioms in rootLabels if they are roots" in {
       val input = InputFile.fromString("""
-        |fof(a, axiom, p).
-        |fof(b, axiom, q).
-        |fof(c, conjecture, p).
+        |fof(a, axiom, p, file('problem.p', a)).
+        |fof(b, axiom, q, file('problem.p', b)).
+        |fof(c, conjecture, p, file('problem.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(root, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
       TstpDerivation.fromInputFile(input) must beRight.like {
@@ -1263,8 +1263,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "do not include conjectures in rootLabels, even if they have no children" in {
       val input = InputFile.fromString("""
-        |fof(a, axiom, $false).
-        |fof(c, conjecture, p).
+        |fof(a, axiom, $false, file('problem.p', a)).
+        |fof(c, conjecture, p, file('problem.p', c)).
         |fof(root, plain, $false, inference(falsum, [status(thm)], [a])).""".stripMargin)
       TstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRootLabels must_== Set("root")
@@ -1273,8 +1273,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "compute all refutation labels" in {
       val input = InputFile.fromString("""
-        |fof(a, axiom, p).
-        |fof(c, conjecture, p).
+        |fof(a, axiom, p, file('problem.p', a)).
+        |fof(c, conjecture, p, file('problem.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(refute1, plain, $false, inference(falsum, [status(thm)], [nc, a])).
         |fof(refute2, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
@@ -1285,8 +1285,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "do not include conjecture in refutation labels even if it is $false" in {
       val input = InputFile.fromString("""
-        |fof(a, axiom, $false).
-        |fof(c, conjecture, $false).""".stripMargin)
+        |fof(a, axiom, $false, file('problem.p', a)).
+        |fof(c, conjecture, $false, file('problem.p', c)).""".stripMargin)
       TstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRefutationLabels must_== Set("a")
       }
@@ -1299,8 +1299,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
     "parse skolemization steps" in {
       def simpleSkolemConstantDerivation(skolemizationStep: String) = InputFile.fromString(s"""
-      |fof(a, axiom, ![X]: p(X)).
-      |fof(c, conjecture, ![X]: p(X)).
+      |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+      |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |$skolemizationStep
       |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
@@ -1414,8 +1414,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "parse skolemization symbol with context symbols" in {
         val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X, a)).
-        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y)).
+        |fof(a, axiom, ![X]: p(X, a), file('problem.p', a)).
+        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y), file('problem.p', c)).
         |fof(nc, negated_conjecture, ![Y]: ?[X]: ~p(X, Y), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ![Y]: ~p(sK0(Y), Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [nc])).
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
@@ -1434,8 +1434,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "parse skolemization symbol with multiple context symbols" in {
         val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X, a, b)).
-        |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z)).
+        |fof(a, axiom, ![X]: p(X, a, b), file('problem.p', a)).
+        |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z), file('problem.p', c)).
         |fof(nc, negated_conjecture, ![Y, Z]: ?[X]: ~p(X, Y, Z), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ![Y, Z]: ~p(sK0(Y, Z), Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y, Z))], [nc])).
         |fof(axiom_instance, plain, p(sK0(a, b), a, b), inference(instance, [status(thm)], [a])).
@@ -1454,8 +1454,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "should parse skolemize step where order of context variables doesn't match, but they are equal as sets" in {
         val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X, a, b)).
-        |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z)).
+        |fof(a, axiom, ![X]: p(X, a, b), file('problem.p', a)).
+        |fof(c, conjecture, ?[Y, Z]: ![X]: p(X, Y, Z), file('problem.p', c)).
         |fof(nc, negated_conjecture, ![Y, Z]: ?[X]: ~p(X, Y, Z), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ![Y, Z]: ~p(sK0(Y, Z), Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Z, Y))], [nc])).
         |fof(axiom_instance, plain, p(sK0(b, a), a, b), inference(instance, [status(thm)], [a])).
@@ -1474,8 +1474,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemize with skolem term that has non variable arguments" in {
         val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X, a)).
-        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y)).
+        |fof(a, axiom, ![X]: p(X, a), file('problem.p', a)).
+        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y), file('problem.p', c)).
         |fof(nc, negated_conjecture, ![Y]: ?[X]: ~p(X, Y), inference(negated_conjecture, [status(cth)], [c])).
         |fof(nc_skolemized, plain, ![Y]: ~p(sK0(Y), Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(a))], [nc])).
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
@@ -1488,8 +1488,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "return cannot handle input on introduced choice_axiom" in {
         val input = InputFile.fromString("""
-        |fof(a, axiom, ![X]: p(X, a)).
-        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y)).
+        |fof(a, axiom, ![X]: p(X, a), file('problem.p', a)).
+        |fof(c, conjecture, ?[Y]: ![X]: p(X, Y), file('problem.p', c)).
         |fof(nc, negated_conjecture, ![Y]: ?[X]: ~p(X, Y), inference(negated_conjecture, [status(cth)], [c])).
         |fof(ca, plain, ![Y]: (?[X]: ~p(X, Y) => ~p(sK0(Y), Y)), introduced(choice_axiom,[])).
         |fof(nc_skolemized, plain, ![Y]: ~p(sK0(Y), Y), inference(skolemization, [status(esa), new_symbols(skolem, [sK0])], [nc, ca])).
@@ -1505,7 +1505,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
     "skolemization" in {
       "fail on skolemization step in which the bound variable does not occur in the parent formula" in {
         val input = InputFile.fromString("""
-            |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
+            |fof(a, axiom, ![X]: ?[Y]: p(X, Y), file('problem.p', a)).
             |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
           """.stripMargin)
         val derivation = TstpDerivation.fromInputFile(input).toOption.get
@@ -1514,7 +1514,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "succeed on skolemization step in which the bound variable occurs in an inner existential quantifier" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y, Z]: p(X, Y, Z)).
+          |fof(a, axiom, ![X]: ?[Y, Z]: p(X, Y, Z), file('problem.p', a)).
           |fof(s, plain, ![X]: ?[Y]: p(X, Y, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
         """.stripMargin)
         val derivation = TstpDerivation.fromInputFile(input).toOption.get
@@ -1523,7 +1523,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "succeed on skolemization step that has no existential quantifier (but a strong universal)" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ~(![Y]: p(X,Y))).
+          |fof(a, axiom, ![X]: ~(![Y]: p(X,Y)), file('problem.p', a)).
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1532,7 +1532,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step in which the bound variable does not correspond to an existential quantifier" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X,Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0)], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1541,7 +1541,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step in which the variable is not bound to an existential quantifier" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: p(X,Y)).
+          |fof(a, axiom, ![X]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X,sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0)], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1550,7 +1550,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step in which the variable is bound to an universal quantifier" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X, Y]: p(X,Y)).
+          |fof(a, axiom, ![X, Y]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1559,7 +1559,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step where the resulting formula is not the skolemization of the parent formula" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: p(X,Y)).
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1568,7 +1568,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step whose actual context variables do not match the claimed context variables" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: ![Z]: p(X,Y,Z)).
+          |fof(a, axiom, ![X]: ?[Y]: ![Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Z]: p(X,sK0(X,Z), Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X,Z))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1577,7 +1577,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "succeed on skolemization step which claims the same context variables as the parent formula, but in a different order" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
+          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1586,7 +1586,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step with non-distinct context variables" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X, X]: ?[Y]: p(Y)).
+          |fof(a, axiom, ![X, X]: ?[Y]: p(Y), file('problem.p', a)).
           |fof(s, plain, ![X, X]: p(sK(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1602,7 +1602,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step with skolem term that uses the same context variable multiple times" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
+          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1615,7 +1615,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step which contains a context variable that does not occur in the parent formula" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z)).
+          |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,W))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1624,7 +1624,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization step that introduces a symbol that is already used in input" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X)), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X, a(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
         """.stripMargin)
         val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
@@ -1635,8 +1635,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization steps which introduce the same symbol name, even if not used in parent" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ?[X]: p(X)).
-          |fof(b, axiom, ?[X]: q(X)).
+          |fof(a, axiom, ?[X]: p(X), file('problem.p', a)).
+          |fof(b, axiom, ?[X]: q(X), file('problem.p', b)).
           |fof(s1, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
           |fof(s2, plain, q(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [b])).
           |fof(s, plain, p(sK0) & q(sK0), inference(and, [status(thm)], [s1, s2])).
@@ -1656,8 +1656,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "fail on skolemization steps which introduce the same symbol name, even if they have different arity" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ?[X]: p(X)).
-          |fof(b, axiom, ![Y]: ?[X]: q(Y, X)).
+          |fof(a, axiom, ?[X]: p(X), file('problem.p', a)).
+          |fof(b, axiom, ![Y]: ?[X]: q(Y, X), file('problem.p', b)).
           |fof(s1, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
           |fof(s2, plain, ![Y]: q(Y, sK0(Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [b])).
           |fof(s, plain, p(sK0) & ![Y]: q(Y, sK0(Y)), inference(and, [status(thm)], [s1, s2])).
@@ -1676,8 +1676,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "suceed on skolemization step that introduces a symbol that is used in derivation in an unused axiom" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X))).
-          |fof(b, axiom, ![X]: q(X, b(X))).
+          |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X)), file('problem.p', a)).
+          |fof(b, axiom, ![X]: q(X, b(X)), file('problem.p', b)).
           |fof(s, plain, ![X]: p(X, b(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [b]), skolemize(Y, b(X))], [a])).
           |fof(i, plain, q(c, b(c)) & p(c, b(c), a(c)), inference(and, [status(thm)], [a, s])).
         """.stripMargin)
@@ -1687,8 +1687,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
 
       "suceed on correct skolemization step with context variables" in {
         val input = InputFile.fromString("""
-          |fof(a, axiom, ?[X]: ![Y, Z]: p(X,Y,Z)).
-          |fof(c, conjecture, ?[X]: ![Y]: p(X,Y,Y)).
+          |fof(a, axiom, ?[X]: ![Y, Z]: p(X,Y,Z), file('problem.p', a)).
+          |fof(c, conjecture, ?[X]: ![Y]: p(X,Y,Y), file('problem.p', c)).
           |fof(nc, negated_conjecture, ![X]: ?[Z]: ~p(X,Z,Z), inference(negated_conjecture, [status(cth)], [c])).
           |fof(ncs, plain, ![X]: ~p(X, sK0(X), sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [nc])).
           |fof(as, plain, ![Y,Z]: p(sK1, Y, Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemize(X, sK1)], [a])).
@@ -1848,8 +1848,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
   "tstpDerivationToProofContext" should {
     "return proof with negated conjecture in antecedent" in {
       val input = InputFile.fromString("""
-      |fof(a, axiom, ![X]: p(X)).
-      |fof(c, conjecture, ![X]: p(X)).
+      |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+      |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).""".stripMargin)
       val derivation = TstpDerivation.fromInputFile(input).get
@@ -1865,8 +1865,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
 
     "return proof with conjecture in succeedent" in {
       val input = InputFile.fromString("""
-      |fof(a, axiom, ![X]: p(X)).
-      |fof(c, conjecture, p(a)).
+      |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+      |fof(c, conjecture, p(a), file('problem.p', c)).
       |fof(end, plain, p(a), inference(instance, [status(thm)], [a])).""".stripMargin)
       val derivation = TstpDerivation.fromInputFile(input).get
 
@@ -1882,8 +1882,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
     // this more faithfully represents the TPTP derivation
     "should return multiple axioms in antecedent if they are used multiple times" in {
       val input = InputFile.fromString("""
-      |fof(a1, axiom, ![X]: p(X)).
-      |fof(c, conjecture, ![X]: p(X)).
+      |fof(a1, axiom, ![X]: p(X), file('problem.p', a1)).
+      |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
       |fof(end, plain, ![X]: p(X), inference(instance, [status(thm)], [a1, a1])).""".stripMargin)
       val derivation = TstpDerivation.fromInputFile(input).get
 
@@ -1926,8 +1926,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "returns skolemization proof for correct skolemization step without context variables" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ?[X]: p(X)).
-            |fof(c, conjecture, ?[X]: p(X)).
+            |fof(a, axiom, ?[X]: p(X), file('problem.p', a)).
+            |fof(c, conjecture, ?[X]: p(X), file('problem.p', c)).
             |fof(nc, negated_conjecture, ![X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
             |fof(i, plain, ~p(sK0), inference(instance, [status(thm)], [nc])).
@@ -1941,7 +1941,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "succeeds on derivation that ends in a formula containing a skolem symbol without context variables" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ?[X]: p(X)).
+            |fof(a, axiom, ?[X]: p(X), file('problem.p', a)).
             |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
         """.stripMargin
         )
@@ -1952,7 +1952,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "succeeds on derivation that ends in a formula containing a skolem symbol with context variables" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: ?[Y]: p(X, Y)).
+            |fof(a, axiom, ![X]: ?[Y]: p(X, Y), file('problem.p', a)).
             |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin
         )
@@ -1963,8 +1963,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "fails if two skolemizations with the same symbol happen even if they are on the same formula" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(ncs1, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(ncs2, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
@@ -1986,9 +1986,9 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "fails if two skolemization steps have incompatible definitions" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(a2, axiom, ?[X]: q(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+            |fof(a2, axiom, ?[X]: q(X), file('problem.p', a2)).
+            |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(ncs1, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(ncs2, plain, q(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a2])).
@@ -2012,9 +2012,9 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "fails if two skolemization steps have the same symbols, even if they have different arities" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(a2, axiom, ![Y]: ?[X]: q(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+            |fof(a2, axiom, ![Y]: ?[X]: q(X), file('problem.p', a2)).
+            |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(ncs1, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(ncs2, plain, ![Y]: q(sK0(Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [a2])).
@@ -2038,8 +2038,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "succeeds if two skolemizations with distinct symbols happen, even if they are on the same formula" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(ncs1, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
             |fof(ncs2, plain, ~p(sK1), inference(skolemize, [status(esa), new_symbols(skolem, [sK1]), skolemize(X, sK1)], [nc])).
@@ -2055,7 +2055,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "picks outermost bound variable to skolemize if there are multiple with the same name" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: ?[Y]: ?[Y]: p(X, Y)).
+            |fof(a, axiom, ![X]: ?[Y]: ?[Y]: p(X, Y), file('problem.p', a)).
             |fof(s, plain, ![X]: ?[Y]: p(X, Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin
         )
@@ -2066,8 +2066,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "succeed on input where a skolemization step introduces symbol that is used in plain inference, but not in conjecture or axiom" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ![X]: p(X)).
-            |fof(c, conjecture, ![X]: p(X)).
+            |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
+            |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
             |fof(p, plain, p(c) | ~p(c), inference(tautology, [status(thm)], [])).
             |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(ncs, plain, ~p(c), inference(skolemize, [status(esa), new_symbols(skolem, [c]), skolemize(X, c)], [nc])).
@@ -2082,8 +2082,8 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       "succeeds on skolemization step whose claimed formula is not equal, but alpha-equivalent to expected skolemized formula" in {
         val input = InputFile.fromString(
           """
-            |fof(a, axiom, ?[Y]:![X]: p(Y, X)).
-            |fof(c, conjecture, ?[Y]:![X]: p(Y, X)).
+            |fof(a, axiom, ?[Y]:![X]: p(Y, X), file('problem.p', a)).
+            |fof(c, conjecture, ?[Y]:![X]: p(Y, X), file('problem.p', c)).
             |fof(nc, negated_conjecture, ![Y]:?[X]: ~p(Y, X), inference(negated_conjecture, [status(cth)], [c])).
             |fof(ncs, plain, ![Z]: ~p(Z, sK0(Z)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [nc])).
             |fof(ai, plain, $false, inference(instance, [status(thm)], [a, ncs])).

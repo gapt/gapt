@@ -114,11 +114,17 @@ sealed trait TstpDerivationStep {
   def parents: Seq[String]
 }
 
+trait FileSourceStep {
+  def problemFile: String
+  def problemFileLabel: String
+}
+
 case class TstpConjectureStep(
     name: String,
     formula: FOLFormula,
-    annotationsOption: Option[Annotations]
-) extends TstpDerivationStep {
+    problemFile: String,
+    problemFileLabel: String
+) extends TstpDerivationStep with FileSourceStep {
   def parents: Seq[String] = Seq.empty
   def role: String = "conjecture"
 }
@@ -126,8 +132,9 @@ case class TstpConjectureStep(
 case class TstpAxiomStep(
     name: String,
     formula: FOLFormula,
-    annotationsOption: Option[Annotations]
-) extends TstpDerivationStep {
+    problemFile: String,
+    problemFileLabel: String
+) extends TstpDerivationStep with FileSourceStep {
   def parents: Seq[String] = Seq.empty
   def role: String = "axiom"
 }
@@ -342,7 +349,8 @@ object TstpDerivation {
       annotations: Option[Annotations]
   ): Either[TstpDerivationError, TstpAxiomStep] = boundary {
     val fol = parseFOLFormula(formula).getOrBreak
-    Right(TstpAxiomStep(name, fol, annotations))
+    val (fileName, label) = parseFileDirective(name, annotations).getOrBreak
+    Right(TstpAxiomStep(name, fol, fileName, label))
   }
 
   private def parseConjectureStep(
@@ -351,7 +359,30 @@ object TstpDerivation {
       annotations: Option[Annotations]
   ): Either[TstpDerivationError, TstpConjectureStep] = boundary {
     val fol = parseFOLFormula(formula).getOrBreak
-    Right(TstpConjectureStep(name, fol, annotations))
+    val (fileName, label) = parseFileDirective(name, annotations).getOrBreak
+    Right(TstpConjectureStep(name, fol, fileName, label))
+  }
+
+  private def parseFileDirective(
+      stepName: String,
+      annotationsOption: Option[Annotations]
+  ): Either[
+    TstpDerivationError,
+    (fileName: String, label: String)
+  ] = boundary {
+    val annotations = annotationsOption.getOrElse {
+      break(Left(SourceMissing(stepName)))
+    }
+    val (fileName, label) = annotations.source match {
+      case Source.File(fileName, Some(label)) =>
+        (fileName, label)
+      case Source.File(_, None) =>
+        break(Left(FileDirectiveLabelMissing(stepName)))
+      case _ =>
+        break(Left(FileDirectiveMissing(stepName)))
+    }
+
+    Right((fileName = fileName, label = label))
   }
 
   private def parseNegatedConjectureStep(
@@ -1140,19 +1171,8 @@ def checkDerivationHasCorrectFileDirectives(derivation: TstpDerivation, fileName
   val parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
   val innerResolver = resolver.relativeTo(os.Path(fileName) / os.up)
   derivation.stepsIterator.foreach {
-    case s: (TstpAxiomStep | TstpConjectureStep) => {
-      val annotations = s.annotationsOption.getOrElse {
-        break(Left(SourceMissing(s.name)))
-      }
-      val (fileName, label) = annotations.source match {
-        case Source.File(fileName, Some(label)) =>
-          (fileName, label)
-        case Source.File(_, None) =>
-          break(Left(FileDirectiveLabelMissing(s.name)))
-        case _ =>
-          break(Left(FileDirectiveMissing(s.name)))
-      }
-
+    case s: FileSourceStep => {
+      val (fileName, label) = (s.problemFile, s.problemFileLabel)
       val tptpFile = parseTptpMemoTable.getOrElseUpdate(
         fileName, {
           val tptpFileContent = innerResolver(fileName).getOrElse {
