@@ -1312,8 +1312,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc]))."
         )
         TstpDerivation.fromInputFile(input) must beRight.like {
-          case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
-              case s: TstpSkolemizationStep => {
+          case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
+              case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLConst("sK0"))
                   .and(s.contextVariables must_=== Seq.empty)
                   .and(s.skolemizedSymbol must_=== FOLVar("X"))
@@ -1422,8 +1422,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
         TstpDerivation.fromInputFile(input) must beRight.like {
-          case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
-              case s: TstpSkolemizationStep => {
+          case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
+              case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 1))
                   .and(s.contextVariables must_=== Seq(FOLVar("Y")))
                   .and(s.skolemizedSymbol must_=== FOLVar("X"))
@@ -1442,8 +1442,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
         TstpDerivation.fromInputFile(input) must beRight.like {
-          case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
-              case s: TstpSkolemizationStep => {
+          case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
+              case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
                   .and(s.contextVariables must_=== Seq(FOLVar("Y"), FOLVar("Z")))
                   .and(s.skolemizedSymbol must_=== FOLVar("X"))
@@ -1462,8 +1462,8 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
         TstpDerivation.fromInputFile(input) must beRight.like {
-          case derivation => derivation.get("nc_skolemized") must beSome[TstpDerivationStep].like {
-              case s: TstpSkolemizationStep => {
+          case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
+              case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
                   .and(s.contextVariables must_=== Seq(FOLVar("Z"), FOLVar("Y")))
                   .and(s.skolemizedSymbol must_=== FOLVar("X"))

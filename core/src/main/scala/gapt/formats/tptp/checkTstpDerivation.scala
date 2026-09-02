@@ -11,7 +11,6 @@ import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
-import gapt.expr.formula.fol.FOLFunction
 import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
@@ -107,86 +106,20 @@ enum SzsStatus {
   def statusLine: String = s"% SZS status $status"
 }
 
-sealed trait TstpDerivationStep {
-  def name: String
-  def role: String
-  def formula: FOLFormula
-  def parents: Seq[String]
-}
-
-trait FileSourceStep {
-  def problemFile: String
-  def problemFileLabel: String
-}
-
-case class TstpConjectureStep(
-    name: String,
-    formula: FOLFormula,
-    problemFile: String,
-    problemFileLabel: String
-) extends TstpDerivationStep with FileSourceStep {
-  def parents: Seq[String] = Seq.empty
-  def role: String = "conjecture"
-}
-
-case class TstpAxiomStep(
-    name: String,
-    formula: FOLFormula,
-    problemFile: String,
-    problemFileLabel: String
-) extends TstpDerivationStep with FileSourceStep {
-  def parents: Seq[String] = Seq.empty
-  def role: String = "axiom"
-}
-
-case class TstpPlainInferenceStep(
-    name: String,
-    formula: FOLFormula,
-    parents: Seq[String],
-    annotations: Annotations,
-    source: Source.Inference
-) extends TstpDerivationStep {
-  def role: String = "plain"
-}
-
-case class TstpNegatedConjectureStep(
-    name: String,
-    formula: FOLFormula,
-    parent: String,
-    annotations: Annotations,
-    source: Source.Inference
-) extends TstpDerivationStep {
-  def role: String = "negated_conjecture"
-  def parents: Seq[String] = Seq(parent)
-}
-
-case class TstpSkolemizationStep(
-    name: String,
-    formula: FOLFormula,
-    parent: String,
-    source: Source.Inference,
-    newSkolemSymbol: FOLFunctionConst,
-    contextVariables: Seq[FOLVar],
-    skolemizedSymbol: FOLVar,
-    annotations: Annotations
-) extends TstpDerivationStep {
-  def parents: Seq[String] = Seq(parent)
-  def role: String = "plain"
-}
-
 /**
 * Represents all the information inside a TstpDerivation.
-* It guarantees that the parent relationship is acyclic.
+* It guarantees unique step names, existing parents, an acyclic parent
+* relationship, and valid role relationships between steps.
 */
 case class TstpDerivation private[check] (
-    private val map: Map[String, TstpDerivationStep],
+    private val map: Map[String, ParsedTstpDerivationStep],
     private val topologicallyOrderedFromSinksToSources: Iterable[String]
 ) {
-  def stepsIterator: Iterator[TstpDerivationStep] = map.valuesIterator
-  def stepsTopologicallyOrdered: Iterable[TstpDerivationStep] = topologicallyOrderedFromSinksToSources.map(map(_))
-  def get(label: String): Option[TstpDerivationStep] = map.get(label)
+  def stepsIterator: Iterator[ParsedTstpDerivationStep] = map.valuesIterator
+  def stepsTopologicallyOrdered: Iterable[ParsedTstpDerivationStep] = topologicallyOrderedFromSinksToSources.map(map(_))
+  def get(label: String): Option[ParsedTstpDerivationStep] = map.get(label)
 
-  def parentsOf(formulaName: String): Seq[TstpDerivationStep] = {
+  def parentsOf(formulaName: String): Seq[ParsedTstpDerivationStep] = {
     map(formulaName).parents.map(p => map(p))
   }
 
@@ -211,48 +144,27 @@ case class TstpDerivation private[check] (
 
 object TstpDerivation {
 
-  /** Loads a TstpDerivation from a given input file and performs the following checks, otherwise fails with an error:
-  * - input is syntactically correct TPTP
-  * - there are no steps with duplicate labels
+  /** Parses and validates a TstpDerivation from a given input file.
   *
   * @param input
   * @return the TstpDerivation or an Error if there was an issue
   */
-  def fromInputFile(input: InputFile): Either[TstpDerivationError, TstpDerivation] = {
+  def fromInputFile(input: InputFile): Either[TstpDerivationError, TstpDerivation] =
+    ParsedTstpDerivation.fromInputFile(input).flatMap(fromParsed)
+
+  /** Validates a parsed derivation and constructs a [[TstpDerivation]]. */
+  def fromParsed(parsed: ParsedTstpDerivation): Either[TstpDerivationError, TstpDerivation] = {
     for
-      tptp <- loadAsTptpFile(input)
-      steps <- intoAnnotatedFormulaSteps(tptp)
-      map <- intoUniqueMap(steps)
+      map <- intoUniqueMap(parsed.steps)
       checkedDerivation <- intoCheckedTstpDerivation(map)
     yield checkedDerivation
   }
 
-  // ensures the input file is syntactically correct TPTP
-  private def loadAsTptpFile(
-      input: InputFile
-  ): Either[InputSyntaxError, TptpFile] = {
-    try Right(TptpImporter.loadWithoutIncludes(input))
-    catch // In this case the input file was not valid TPTP
-      case e: IllegalArgumentException => Left(InputSyntaxError(e))
-  }
-
-  // ensures that there are only AnnotatedFormula inputs
-  private def intoAnnotatedFormulaSteps(
-      tptpFile: TptpFile
-  ): Either[CannotHandleIncludeDirectives, Seq[AnnotatedFormula]] = boundary {
-    val formulas = tptpFile.inputs.map {
-      case i: IncludeDirective =>
-        break(Left(CannotHandleIncludeDirectives()))
-      case a: AnnotatedFormula => a
-    }
-    Right(formulas)
-  }
-
   // ensures there are no steps with duplicate labels
   private def intoUniqueMap(
-      steps: Seq[AnnotatedFormula]
-  ): Either[DistinctFormulasWithSameName, Map[String, AnnotatedFormula]] = boundary {
-    val map = steps.foldLeft(Map.empty[String, AnnotatedFormula]) { (map, step) =>
+      steps: Seq[ParsedTstpDerivationStep]
+  ): Either[DistinctFormulasWithSameName, Map[String, ParsedTstpDerivationStep]] = boundary {
+    val map = steps.foldLeft(Map.empty[String, ParsedTstpDerivationStep]) { (map, step) =>
       map.updatedWith(step.name) {
         case Some(formula) =>
           break(Left(DistinctFormulasWithSameName(formula.name)))
@@ -265,13 +177,11 @@ object TstpDerivation {
   }
 
   private def intoCheckedTstpDerivation(
-      map: Map[String, AnnotatedFormula]
+      map: Map[String, ParsedTstpDerivationStep]
   ): Either[TstpDerivationError, TstpDerivation] = boundary {
     val topologicalOrder = sortTopologically(map).getOrBreak
 
-    val steps = map.values.map { a => a.name -> parseStep(a).getOrBreak }.toMap
-
-    val negatedConjectures = steps.values.collect { case s: TstpNegatedConjectureStep => s }
+    val negatedConjectures = map.values.collect { case s: ParsedTstpNegatedConjectureStep => s }
     negatedConjectures.find(c => map.hasNonConjectureParent(c.name)).map { s =>
       break(Left(NegatedConjectureStepWithNonConjectureParent(s.name)))
     }
@@ -280,21 +190,21 @@ object TstpDerivation {
       break(Left(UnexpectedInput("got more than one negated conjecture")))
     }
 
-    val plainInferences = steps.values.collect { case a: TstpPlainInferenceStep => a }
+    val plainInferences = map.values.collect { case a: ParsedTstpPlainInferenceStep => a }
     plainInferences.find(s => map.hasConjectureParent(s.name)).map { s =>
       break(Left(PlainInferenceWithConjectureParent(s)))
     }
 
-    Right(TstpDerivation(steps, topologicalOrder))
+    Right(TstpDerivation(map, topologicalOrder))
   }
 
   private def sortTopologically(
-      map: Map[String, AnnotatedFormula]
+      map: Map[String, ParsedTstpDerivationStep]
   ): Either[NonExistentStep | InferenceCycle, Iterable[String]] = boundary {
     import scala.collection.mutable
 
     val visited = mutable.Set[String]()
-    val reachableSteps = mutable.Buffer[AnnotatedFormula]()
+    val reachableSteps = mutable.Buffer[ParsedTstpDerivationStep]()
     def walk(label: String): Unit = {
       if !visited.contains(label) then {
         visited += label
@@ -302,7 +212,7 @@ object TstpDerivation {
           break(Left(NonExistentStep(label)))
         }
         reachableSteps += formula
-        formula.parentLabels.foreach(walk)
+        formula.parents.foreach(walk)
       }
     }
     map.keysIterator.foreach(walk)
@@ -315,196 +225,9 @@ object TstpDerivation {
     Right(usedStepsLeafsToRoot.map(_.name))
   }
 
-  private def parseStep(annotatedFormula: AnnotatedFormula): Either[TstpDerivationError, TstpDerivationStep] = boundary {
-    val AnnotatedFormula(language, name, role, formula, annotations) = annotatedFormula
-    language match {
-      case "fof" | "cnf" => // we only support these languages for now
-      case language =>
-        break(Left(UnexpectedInput(s"unsupported input language $language. used in input $annotatedFormula")))
-    }
-    role match {
-      case "axiom" | "hypothesis" =>
-        parseAxiomStep(name, formula, annotations)
-      case "conjecture" =>
-        parseConjectureStep(name, formula, annotations)
-      case "negated_conjecture" =>
-        parseNegatedConjectureStep(name, formula, annotations)
-      case "plain" =>
-        parsePlainInferenceStep(name, formula, annotations)
-      case r =>
-        break(Left(UnexpectedInput(s"unsupported input role $r. used in input $annotatedFormula")))
-    }
-  }
-
-  private def parseFOLFormula(formula: Formula): Either[TstpDerivationError, FOLFormula] = {
-    if !formula.isInstanceOf[FOLFormula] then
-      Left(UnexpectedInput(s"expected FOL formula, got ${formula.getClass}"))
-    else
-      Right(formula.asInstanceOf[FOLFormula])
-  }
-
-  private def parseAxiomStep(
-      name: String,
-      formula: Formula,
-      annotations: Option[Annotations]
-  ): Either[TstpDerivationError, TstpAxiomStep] = boundary {
-    val fol = parseFOLFormula(formula).getOrBreak
-    val (fileName, label) = parseFileDirective(name, annotations).getOrBreak
-    Right(TstpAxiomStep(name, fol, fileName, label))
-  }
-
-  private def parseConjectureStep(
-      name: String,
-      formula: Formula,
-      annotations: Option[Annotations]
-  ): Either[TstpDerivationError, TstpConjectureStep] = boundary {
-    val fol = parseFOLFormula(formula).getOrBreak
-    val (fileName, label) = parseFileDirective(name, annotations).getOrBreak
-    Right(TstpConjectureStep(name, fol, fileName, label))
-  }
-
-  private def parseFileDirective(
-      stepName: String,
-      annotationsOption: Option[Annotations]
-  ): Either[
-    TstpDerivationError,
-    (fileName: String, label: String)
-  ] = boundary {
-    val annotations = annotationsOption.getOrElse {
-      break(Left(SourceMissing(stepName)))
-    }
-    val (fileName, label) = annotations.source match {
-      case Source.File(fileName, Some(label)) =>
-        (fileName, label)
-      case Source.File(_, None) =>
-        break(Left(FileDirectiveLabelMissing(stepName)))
-      case _ =>
-        break(Left(FileDirectiveMissing(stepName)))
-    }
-
-    Right((fileName = fileName, label = label))
-  }
-
-  private def parseNegatedConjectureStep(
-      name: String,
-      formula: Formula,
-      annotationsOption: Option[Annotations]
-  ): Either[TstpDerivationError, TstpNegatedConjectureStep] = boundary { l ?=>
-    val folFormula = parseFOLFormula(formula).getOrBreak(using l)
-    val annotations = annotationsOption.getOrElse {
-      break(Left(UnexpectedInput("got negated conjecture without source")))
-    }
-    val inference = annotations.source match {
-      case s: Source.Inference => s
-      case _ =>
-        break(Left(UnexpectedInput(s"got negated conjecture inference without inference record: $name")))
-    }
-    val expectedRule = "negated_conjecture"
-    if inference.rule != expectedRule then
-      break(Left(StepWithInvalidInferenceRule(name, inference.rule, expectedRule)))
-
-    annotations.source.parentLabels.distinct match {
-      case Seq() =>
-        break(Left(NegatedConjectureWithoutParent(name)))
-      case Seq(parent) =>
-        Right(TstpNegatedConjectureStep(name, folFormula, parent, annotations, inference))
-      case Seq(parent, _*) =>
-        break(Left(NegatedConjectureWithMultipleDistinctParents()))
-    }
-  }
-
-  private def parsePlainInferenceStep(
-      name: String,
-      formula: Formula,
-      annotationsOption: Option[Annotations]
-  ): Either[TstpDerivationError, TstpSkolemizationStep | TstpPlainInferenceStep] = boundary {
-    val folFormula = parseFOLFormula(formula).getOrBreak
-    val annotations = annotationsOption.getOrElse {
-      break(Left(PlainInferenceWithoutSource(name)))
-    }
-    val inference = annotations.source match {
-      case s: Source.Inference => s
-      case s: Source.Internal  => break(Left(CannotHandleInput(name, "cannot handle internal sources")))
-      case _                   => break(Left(PlainInferenceWithoutSource(name)))
-    }
-
-    val optionalInfo = annotations.optionalInfo
-    inference.rule match {
-      case "skolemize" => parseSkolemizationStep(name, folFormula, inference, optionalInfo)
-      case _ =>
-        Right(TstpPlainInferenceStep(
-          name,
-          folFormula,
-          annotations.source.parentLabels,
-          annotations,
-          inference
-        ))
-    }
-  }
-
-  private def parseSkolemizationStep(
-      name: String,
-      formula: FOLFormula,
-      inference: Source.Inference,
-      optionalInfo: Seq[GeneralTerm]
-  ): Either[TstpDerivationError, TstpSkolemizationStep] = boundary {
-    val parent = inference.parentLabels match {
-      case Seq()                   => break(Left(SkolemizationStepWithoutParent(name)))
-      case parents @ Seq(_, _, _*) => break(Left(SkolemizationStepWithMultipleParents(name, parents)))
-      case Seq(label)              => label
-    }
-    val newSkolemSymbols = inference.usefulInfo.collect {
-      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term: FOLConst)) => term
-      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term: FOLVar)) =>
-        break(Left(NonConstantSkolemTerm(name, term)))
-      case TptpTerm("new_symbols", TptpTerm("skolem"), GeneralList(term)) =>
-        break(Left(CannotHandleInput(name, s"step $name: cannot handle new_symbols(skolem, term) if the term is complex. got term $term")))
-      case TptpTerm("new_symbols", TptpTerm("skolem"), terms @ GeneralList(_, _*)) =>
-        break(Left(CannotHandleInput(name, s"step $name: cannot handle multiple skolemizations in one step yet. got $terms")))
-    }
-    val newSkolemSymbol = newSkolemSymbols match {
-      case Seq()         => break(Left(SkolemizationStepWithoutNewSymbols(name)))
-      case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one new_symbols(skolem,_) term")))
-      case Seq(term)     => term.asInstanceOf[FOLConst]
-    }
-    val boundVariableSkolemTermPairs = inference.usefulInfo.collect {
-      case TptpTerm("skolemize", boundVariable: FOLVar, skolemTerm: FOLTerm) =>
-        (boundVariable, skolemTerm)
-      case TptpTerm("skolemize", _*) =>
-        break(Left(UnexpectedInput("expected skolemize(X,t) term where X is a variable and t is a term")))
-    }
-    val (boundVariable, skolemTerm) = boundVariableSkolemTermPairs match {
-      case Seq()         => break(Left(SkolemizationStepWithoutBinding(name)))
-      case Seq(_, _, _*) => break(Left(UnexpectedInput("expected at most one skolemize(_,_) term")))
-      case Seq(pair)     => pair
-    }
-    val (skolemFunctionConst, args) = skolemTerm match {
-      case FOLFunction(h, args) => (FOLFunctionConst(h, args.size), args)
-      case _ =>
-        break(Left(UnexpectedInput("expected skolem term to be a FOL term")))
-    }
-    val contextVariables = args.map {
-      case x: FOLVar => x
-      case _         => break(Left(UnexpectedInput("expected skolem term arguments to be first-order variables")))
-    }
-    if newSkolemSymbol.name != skolemFunctionConst.name then {
-      break(Left(SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(name)))
-    }
-    Right(TstpSkolemizationStep(
-      name,
-      formula,
-      parent,
-      inference,
-      skolemFunctionConst,
-      contextVariables,
-      boundVariable,
-      Annotations(inference, optionalInfo)
-    ))
-  }
-
-  extension (map: Map[String, AnnotatedFormula]) {
-    def parentsOf(label: String): Seq[AnnotatedFormula] = {
-      map(label).parentLabels.map(p => map(p))
+  extension (map: Map[String, ParsedTstpDerivationStep]) {
+    def parentsOf(label: String): Seq[ParsedTstpDerivationStep] = {
+      map(label).parents.map(p => map(p))
     }
 
     def hasNonConjectureParent(formulaName: String): Boolean = {
@@ -558,14 +281,14 @@ def buildTstpDerivationToProofContext(
     VariableCapturingProofDeclaration(FOLConst(name), cutProof)
   }
 
-  def handleStep(s: TstpDerivationStep) = {
+  def handleStep(s: ParsedTstpDerivationStep) = {
     s match {
-      case _: TstpConjectureStep =>
-      case s: TstpAxiomStep => {
+      case _: ParsedTstpConjectureStep =>
+      case s: ParsedTstpAxiomStep => {
         addToContext(proofDeclaration(s.name, LogicalAxiom(s.formula), Seq.empty))
       }
 
-      case s: TstpNegatedConjectureStep => {
+      case s: ParsedTstpNegatedConjectureStep => {
         val parentFormula = deoverloadedDerivation.get(s.parent).get.formula
 
         // in the following we construct a proof of Neg(conjecture) :- s.formula
@@ -593,12 +316,12 @@ def buildTstpDerivationToProofContext(
         addToContext(proofDeclaration(s.name, cutProof, Seq.empty))
       }
 
-      case s: TstpSkolemizationStep => {
+      case s: ParsedTstpSkolemizationStep => {
         val skolemizationStep = verifiedSkolemizationsByStepName(s.name)
         addToContext(proofDeclaration(s.name, skolemizationStep.proof, Seq(s.parent)))
       }
 
-      case s: TstpPlainInferenceStep => {
+      case s: ParsedTstpPlainInferenceStep => {
         val parentFormulas = s.parents.map(p => deoverloadedDerivation.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
@@ -632,13 +355,13 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  val futures: Seq[Future[(TstpDerivationStep, Boolean)]] = deoverloadedDerivation.stepsIterator.toSeq.flatMap {
-    case s: TstpPlainInferenceStep => {
+  val futures: Seq[Future[(ParsedTstpDerivationStep, Boolean)]] = deoverloadedDerivation.stepsIterator.toSeq.flatMap {
+    case s: ParsedTstpPlainInferenceStep => {
       val parentFormulas = s.parents.map(p => deoverloadedDerivation.get(p).get.formula)
       val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
       Seq(Future { (s, isValid(s.name, sequentToProve)) })
     }
-    case s: TstpNegatedConjectureStep => {
+    case s: ParsedTstpNegatedConjectureStep => {
       val parentFormula = deoverloadedDerivation.get(s.parent).get.formula
       Seq(
         Future {
@@ -695,7 +418,7 @@ private def verifiedSkolemizations(
     derivation: TstpDerivation
 ): Either[IncorrectSkolemization, Map[String, VerifiedSkolemization]] = boundary {
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
-    case step: TstpSkolemizationStep => {
+    case step: ParsedTstpSkolemizationStep => {
       val parentFormula = derivation.get(step.parent).get.formula
       val locallyCorrectSkolemization =
         VerifiedSkolemization.fromTstpSkolemizationStepAndParentFormula(step, parentFormula).getOrBreak
@@ -711,7 +434,7 @@ private def verifiedSkolemizations(
 
 private def deoverloadSymbols(derivation: TstpDerivation): TstpDerivation = {
   import scala.collection.mutable
-  val constTable = mutable.Map.empty[String, mutable.Set[(Const, TstpDerivationStep)]]
+  val constTable = mutable.Map.empty[String, mutable.Set[(Const, ParsedTstpDerivationStep)]]
 
   derivation.stepsIterator.foreach { s =>
     constants.all(s.formula).foreach { c =>
@@ -735,11 +458,11 @@ private def deoverloadSymbols(derivation: TstpDerivation): TstpDerivation = {
   derivation.copy(
     map = derivation.stepsIterator.map { s =>
       val step = s match {
-        case s: TstpAxiomStep             => s.copy(formula = renamedFormula(s.formula))
-        case s: TstpConjectureStep        => s.copy(formula = renamedFormula(s.formula))
-        case s: TstpNegatedConjectureStep => s.copy(formula = renamedFormula(s.formula))
-        case s: TstpPlainInferenceStep    => s.copy(formula = renamedFormula(s.formula))
-        case s: TstpSkolemizationStep     => s.copy(formula = renamedFormula(s.formula))
+        case s: ParsedTstpAxiomStep             => s.copy(formula = renamedFormula(s.formula))
+        case s: ParsedTstpConjectureStep        => s.copy(formula = renamedFormula(s.formula))
+        case s: ParsedTstpNegatedConjectureStep => s.copy(formula = renamedFormula(s.formula))
+        case s: ParsedTstpPlainInferenceStep    => s.copy(formula = renamedFormula(s.formula))
+        case s: ParsedTstpSkolemizationStep     => s.copy(formula = renamedFormula(s.formula))
       }
       (s.name, step)
     }.toMap
@@ -790,16 +513,16 @@ case class VerifiedSkolemization private (
 
 object VerifiedSkolemization {
   def fromTstpSkolemizationStepAndParentFormula(
-      skolemizationStep: TstpSkolemizationStep,
+      skolemizationStep: ParsedTstpSkolemizationStep,
       parentFormula: FOLFormula
   ): Either[IncorrectSkolemization, VerifiedSkolemization] =
     deepSkolemizationCheck(skolemizationStep, parentFormula)
 
   private def deepSkolemizationCheck(
-      skolemizationStep: TstpSkolemizationStep,
+      skolemizationStep: ParsedTstpSkolemizationStep,
       parentFormula: FOLFormula
   ) = boundary {
-    val TstpSkolemizationStep(
+    val ParsedTstpSkolemizationStep(
       name,
       claimedSkolemizedFormula,
       parent,
@@ -920,8 +643,8 @@ private def ensureSkolemSymbolsDistinctFromInput(
     verifiedSkolemDefinitions: Map[String, (FOLFunctionConst, Expr, Set[String])]
 ): Either[IncorrectSkolemization, Unit] = boundary {
   val inputSymbols = derivation.stepsIterator.collect {
-    case s: TstpAxiomStep      => s.name -> constants.nonLogical(s.formula)
-    case s: TstpConjectureStep => s.name -> constants.nonLogical(s.formula)
+    case s: ParsedTstpAxiomStep      => s.name -> constants.nonLogical(s.formula)
+    case s: ParsedTstpConjectureStep => s.name -> constants.nonLogical(s.formula)
   }.toMap
 
   inputSymbols.foreach { (stepName, symbols) =>
@@ -1156,11 +879,11 @@ def checkDerivationHasRefutation(derivation: TstpDerivation): Either[TstpDerivat
 
 def checkDerivationHasCorrectStatuses(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = boundary {
   derivation.stepsIterator.foreach {
-    case s: TstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Set("cth")) =>
+    case s: ParsedTstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Set("cth")) =>
       break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
-    case s: TstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Set("thm")) =>
+    case s: ParsedTstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Set("thm")) =>
       break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
-    case s: TstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Set("esa")) =>
+    case s: ParsedTstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Set("esa")) =>
       break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
     case _ =>
   }
@@ -1228,7 +951,7 @@ extension (annotations: Option[Annotations]) {
   }
 }
 
-extension (step: TstpDerivationStep) {
+extension (step: ParsedTstpDerivationStep) {
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
     step.annotationsOption.hasUnambiguousStatusAmong(statuses)
   }
@@ -1251,15 +974,15 @@ extension (inference: Source.Inference) {
     inference.usefulInfo.statusSet
 }
 
-extension (step: TstpPlainInferenceStep) {
+extension (step: ParsedTstpPlainInferenceStep) {
   def statuses: Set[String] = step.source.statuses
 }
 
-extension (step: TstpNegatedConjectureStep) {
+extension (step: ParsedTstpNegatedConjectureStep) {
   def statuses: Set[String] = step.source.statuses
 }
 
-extension (step: TstpSkolemizationStep) {
+extension (step: ParsedTstpSkolemizationStep) {
   def statuses: Set[String] = step.source.statuses
 }
 
@@ -1291,17 +1014,17 @@ extension (source: Source) {
   }
 }
 
-extension (step: TstpDerivationStep) {
+extension (step: ParsedTstpDerivationStep) {
   def annotationsOption: Option[Annotations] = step match {
-    case s: TstpConjectureStep =>
+    case s: ParsedTstpConjectureStep =>
       s.annotationsOption
-    case s: TstpAxiomStep =>
+    case s: ParsedTstpAxiomStep =>
       s.annotationsOption
-    case s: TstpPlainInferenceStep =>
+    case s: ParsedTstpPlainInferenceStep =>
       Some(s.annotations)
-    case s: TstpNegatedConjectureStep =>
+    case s: ParsedTstpNegatedConjectureStep =>
       Some(s.annotations)
-    case s: TstpSkolemizationStep =>
+    case s: ParsedTstpSkolemizationStep =>
       Some(s.annotations)
   }
 }
@@ -1369,7 +1092,7 @@ case class NegatedConjectureWithMultipleDistinctParents() extends VerifiedBadRea
 }
 
 case class PlainInferenceWithConjectureParent(
-    step: TstpPlainInferenceStep
+    step: ParsedTstpPlainInferenceStep
 ) extends VerifiedBadReason {
   def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
 }
@@ -1595,6 +1318,6 @@ case class UnexpectedException(e: Throwable) extends VerifiedUnknownReason {
   override def message: String = s"unexpected exception: ${e.getMessage}"
 }
 
-case class StepsWithOverloadedSymbols(symbolName: String, steps: Set[TstpDerivationStep]) extends VerifiedUnknownReason {
+case class StepsWithOverloadedSymbols(symbolName: String, steps: Set[ParsedTstpDerivationStep]) extends VerifiedUnknownReason {
   override def message: String = s"cannot handle overloaded symbols. symbol $symbolName occurs overloaded in the following steps: ${steps.map(_.name).mkString(", ")}"
 }
