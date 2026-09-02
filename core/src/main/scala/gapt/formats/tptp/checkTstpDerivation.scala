@@ -511,17 +511,6 @@ object TstpDerivation {
 }
 
 /**
-* Checks if the given directed graph contains a cycle.
-*
-* @param nodes the set of nodes of the graph
-* @param successors a function that returns for a given node in the graph the set of the nodes it can via a single edge
-* @return true if the directed graph contains a cycle, false otherwise
-*/
-def isCyclic[T](nodes: Set[T], successors: T => Set[T]): Boolean = {
-  linearizeStrictPartialOrder(nodes, successors).isLeft
-}
-
-/**
 * Attempts to replay the inferences in the given TstpDerivation into a Context containing
 * LKProofs for every inference step in the TstpDerivation
 */
