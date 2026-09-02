@@ -82,37 +82,11 @@ import scala.util.control.NonFatal
 import boundary.break
 import gapt.utils.NameGenerator
 
-type VerifiedBadReason =
-  IncorrectInference
-    | IncorrectSkolemization
-    | SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm
-    | SkolemizationStepWithoutBinding
-    | SkolemizationStepWithoutNewSymbols
-    | SkolemizationStepWithoutParent
-    | SkolemizationStepWithMultipleParents
-    | InferenceCycle
-    | FileDirectiveError
-    | StepWithInvalidStatus
-    | StepWithInvalidInferenceRule
-    | NegatedConjectureStepWithNonConjectureParent
-    | NegatedConjectureWithoutParent
-    | PlainInferenceWithConjectureParent
-    | PlainInferenceWithoutSource
-    | NegatedConjectureWithMultipleDistinctParents
-    | DistinctFormulasWithSameName
-    | NoRefutationFound
-    | AmbiguousRefutationLabelsFound
-    | NonExistentStep
-    | NonConstantSkolemTerm
-
-type VerifiedUnknownReason =
-  UnexpectedException
-    | InputSyntaxError
-    | CannotHandleInput
-    | UnexpectedInput
-    | CannotHandleIncludeDirectives
-    | FileNotFound
-    | StepsWithOverloadedSymbols
+sealed trait TstpDerivationError {
+  def message: String
+}
+sealed trait VerifiedBadReason extends TstpDerivationError
+sealed trait VerifiedUnknownReason extends TstpDerivationError
 
 enum SzsStatus {
   case VerifiedGood
@@ -1136,9 +1110,9 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
     } catch e => Left(UnexpectedException(e))
 
   result match {
-    case Left(r: VerifiedUnknownReason)  => SzsStatus.Unknown(r)
-    case Left(reason: VerifiedBadReason) => SzsStatus.VerifiedBad(reason)
-    case Right(_)                        => SzsStatus.VerifiedGood
+    case Left(reason: VerifiedUnknownReason) => SzsStatus.Unknown(reason)
+    case Left(reason: VerifiedBadReason)     => SzsStatus.VerifiedBad(reason)
+    case Right(_)                            => SzsStatus.VerifiedGood
   }
 }
 
@@ -1326,23 +1300,19 @@ extension [T](a: IterableOnce[T]) {
   }
 }
 
-sealed trait TstpDerivationError {
-  def message: String
-}
-
 case class InputSyntaxError(
     cause: IllegalArgumentException
-) extends TstpDerivationError {
+) extends VerifiedUnknownReason {
   override def message: String = cause.getMessage
 }
 
 case class DistinctFormulasWithSameName(
     label: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   override def message: String = s"there are multiple distinct formulas with the same name: $label"
 }
 
-case class InferenceCycle() extends TstpDerivationError {
+case class InferenceCycle() extends VerifiedBadReason {
   def message: String = "inference cycle detected"
 }
 
@@ -1350,7 +1320,7 @@ case class StepWithInvalidStatus(
     stepName: String,
     actualStatuses: Iterable[String],
     validStatuses: Iterable[String]
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
 }
 
@@ -1358,73 +1328,73 @@ case class StepWithInvalidInferenceRule(
     stepName: String,
     actualInferenceName: String,
     expectedInferenceName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   override def message: String = s"$stepName has invalid inference name '$actualInferenceName'. Expected '$expectedInferenceName'"
 }
 
 case class NegatedConjectureStepWithNonConjectureParent(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"step with name $stepName has a non-conjecture parent"
 }
 
 case class NegatedConjectureWithoutParent(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"negated conjecture step with name $stepName has no parent"
 }
 
-case class NegatedConjectureWithMultipleDistinctParents() extends TstpDerivationError {
+case class NegatedConjectureWithMultipleDistinctParents() extends VerifiedBadReason {
   def message: String = "got negated conjecture with multiple distinct parents"
 }
 
 case class PlainInferenceWithConjectureParent(
     step: TstpPlainInferenceStep
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
 }
 
 case class PlainInferenceWithoutSource(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"plain inference step with name $stepName has no source"
 }
 
 case class IncorrectInference(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"inference step with name $stepName is incorrect"
 }
 
 case class IncorrectSkolemization(
     reason: IncorrectSkolemizationReason
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = reason.message
 }
 
 case class NonConstantSkolemTerm(
     stepName: String,
     term: FOLVar
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"step $stepName: skolem term $term is not a constant, but a variable"
 }
 
 case class SkolemizationStepWithoutParent(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"skolemization inference with name $stepName has no parent"
 }
 
 case class SkolemizationStepWithMultipleParents(
     stepName: String,
     parents: Seq[String]
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"skolemization inference with name $stepName has multiple parents ${parents.mkString(", ")}"
 }
 
 case class NonExistentStep(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"step with name $stepName does not exist"
 }
 
@@ -1496,39 +1466,39 @@ case class NonRectifiedFormula(
 
 case class SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"skolemization step with name $stepName has differing skolem terms"
 }
 
 case class SkolemizationStepWithoutNewSymbols(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"skolemization step with name $stepName has no new symbols"
 }
 
 case class SkolemizationStepWithoutBinding(
     stepName: String
-) extends TstpDerivationError {
+) extends VerifiedBadReason {
   def message: String = s"skolemization step with name $stepName has no skolemize(_,_) binding"
 }
 
-case class CannotHandleIncludeDirectives() extends TstpDerivationError {
+case class CannotHandleIncludeDirectives() extends VerifiedUnknownReason {
   def message: String = "cannot handle include directives"
 }
 
-case class CannotHandleInput(stepName: String, reason: String) extends TstpDerivationError {
+case class CannotHandleInput(stepName: String, reason: String) extends VerifiedUnknownReason {
   def message: String = s"cannot handle input step with name $stepName: $reason"
 }
 
-case class NoRefutationFound() extends TstpDerivationError {
+case class NoRefutationFound() extends VerifiedBadReason {
   def message: String = "no refutation found as there is no unique $false formula in the derivation"
 }
 
-case class AmbiguousRefutationLabelsFound(labels: Seq[String]) extends TstpDerivationError {
+case class AmbiguousRefutationLabelsFound(labels: Seq[String]) extends VerifiedBadReason {
   def message: String = s"no refutation found as there are multiple $$false formulas in the derivation: ${labels.mkString(", ")}"
 }
 
-case class UnexpectedInput(message: String) extends TstpDerivationError
+case class UnexpectedInput(message: String) extends VerifiedUnknownReason
 
 case class NoStrongQuantifierFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
     extends IncorrectSkolemizationReason {
@@ -1540,7 +1510,7 @@ case class MultipleStrongQuantifiersFittingSkolemization(stepName: String, input
   def message: String = s"could find multiple (non-unique) strong quantifiers s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
 }
 
-sealed trait FileDirectiveError extends TstpDerivationError
+sealed trait FileDirectiveError extends VerifiedBadReason
 case class SourceMissing(stepName: String) extends FileDirectiveError {
   override def message: String = s"step $stepName is missing a source"
 }
@@ -1597,14 +1567,14 @@ case class FileDirectiveFormulaNotAlphaEquivalentToClaimedFormula(
   override def message: String = s"step ${stepName} has a file source (${fileName}) that points to a formula with name ${label} that is not alpha-equivalent to the claimed formula. expected: ${expected}, actual: ${actual}"
 }
 
-case class FileNotFound(fileName: String) extends TstpDerivationError {
+case class FileNotFound(fileName: String) extends VerifiedUnknownReason {
   override def message: String = s"file not found: $fileName"
 }
 
-case class UnexpectedException(e: Throwable) extends TstpDerivationError {
+case class UnexpectedException(e: Throwable) extends VerifiedUnknownReason {
   override def message: String = s"unexpected exception: ${e.getMessage}"
 }
 
-case class StepsWithOverloadedSymbols(symbolName: String, steps: Set[TstpDerivationStep]) extends TstpDerivationError {
+case class StepsWithOverloadedSymbols(symbolName: String, steps: Set[TstpDerivationStep]) extends VerifiedUnknownReason {
   override def message: String = s"cannot handle overloaded symbols. symbol $symbolName occurs overloaded in the following steps: ${steps.map(_.name).mkString(", ")}"
 }
