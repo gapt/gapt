@@ -1,1 +1,0 @@
-fof(c, conjecture, $true).
