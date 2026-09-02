@@ -7,24 +7,15 @@ import gapt.expr.Expr
 import gapt.expr.Var
 import gapt.expr.formula.*
 import gapt.expr.formula.Formula
-import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
 import gapt.expr.formula.fol.FOLFormula
-import gapt.expr.formula.fol.FOLFunctionConst
 import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
-import gapt.expr.formula.hol.HOLPosition
-import gapt.expr.given
-import gapt.expr.substitute
 import gapt.expr.ty.Ti
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
 import gapt.formats.tptp.*
-import gapt.formats.tptp.check.FindSkolemizableInstance.QuantifierType
-import gapt.logic.Polarity
-import gapt.logic.Polarity.Negative
-import gapt.logic.Polarity.Positive
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Ant
 import gapt.proofs.Sequent
@@ -39,27 +30,14 @@ import gapt.proofs.context.update.ProofNameDeclaration
 import gapt.proofs.context.update.Sort
 import gapt.proofs.context.update.Update
 import gapt.proofs.lk.LKProof
-import gapt.proofs.lk.rules.AndLeftRule
 import gapt.proofs.lk.rules.AndRightRule
 import gapt.proofs.lk.rules.CutRule
-import gapt.proofs.lk.rules.ExistsLeftRule
-import gapt.proofs.lk.rules.ExistsRightRule
-import gapt.proofs.lk.rules.ExistsSkLeftRule
-import gapt.proofs.lk.rules.ForallLeftRule
-import gapt.proofs.lk.rules.ForallRightRule
-import gapt.proofs.lk.rules.ForallSkRightRule
-import gapt.proofs.lk.rules.ImpLeftRule
 import gapt.proofs.lk.rules.ImpRightRule
 import gapt.proofs.lk.rules.LogicalAxiom
-import gapt.proofs.lk.rules.NegLeftRule
-import gapt.proofs.lk.rules.NegRightRule
-import gapt.proofs.lk.rules.OrLeftRule
-import gapt.proofs.lk.rules.OrRightRule
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.lk.rules.WeakeningLeftRule
 import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
-import gapt.utils.Maybe
 import gapt.utils.getOrBreak
 
 import java.nio.file.Paths
@@ -73,7 +51,6 @@ import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
 import scala.util.boundary
-import scala.util.boundary.Label
 import scala.util.control.NonFatal
 
 import boundary.break
@@ -278,24 +255,6 @@ private def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A
   }
 }
 
-private def verifiedSkolemizations(
-    derivation: StructurallyCorrectTstpDerivation
-): Either[IncorrectSkolemization, Map[String, VerifiedSkolemization]] = boundary {
-  val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
-    case step: ParsedTstpSkolemizationStep => {
-      val parentFormula = derivation.get(step.parent).get.formula
-      val locallyCorrectSkolemization =
-        VerifiedSkolemization.fromTstpSkolemizationStepAndParentFormula(step, parentFormula).getOrBreak
-
-      (step.name, locallyCorrectSkolemization)
-    }
-  }.toMap
-
-  val verifiedSkolemDefinitions = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
-  val _ = ensureSkolemSymbolsDistinctFromInput(derivation, verifiedSkolemDefinitions).getOrBreak
-  Right(verifiedSkolemizationsByStepName)
-}
-
 private def deoverloadSymbols(derivation: StructurallyCorrectTstpDerivation): StructurallyCorrectTstpDerivation = {
   import scala.collection.mutable
   val constTable = mutable.Map.empty[String, mutable.Set[(Const, ParsedTstpDerivationStep)]]
@@ -359,316 +318,6 @@ def renameConsts(renaming: PartialFunction[Const, String])(expr: Expr): Expr = e
   case c: Const       => Const(renaming.applyOrElse(c, _ => c.name), c.ty, c.params)
   case App(head, arg) => App(renameConsts(renaming)(head), renameConsts(renaming)(arg))
   case Abs(v, body)   => Abs(v, renameConsts(renaming)(body))
-}
-
-type SkolemDefinition = Expr
-type SkolemSymbol = FOLFunctionConst
-type SkolemSymbolName = String
-case class VerifiedSkolemization private (
-    skolemSymbol: SkolemSymbol,
-    skolemDefinition: SkolemDefinition,
-    proof: LKProof
-)
-
-object VerifiedSkolemization {
-  def fromTstpSkolemizationStepAndParentFormula(
-      skolemizationStep: ParsedTstpSkolemizationStep,
-      parentFormula: FOLFormula
-  ): Either[IncorrectSkolemization, VerifiedSkolemization] =
-    deepSkolemizationCheck(skolemizationStep, parentFormula)
-
-  private def deepSkolemizationCheck(
-      skolemizationStep: ParsedTstpSkolemizationStep,
-      parentFormula: FOLFormula
-  ) = boundary {
-    val ParsedTstpSkolemizationStep(
-      name,
-      claimedSkolemizedFormula,
-      parent,
-      source,
-      newSkolemSymbol,
-      claimedContextVariables,
-      claimedBoundVariable,
-      _
-    ) = skolemizationStep
-
-    if claimedContextVariables.distinct != claimedContextVariables then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, claimedSkolemizedFormula)) // TODO: find better error
-    }
-
-    val claimedSkolemTerm = newSkolemSymbol(claimedContextVariables*)
-    val pol = Negative // TODO: we are assuming a negative context (i.e. if coming from an conjecture leaf, there was negated_conjecture before)
-    val possibleMatches = FindSkolemizableInstance(parentFormula, claimedSkolemizedFormula, pol, claimedBoundVariable, newSkolemSymbol, claimedSkolemTerm)
-    if possibleMatches.size == 0 then {
-      reportIncorrectSkolemization(NoStrongQuantifierFittingSkolemization(name, parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm))
-    }
-    if possibleMatches.size > 1 then {
-      reportIncorrectSkolemization(MultipleStrongQuantifiersFittingSkolemization(name, parentFormula, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm))
-    }
-    val (quantifierPosition, skolemContext, parentContext) = possibleMatches(0)
-    // TODO: get rid of cast
-    val mainSkolemizationFormula = HOLPosition.toLambdaPosition(parentFormula)(quantifierPosition).get(parentFormula).get.asInstanceOf[FOLFormula]
-
-    val (allContextQuantifierTypes, allContextVariables) = parentContext unzip
-    val outerSkolemizationContextVariables = parentContext.collect { case (QuantifierType.Weak, x) => x.asInstanceOf[FOLVar] }
-
-    val innerSkolemizationContextVariables = freeVariables(mainSkolemizationFormula).toSeq
-
-    if allContextVariables.distinct != allContextVariables then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
-    }
-
-    if outerSkolemizationContextVariables.distinct != outerSkolemizationContextVariables then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
-    }
-
-    if outerSkolemizationContextVariables.contains(claimedBoundVariable) then {
-      reportIncorrectSkolemization(NonRectifiedFormula(name, parentFormula))
-    }
-
-    if claimedContextVariables.toSet != outerSkolemizationContextVariables.toSet
-      && claimedContextVariables.toSet != innerSkolemizationContextVariables.toSet
-    then {
-      reportIncorrectSkolemization(
-        ContextVariableMismatch(
-          name,
-          claimedContextVariables,
-          outerSkolemizationContextVariables,
-          innerSkolemizationContextVariables,
-          claimedBoundVariable,
-          parentFormula
-        )
-      )
-    }
-
-    val skolemDefinition = Abs.Block(claimedContextVariables, mainSkolemizationFormula)
-
-    val (parentSKVar, innerFormula) = mainSkolemizationFormula match {
-      case All(v, f) => (v, f)
-      case Ex(v, f)  => (v, f)
-    }
-    assert(parentSKVar == claimedBoundVariable, s"parentSKVar ($parentSKVar) does not match claimedBoundVariable ($claimedBoundVariable)")
-    val inferredSkolemizationFormula = HOLPosition.replace(parentFormula, quantifierPosition, innerFormula.substitute(claimedBoundVariable -> claimedSkolemTerm)).asInstanceOf[FOLFormula]
-    if inferredSkolemizationFormula != claimedSkolemizedFormula then {
-      reportIncorrectSkolemization(FormulaMismatch(name, claimedSkolemizedFormula, claimedBoundVariable, claimedSkolemTerm, inferredSkolemizationFormula, parentFormula))
-    }
-
-    val skolemizationProof = CreateSkolemizationProof(parentFormula, inferredSkolemizationFormula, claimedBoundVariable, claimedSkolemTerm, innerFormula, quantifierPosition, pol)
-    val cutWithClaimedFormula = CutRule(skolemizationProof, LogicalAxiom(claimedSkolemizedFormula)) // fixes alpha equivalence
-    Right(new VerifiedSkolemization(newSkolemSymbol, skolemDefinition, cutWithClaimedFormula))
-  }
-}
-
-private def ensureCompatibleSkolemDefinitions(
-    skolemizationsByStepName: Map[String, VerifiedSkolemization]
-): Either[IncorrectSkolemization, Map[String, (FOLFunctionConst, Expr, Set[String])]] = boundary {
-  val skolemizationsBySkolemSymbolName =
-    skolemizationsByStepName.groupBy((_, skolemization) => skolemization.skolemSymbol.name)
-
-  val verifiedSkolemDefinitions = skolemizationsBySkolemSymbolName.map {
-    case s @ (skolemSymbolName, definitionsByStepName) => {
-      val incompatibilities = incompatibleSkolemDefinitions(definitionsByStepName)
-      if incompatibilities.nonEmpty then {
-        reportIncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbolName, incompatibilities))
-      }
-
-      val uniqueDefinitions = definitionsByStepName.map((_, skolemization) => (skolemization.skolemSymbol, skolemization.skolemDefinition)).toSet
-      assert(uniqueDefinitions.size == 1, s"skolem symbol ${skolemSymbolName} has multiple incompatible definitions: $uniqueDefinitions")
-      val (skolemConst, definition) = uniqueDefinitions.head
-      val stepNames = definitionsByStepName.keySet
-      (skolemSymbolName, (skolemConst, definition, stepNames))
-    }
-  }.toMap
-
-  Right(verifiedSkolemDefinitions)
-}
-
-private def incompatibleSkolemDefinitions(
-    skolemizationsByStepName: Map[String, VerifiedSkolemization]
-): Map[String, VerifiedSkolemization] = {
-  skolemizationsByStepName.toSeq.combinations(2).foldLeft(Map.empty) {
-    case (acc, Seq((leftStep, leftSkolemization), (rightStep, rightSkolemization))) => {
-      val leftSymbol = leftSkolemization.skolemSymbol
-      val rightSymbol = rightSkolemization.skolemSymbol
-      assert(leftSymbol.name == rightSymbol.name, s"skolem symbol names do not match: ${leftSymbol.name} != ${rightSymbol.name}")
-      acc ++ Set((leftStep, leftSkolemization), (rightStep, rightSkolemization))
-    }
-    case _ => throw new AssertionError("cannot happen as we only select 2 combinations")
-  }
-}
-
-private def ensureSkolemSymbolsDistinctFromInput(
-    derivation: StructurallyCorrectTstpDerivation,
-    verifiedSkolemDefinitions: Map[String, (FOLFunctionConst, Expr, Set[String])]
-): Either[IncorrectSkolemization, Unit] = boundary {
-  val inputSymbols = derivation.stepsIterator.collect {
-    case s: ParsedTstpAxiomStep      => s.name -> constants.nonLogical(s.formula)
-    case s: ParsedTstpConjectureStep => s.name -> constants.nonLogical(s.formula)
-  }.toMap
-
-  inputSymbols.foreach { (stepName, symbols) =>
-    symbols.foreach { symbol =>
-      verifiedSkolemDefinitions.get(symbol.name).foreach { (_, _, skolemizationStepNames) =>
-        reportIncorrectSkolemization(SkolemSymbolIsAConstantExistingInTheInput(
-          stepName,
-          skolemizationStepNames.head,
-          symbol
-        ))
-      }
-    }
-  }
-
-  Right(())
-}
-
-private def reportIncorrectSkolemization[T](
-    reason: IncorrectSkolemizationReason
-)(using Label[Left[IncorrectSkolemization, Nothing]]): Nothing =
-  break(Left(IncorrectSkolemization(reason)))
-
-object FindSkolemizableInstance {
-  enum QuantifierType {
-    case Strong
-    case Weak
-  }
-
-  /**
-   * Finds all positions p and variable contexts s.t. unskolemized[p] is a strongly quantified
-   * formula Q skVar . F and replacing unskolemized[p] by F{skVar <- skTerm} obtains skolemized.
-   */
-  def apply(unskolemized: FOLFormula, skolemized: FOLFormula, polarity: Polarity, skVar: FOLVar, skConst: Const, skTerm: FOLTerm) = {
-    def skQuantifier(e: Expr) = e match { case All(x, _) => skVar == x; case Ex(x, _) => skVar == x; case _ => false }
-    val candidate_positions = HOLPosition.getPositions(unskolemized, skQuantifier)
-    val qs = candidate_positions.filter(x => isStrongQuantifierPosition(x, unskolemized, polarity))
-    // println(s"us: $unskolemized s: $skolemized candidates: $candidate_positions strong_qs: $qs")
-    val correctly_skolemized = qs.filter(pos => {
-      val inner_pos = HOLPosition(pos.list :+ 1)
-      val lambda_pos = HOLPosition.toLambdaPosition(unskolemized)(inner_pos)
-      val body = lambda_pos.get(unskolemized).get
-      val reskolemized = HOLPosition.replace(unskolemized, pos, body.substitute(skVar -> skTerm))
-      reskolemized == skolemized
-    })
-    def getContext(x: HOLPosition, f: FOLFormula) = polarityAndContextAt(x, f, polarity)._2
-    correctly_skolemized.map(x => (x, getContext(x, skolemized), getContext(x, unskolemized)))
-  }
-
-  def polarityAndContextAt(pos: HOLPosition, e: Expr, polarity: Polarity, context: List[(QuantifierType, Var)] = Nil): (Polarity, List[(QuantifierType, Var)]) =
-    (pos.list, e) match {
-      case (Nil, _)           => (polarity, context.reverse)
-      case (_, FOLAtom(_, _)) => (polarity, context.reverse)
-      case (1 :: _, Neg(x))   => polarityAndContextAt(pos.tail, x, !polarity, context)
-      case (1 :: _, All(v, x)) =>
-        val ws = if polarity == Positive then QuantifierType.Strong else QuantifierType.Weak
-        polarityAndContextAt(pos.tail, x, polarity, (ws, v) :: context)
-      case (1 :: _, Ex(v, x)) =>
-        val ws = if polarity == Positive then QuantifierType.Weak else QuantifierType.Strong
-        polarityAndContextAt(pos.tail, x, polarity, (ws, v) :: context)
-      case (1 :: _, And(x, _)) => polarityAndContextAt(pos.tail, x, polarity, context)
-      case (2 :: _, And(_, x)) => polarityAndContextAt(pos.tail, x, polarity, context)
-      case (1 :: _, Or(x, _))  => polarityAndContextAt(pos.tail, x, polarity, context)
-      case (2 :: _, Or(_, x))  => polarityAndContextAt(pos.tail, x, polarity, context)
-      case (1 :: _, Imp(x, _)) => polarityAndContextAt(pos.tail, x, !polarity, context)
-      case (2 :: _, Imp(_, x)) => polarityAndContextAt(pos.tail, x, polarity, context)
-      case _                   => throw new Exception(s"Could not find polarity of $pos in $e")
-    }
-
-  def isStrongQuantifierPosition(pos: HOLPosition, e: Expr, polarity: Polarity): Boolean = {
-    val pol = polarityAndContextAt(pos, e, polarity)._1
-    val lambda_pos = HOLPosition.toLambdaPosition(e)(pos)
-    lambda_pos.get(e) match {
-      case Some(All(_, _)) => pol == Positive
-      case Some(Ex(_, _))  => pol == Negative
-      case _               => false
-    }
-  }
-}
-
-object CreateSkolemizationProof {
-
-  /**
-   * creates a proof F :- skF
-   * @param unskolemized the unskolemized formula F
-   * @param skolemized the skolemized formula skF
-   * @param skVar the variable of the strong quantifier removed
-   * @param skTerm the skolem term
-   * @param pathToSk the position at which the strong quantifier occurs
-   * @param polarity in which polarity we are right now
-   * @return
-   */
-  def apply(unskolemized: FOLFormula, skolemized: FOLFormula, skVar: FOLVar, skTerm: FOLTerm, innerFormula: FOLFormula, pathToSk: HOLPosition, polarity: Polarity): LKProof = {
-    if unskolemized == skolemized then
-      LogicalAxiom(skolemized)
-    if pathToSk.isEmpty then {
-      val innerSubstituted = innerFormula.substitute(skVar -> skTerm)
-      val axiom = LogicalAxiom(innerSubstituted)
-      if polarity == Negative then
-        ExistsSkLeftRule(axiom, Ant(0), Ex(skVar, innerFormula), skTerm)
-      else
-        ForallSkRightRule(axiom, Suc(0), All(skVar, innerFormula), skTerm)
-    } else {
-      val branch = pathToSk.head
-      val remainingBranch = pathToSk.tail
-      // polarity swaps on which side the unskolemized and skolemized formula appear (neg: skolemized right, pos: skolemized left)
-      def swapPos(a: FOLFormula, b: FOLFormula) = if polarity == Negative then (a, b) else (b, a)
-
-      (unskolemized, skolemized, branch) match {
-        case (a @ Neg(f), sa @ Neg(fs), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, !polarity)
-          val (b, sb) = swapPos(fs, f) // NegLeftRule needs the auxiliary, not the primary formula
-          val p1 = NegLeftRule(rp, sb)
-          NegRightRule(p1, b)
-        case (a @ And(f, g), sa @ And(fs, _), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val axiom = LogicalAxiom(g)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = AndRightRule(rp, axiom, sb)
-          AndLeftRule(p1, b)
-        case (a @ And(f, g), sa @ And(_, gs), 2) =>
-          val axiom = LogicalAxiom(f)
-          val rp = apply(g, gs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = AndRightRule(axiom, rp, sb)
-          AndLeftRule(p1, b)
-        case (a @ Or(f, g), sa @ Or(fs, _), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val axiom = LogicalAxiom(g)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = OrLeftRule(rp, axiom, b)
-          OrRightRule(p1, sb)
-        case (a @ Or(f, g), sa @ Or(_, gs), 2) =>
-          val rp = apply(g, gs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val axiom = LogicalAxiom(f)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = OrLeftRule(axiom, rp, b)
-          OrRightRule(p1, sb)
-        case (a @ Imp(f, g), sa @ Imp(fs, _), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, !polarity)
-          val axiom = LogicalAxiom(g)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = ImpLeftRule(rp, axiom, b)
-          ImpRightRule(p1, sb)
-        case (a @ Imp(f, g), sa @ Imp(_, gs), 2) =>
-          val rp = apply(g, gs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val axiom = LogicalAxiom(f)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = ImpLeftRule(axiom, rp, b)
-          ImpRightRule(p1, sb)
-        case (a @ All(x, f), All(y, fs), 1) =>
-          val sa = All(x, fs)
-          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = ForallLeftRule(rp, b)
-          ForallRightRule(p1, sb)
-        case (a @ Ex(x, f), sa @ Ex(y, fs), 1) =>
-          val rp = apply(f, fs, skVar, skTerm, innerFormula, remainingBranch, polarity)
-          val (b, sb) = swapPos(a, sa)
-          val p1 = ExistsRightRule(rp, sb)
-          ExistsLeftRule(p1, b)
-        case _ =>
-          throw IllegalArgumentException(s"Unhandled case ($unskolemized, $skolemized, $pathToSk, $polarity)")
-      }
-    }
-  }
 }
 
 trait FileNameResolver {
