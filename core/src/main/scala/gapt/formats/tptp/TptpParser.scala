@@ -29,7 +29,7 @@ import scala.util.boundary
 import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
-import gapt.formats.tptp.check.{TstpDerivation, buildTstpDerivationToProofContext, TstpDerivationError, NoRefutationFound, AmbiguousRefutationLabelsFound}
+import gapt.formats.tptp.check.{StructurallyCorrectTstpDerivation, buildTstpDerivationToProofContext, TstpDerivationError, NoRefutationFound, AmbiguousRefutationLabelsFound}
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -254,11 +254,11 @@ object TptpImporter {
   def loadWithIncludes(file: InputFile): TptpFile =
     loadWithIncludes(file, pwd)
 
-  def loadAsTptpDerivation(file: InputFile): Either[TstpDerivationError, TstpDerivation] =
-    TstpDerivation.fromInputFile(file)
+  def loadAsTptpDerivation(file: InputFile): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =
+    StructurallyCorrectTstpDerivation.fromInputFile(file)
 
   def loadAsLKRefutation(file: InputFile): Either[TstpDerivationError, LKProof] = boundary {
-    val derivation = TstpDerivation.fromInputFile(file).getOrBreak
+    val derivation = StructurallyCorrectTstpDerivation.fromInputFile(file).getOrBreak
     val uniqueRefutationLabel = derivation.nonConjectureRootRefutationLabels.toSeq match {
       case Seq()      => break(Left(NoRefutationFound()))
       case Seq(label) => label

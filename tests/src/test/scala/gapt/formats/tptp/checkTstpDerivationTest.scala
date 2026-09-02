@@ -1600,7 +1600,7 @@ class checkTstpDerivationExampleTest extends Specification {
 }
 
 class TstpDerivationParserUnitTest extends mutable.Specification {
-  "TstpDerivation" should {
+  "StructurallyCorrectTstpDerivation" should {
     "handle nested inference sources" in {
       val input = InputFile.fromString("""
         |fof(a1, axiom, p, file('problem.p', a1)).
@@ -1608,7 +1608,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(normalize, [status(thm)], [a1])])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight
     }
 
     "succeed for input where conjecture contains universal quantifier" in {
@@ -1619,7 +1619,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc])).
         |fof(axiom_instance, plain, p(sK0), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight.like {
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
         case d =>
           (d.nonConjectureRootLabels must_=== Set("cont"))
             .and(d.nonConjectureRefutationLabels must_=== Set("cont"))
@@ -1633,7 +1633,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(root1, plain, $false, inference(falsum, [status(thm)], [nc, a])).
         |fof(root2, plain, ~p | q, inference(or, [status(thm)], [nc])).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight.like {
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRootLabels must_== Set("root1", "root2")
       }
     }
@@ -1645,7 +1645,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(c, conjecture, p, file('problem.p', c)).
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(root, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight.like {
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRootLabels must_== Set("root", "b")
       }
     }
@@ -1655,7 +1655,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(a, axiom, $false, file('problem.p', a)).
         |fof(c, conjecture, p, file('problem.p', c)).
         |fof(root, plain, $false, inference(falsum, [status(thm)], [a])).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight.like {
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRootLabels must_== Set("root")
       }
     }
@@ -1667,7 +1667,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
         |fof(refute1, plain, $false, inference(falsum, [status(thm)], [nc, a])).
         |fof(refute2, plain, $false, inference(falsum, [status(thm)], [nc, a])).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight.like {
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRefutationLabels must_== Set("refute1", "refute2")
       }
     }
@@ -1676,7 +1676,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
       val input = InputFile.fromString("""
         |fof(a, axiom, $false, file('problem.p', a)).
         |fof(c, conjecture, $false, file('problem.p', c)).""".stripMargin)
-      TstpDerivation.fromInputFile(input) must beRight.like {
+      StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
         case d => d.nonConjectureRefutationLabels must_== Set("a")
       }
     }
@@ -1700,7 +1700,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beRight.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
               case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLConst("sK0"))
@@ -1715,21 +1715,21 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), skolemize(X, sK0)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with multiple new_symbols(skolem, _)" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), new_symbols(skolem, [sK1]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization with new_symbols that is not a constant" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0(X)]), skolemize(X, sK0)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft.like {
           case _: CannotHandleInput => ok
         }
       }
@@ -1739,7 +1739,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0, sK1]), skolemize(X, sK0)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft.like {
           case _: CannotHandleInput => ok
         }
       }
@@ -1748,28 +1748,28 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, []), skolemize(X, sK0)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with no parents" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], []))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with multiple parents" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [nc, a]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft
       }
 
       "fail on skolemization step with differing new_symbols and skolemize terms" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm]
         }
       }
@@ -1778,7 +1778,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0])], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithoutBinding]
         }
       }
@@ -1787,7 +1787,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
@@ -1796,7 +1796,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(a, sK0)], [nc]))."
         )
-        TstpDerivation.fromInputFile(input) must beLeft {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
@@ -1810,7 +1810,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        TstpDerivation.fromInputFile(input) must beRight.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
               case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 1))
@@ -1830,7 +1830,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(axiom_instance, plain, p(sK0(a, b), a, b), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        TstpDerivation.fromInputFile(input) must beRight.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
               case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
@@ -1850,7 +1850,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(axiom_instance, plain, p(sK0(b, a), a, b), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        TstpDerivation.fromInputFile(input) must beRight.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight.like {
           case derivation => derivation.get("nc_skolemized") must beSome[ParsedTstpDerivationStep].like {
               case s: ParsedTstpSkolemizationStep => {
                 (s.newSkolemSymbol must_=== FOLFunctionConst("sK0", 2))
@@ -1870,7 +1870,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        TstpDerivation.fromInputFile(input) must beLeft {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
         }
       }
@@ -1885,7 +1885,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         |fof(axiom_instance, plain, p(sK0(a), a), inference(instance, [status(thm)], [a])).
         |fof(cont, plain, $false, inference(falsum, [status(thm)], [nc_skolemized, axiom_instance])).
         """.stripMargin)
-        TstpDerivation.fromInputFile(input) must beLeft.like {
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft.like {
           case x: CannotHandleInput => x.stepName must_=== "ca"
         }
       }
@@ -1897,7 +1897,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
             |fof(a, axiom, ![X]: ?[Y]: p(X, Y), file('problem.p', a)).
             |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
           """.stripMargin)
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -1906,7 +1906,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: ?[Y, Z]: p(X, Y, Z), file('problem.p', a)).
           |fof(s, plain, ![X]: ?[Y]: p(X, Y, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X))], [a])).
         """.stripMargin)
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -1915,7 +1915,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: ~(![Y]: p(X,Y)), file('problem.p', a)).
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -1924,7 +1924,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X,Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0)], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -1933,7 +1933,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X,sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0)], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -1942,7 +1942,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X, Y]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -1951,7 +1951,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y), file('problem.p', a)).
           |fof(s, plain, ![X]: ~p(X,sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -1960,7 +1960,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: ?[Y]: ![Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Z]: p(X,sK0(X,Z), Z), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X,Z))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -1969,7 +1969,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(Y,X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(Y,X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -1978,7 +1978,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X, X]: ?[Y]: p(Y), file('problem.p', a)).
           |fof(s, plain, ![X, X]: p(sK(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: NonRectifiedFormula) =>
             (e.stepName must_== "s").and(e.formula must_== fof"!x!x?y p(y)")
@@ -1994,7 +1994,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: ContextVariableMismatch)                => e.stepName must_== "s"
           case IncorrectSkolemization(e: NoStrongQuantifierFittingSkolemization) => e.stepName must_== "s"
@@ -2007,7 +2007,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X, Y]: ?[Z]: p(X,Y,Z), file('problem.p', a)).
           |fof(s, plain, ![X, Y]: p(X,Y,sK0(X,Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Z, sK0(X,W))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft
       }
 
@@ -2016,7 +2016,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(a, axiom, ![X]: ?[Y]: p(X,Y,a(X)), file('problem.p', a)).
           |fof(s, plain, ![X]: p(X, a(X), a(X)), inference(skolemize, [status(esa), new_symbols(skolem, [a]), skolemize(Y, a(X))], [a])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: SkolemSymbolIsAConstantExistingInTheInput) => ok
         }
@@ -2030,7 +2030,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(s2, plain, q(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [b])).
           |fof(s, plain, p(sK0) & q(sK0), inference(and, [status(thm)], [s1, s2])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: MultipleIncompatibleSkolemDefinitionsOfSameSymbol) => {
             (e.skolemSymbol must_== "sK0")
@@ -2051,7 +2051,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(s2, plain, ![Y]: q(Y, sK0(Y)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(Y))], [b])).
           |fof(s, plain, p(sK0) & ![Y]: q(Y, sK0(Y)), inference(and, [status(thm)], [s1, s2])).
         """.stripMargin)
-        val Right(derivation) = TstpDerivation.fromInputFile(input): @unchecked
+        val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(e: MultipleIncompatibleSkolemDefinitionsOfSameSymbol) => {
             (e.skolemSymbol must_== "sK0")
@@ -2071,7 +2071,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(i, plain, q(c, b(c)) & p(c, b(c), a(c)), inference(and, [status(thm)], [a, s])).
         """.stripMargin)
 
-        TstpDerivation.fromInputFile(input) must beRight
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight
       }
 
       "suceed on correct skolemization step with context variables" in {
@@ -2084,7 +2084,7 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           |fof(i, plain, $false, inference(and, [status(thm)], [as, ncs])).
         """.stripMargin)
 
-        TstpDerivation.fromInputFile(input) must beRight
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beRight
       }
     }
 
@@ -2241,7 +2241,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
       |fof(nc, negated_conjecture, ?[X]: ~p(X), inference(negated_conjecture, [status(cth)], [c])).
       |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).""".stripMargin)
-      val derivation = TstpDerivation.fromInputFile(input).get
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
@@ -2257,7 +2257,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       |fof(a, axiom, ![X]: p(X), file('problem.p', a)).
       |fof(c, conjecture, p(a), file('problem.p', c)).
       |fof(end, plain, p(a), inference(instance, [status(thm)], [a])).""".stripMargin)
-      val derivation = TstpDerivation.fromInputFile(input).get
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation) }
 
@@ -2274,7 +2274,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       |fof(a1, axiom, ![X]: p(X), file('problem.p', a1)).
       |fof(c, conjecture, ![X]: p(X), file('problem.p', c)).
       |fof(end, plain, ![X]: p(X), inference(instance, [status(thm)], [a1, a1])).""".stripMargin)
-      val derivation = TstpDerivation.fromInputFile(input).get
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
@@ -2287,7 +2287,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
 
     "work on example1_c" in {
       val input = ClasspathInputFile("proover_competition/Proofs/correct_example1_c_proof.p")
-      val derivation = TstpDerivation.fromInputFile(input).toOption.get
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
@@ -2300,7 +2300,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
 
     "work on example2_c" in {
       val derivationFile = ClasspathInputFile("proover_competition/Proofs/correct_example2_c_proof.p")
-      val derivation = TstpDerivation.fromInputFile(derivationFile).get
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(derivationFile).get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
@@ -2323,7 +2323,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
             |fof(f, plain, $false, inference(falsum, [status(thm)], [s, i])).
         """.stripMargin
         )
-        val derivation = TstpDerivation.fromInputFile(input).get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -2334,7 +2334,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
             |fof(s, plain, p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
         """.stripMargin
         )
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -2345,7 +2345,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
             |fof(s, plain, ![X]: p(X, sK0(X)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin
         )
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -2362,7 +2362,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
         """.stripMargin
         )
 
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
             (skolemSymbol must_=== "sK0")
@@ -2386,7 +2386,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
         """.stripMargin
         )
 
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
             (skolemSymbol must_=== "sK0")
@@ -2412,7 +2412,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
         """.stripMargin
         )
 
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
           case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
             (skolemSymbol must_=== "sK0")
@@ -2437,7 +2437,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
         """.stripMargin
         )
 
-        val derivation = TstpDerivation.fromInputFile(input).toOption.get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -2448,7 +2448,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
             |fof(s, plain, ![X]: ?[Y]: p(X, Y), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(Y, sK0(X))], [a])).
         """.stripMargin
         )
-        val derivation = TstpDerivation.fromInputFile(input).get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -2464,7 +2464,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
             |fof(end, plain, $false, inference(inf, [status(thm)], [p, ncs, ai])).
         """.stripMargin
         )
-        val derivation = TstpDerivation.fromInputFile(input).get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
@@ -2478,7 +2478,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
             |fof(ai, plain, $false, inference(instance, [status(thm)], [a, ncs])).
         """.stripMargin
         )
-        val derivation = TstpDerivation.fromInputFile(input).get
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
         buildTstpDerivationToProofContext(derivation) must beRight
       }
     }

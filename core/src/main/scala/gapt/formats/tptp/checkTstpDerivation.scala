@@ -6,7 +6,6 @@ import gapt.expr.Const
 import gapt.expr.Expr
 import gapt.expr.Var
 import gapt.expr.formula.*
-import gapt.expr.formula.Bottom
 import gapt.expr.formula.Formula
 import gapt.expr.formula.fol.FOLAtom
 import gapt.expr.formula.fol.FOLConst
@@ -62,7 +61,6 @@ import gapt.provers.ResolutionProver
 import gapt.provers.escargot.Escargot
 import gapt.utils.Maybe
 import gapt.utils.getOrBreak
-import gapt.utils.linearizeStrictPartialOrder
 
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
@@ -107,145 +105,11 @@ enum SzsStatus {
 }
 
 /**
-* Represents all the information inside a TstpDerivation.
-* It guarantees unique step names, existing parents, an acyclic parent
-* relationship, and valid role relationships between steps.
-*/
-case class TstpDerivation private[check] (
-    private val map: Map[String, ParsedTstpDerivationStep],
-    private val topologicallyOrderedFromSinksToSources: Iterable[String]
-) {
-  def stepsIterator: Iterator[ParsedTstpDerivationStep] = map.valuesIterator
-  def stepsTopologicallyOrdered: Iterable[ParsedTstpDerivationStep] = topologicallyOrderedFromSinksToSources.map(map(_))
-  def get(label: String): Option[ParsedTstpDerivationStep] = map.get(label)
-
-  def parentsOf(formulaName: String): Seq[ParsedTstpDerivationStep] = {
-    map(formulaName).parents.map(p => map(p))
-  }
-
-  val nonConjectureRootLabels: Set[String] = {
-    def isRoot(key: String): Boolean = {
-      map(key).role != "conjecture" && map.forall((_, f) => !f.parents.contains(key))
-    }
-
-    map.keys.filter(isRoot).toSet
-  }
-
-  val nonConjectureRefutationLabels: Set[String] = {
-    map.flatMap {
-      case (k, f) if f.role != "conjecture" && f.formula == Bottom() => Some(k)
-      case _                                                         => None
-    }.toSet
-  }
-
-  val nonConjectureRootRefutationLabels: Set[String] =
-    nonConjectureRootLabels.intersect(nonConjectureRefutationLabels)
-}
-
-object TstpDerivation {
-
-  /** Parses and validates a TstpDerivation from a given input file.
-  *
-  * @param input
-  * @return the TstpDerivation or an Error if there was an issue
-  */
-  def fromInputFile(input: InputFile): Either[TstpDerivationError, TstpDerivation] =
-    ParsedTstpDerivation.fromInputFile(input).flatMap(fromParsed)
-
-  /** Validates a parsed derivation and constructs a [[TstpDerivation]]. */
-  def fromParsed(parsed: ParsedTstpDerivation): Either[TstpDerivationError, TstpDerivation] = {
-    for
-      map <- intoUniqueMap(parsed.steps)
-      checkedDerivation <- intoCheckedTstpDerivation(map)
-    yield checkedDerivation
-  }
-
-  // ensures there are no steps with duplicate labels
-  private def intoUniqueMap(
-      steps: Seq[ParsedTstpDerivationStep]
-  ): Either[DistinctFormulasWithSameName, Map[String, ParsedTstpDerivationStep]] = boundary {
-    val map = steps.foldLeft(Map.empty[String, ParsedTstpDerivationStep]) { (map, step) =>
-      map.updatedWith(step.name) {
-        case Some(formula) =>
-          break(Left(DistinctFormulasWithSameName(formula.name)))
-
-        case _ => Some(step)
-      }
-    }
-
-    Right(map)
-  }
-
-  private def intoCheckedTstpDerivation(
-      map: Map[String, ParsedTstpDerivationStep]
-  ): Either[TstpDerivationError, TstpDerivation] = boundary {
-    val topologicalOrder = sortTopologically(map).getOrBreak
-
-    val negatedConjectures = map.values.collect { case s: ParsedTstpNegatedConjectureStep => s }
-    negatedConjectures.find(c => map.hasNonConjectureParent(c.name)).map { s =>
-      break(Left(NegatedConjectureStepWithNonConjectureParent(s.name)))
-    }
-
-    if negatedConjectures.size > 1 then {
-      break(Left(UnexpectedInput("got more than one negated conjecture")))
-    }
-
-    val plainInferences = map.values.collect { case a: ParsedTstpPlainInferenceStep => a }
-    plainInferences.find(s => map.hasConjectureParent(s.name)).map { s =>
-      break(Left(PlainInferenceWithConjectureParent(s)))
-    }
-
-    Right(TstpDerivation(map, topologicalOrder))
-  }
-
-  private def sortTopologically(
-      map: Map[String, ParsedTstpDerivationStep]
-  ): Either[NonExistentStep | InferenceCycle, Iterable[String]] = boundary {
-    import scala.collection.mutable
-
-    val visited = mutable.Set[String]()
-    val reachableSteps = mutable.Buffer[ParsedTstpDerivationStep]()
-    def walk(label: String): Unit = {
-      if !visited.contains(label) then {
-        visited += label
-        val formula = map.get(label).getOrElse {
-          break(Left(NonExistentStep(label)))
-        }
-        reachableSteps += formula
-        formula.parents.foreach(walk)
-      }
-    }
-    map.keysIterator.foreach(walk)
-
-    val usedStepsRootToLeafs = linearizeStrictPartialOrder(reachableSteps.toSet, x => map.parentsOf(x.name)).getOrElse {
-      break(Left(InferenceCycle()))
-    }
-    val usedStepsLeafsToRoot = usedStepsRootToLeafs.reverse
-
-    Right(usedStepsLeafsToRoot.map(_.name))
-  }
-
-  extension (map: Map[String, ParsedTstpDerivationStep]) {
-    def parentsOf(label: String): Seq[ParsedTstpDerivationStep] = {
-      map(label).parents.map(p => map(p))
-    }
-
-    def hasNonConjectureParent(formulaName: String): Boolean = {
-      map.parentsOf(formulaName).exists(p => p.role != "conjecture")
-    }
-
-    def hasConjectureParent(formulaName: String): Boolean = {
-      map.parentsOf(formulaName).exists(p => p.role == "conjecture")
-    }
-  }
-}
-
-/**
-* Attempts to replay the inferences in the given TstpDerivation into a Context containing
-* LKProofs for every inference step in the TstpDerivation
+* Attempts to replay the inferences in the given StructurallyCorrectTstpDerivation into a Context containing
+* LKProofs for every inference step in the StructurallyCorrectTstpDerivation
 */
 def buildTstpDerivationToProofContext(
-    derivation: TstpDerivation,
+    derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
   val verifiedSkolemizationsByStepName = verifiedSkolemizations(derivation).getOrBreak
@@ -336,13 +200,13 @@ def buildTstpDerivationToProofContext(
 }
 
 /**
-* Attempts to replay the inferences in the given TstpDerivation, but does not create
+* Attempts to replay the inferences in the given StructurallyCorrectTstpDerivation, but does not create
 * a context or LKProofs of the inferences for performance. Use this, if you are
 * interested in whether the given derivation is correct or not, but do not care
 * about the replayed proofs
 */
 def checkDerivationHasNoIncorrectInferences(
-    derivation: TstpDerivation,
+    derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] = boundary {
   val verifiedSkolemizationsByStepName = verifiedSkolemizations(derivation).getOrBreak
@@ -415,7 +279,7 @@ private def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A
 }
 
 private def verifiedSkolemizations(
-    derivation: TstpDerivation
+    derivation: StructurallyCorrectTstpDerivation
 ): Either[IncorrectSkolemization, Map[String, VerifiedSkolemization]] = boundary {
   val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
     case step: ParsedTstpSkolemizationStep => {
@@ -432,7 +296,7 @@ private def verifiedSkolemizations(
   Right(verifiedSkolemizationsByStepName)
 }
 
-private def deoverloadSymbols(derivation: TstpDerivation): TstpDerivation = {
+private def deoverloadSymbols(derivation: StructurallyCorrectTstpDerivation): StructurallyCorrectTstpDerivation = {
   import scala.collection.mutable
   val constTable = mutable.Map.empty[String, mutable.Set[(Const, ParsedTstpDerivationStep)]]
 
@@ -455,21 +319,16 @@ private def deoverloadSymbols(derivation: TstpDerivation): TstpDerivation = {
   def renamedFormula(formula: FOLFormula): FOLFormula =
     renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
 
-  derivation.copy(
-    map = derivation.stepsIterator.map { s =>
-      val step = s match {
-        case s: ParsedTstpAxiomStep             => s.copy(formula = renamedFormula(s.formula))
-        case s: ParsedTstpConjectureStep        => s.copy(formula = renamedFormula(s.formula))
-        case s: ParsedTstpNegatedConjectureStep => s.copy(formula = renamedFormula(s.formula))
-        case s: ParsedTstpPlainInferenceStep    => s.copy(formula = renamedFormula(s.formula))
-        case s: ParsedTstpSkolemizationStep     => s.copy(formula = renamedFormula(s.formula))
-      }
-      (s.name, step)
-    }.toMap
-  )
+  derivation.mapSteps {
+    case s: ParsedTstpAxiomStep             => s.copy(formula = renamedFormula(s.formula))
+    case s: ParsedTstpConjectureStep        => s.copy(formula = renamedFormula(s.formula))
+    case s: ParsedTstpNegatedConjectureStep => s.copy(formula = renamedFormula(s.formula))
+    case s: ParsedTstpPlainInferenceStep    => s.copy(formula = renamedFormula(s.formula))
+    case s: ParsedTstpSkolemizationStep     => s.copy(formula = renamedFormula(s.formula))
+  }
 }
 
-private def buildTstpDerivationContext(derivation: TstpDerivation, verifiedSkolemizationsByStepName: Map[String, VerifiedSkolemization]): ImmutableContext = {
+private def buildTstpDerivationContext(derivation: StructurallyCorrectTstpDerivation, verifiedSkolemizationsByStepName: Map[String, VerifiedSkolemization]): ImmutableContext = {
   val context: MutableContext = MutableContext.default()
   context += Sort(Ti)
 
@@ -639,7 +498,7 @@ private def incompatibleSkolemDefinitions(
 }
 
 private def ensureSkolemSymbolsDistinctFromInput(
-    derivation: TstpDerivation,
+    derivation: StructurallyCorrectTstpDerivation,
     verifiedSkolemDefinitions: Map[String, (FOLFunctionConst, Expr, Set[String])]
 ): Either[IncorrectSkolemization, Unit] = boundary {
   val inputSymbols = derivation.stepsIterator.collect {
@@ -855,7 +714,7 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
       for
         input <- resolver(fileName)
         inputFile = InputFile.fromString(input)
-        derivation <- TstpDerivation.fromInputFile(inputFile)
+        derivation <- StructurallyCorrectTstpDerivation.fromInputFile(inputFile)
         _ <- checkDerivationHasRefutation(derivation)
         _ <- checkDerivationHasCorrectFileDirectives(derivation, fileName)
         _ <- checkDerivationHasCorrectStatuses(derivation)
@@ -870,14 +729,14 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
   }
 }
 
-def checkDerivationHasRefutation(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = {
+def checkDerivationHasRefutation(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = {
   if derivation.nonConjectureRootRefutationLabels.isEmpty then
     Left(NoRefutationFound())
   else
     Right(())
 }
 
-def checkDerivationHasCorrectStatuses(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = boundary {
+def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = boundary {
   derivation.stepsIterator.foreach {
     case s: ParsedTstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Set("cth")) =>
       break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
@@ -890,7 +749,7 @@ def checkDerivationHasCorrectStatuses(derivation: TstpDerivation): Either[TstpDe
   Right(())
 }
 
-def checkDerivationHasCorrectFileDirectives(derivation: TstpDerivation, fileName: String)(using resolver: FileNameResolver): Either[TstpDerivationError, Unit] = boundary {
+def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpDerivation, fileName: String)(using resolver: FileNameResolver): Either[TstpDerivationError, Unit] = boundary {
   val parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
   val innerResolver = resolver.relativeTo(os.Path(fileName) / os.up)
   derivation.stepsIterator.foreach {
