@@ -1,7 +1,6 @@
 package gapt.cli
 
 import gapt.formats.tptp.check._
-import gapt.formats.OnDiskInputFile
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -49,7 +48,7 @@ def prooVerCLI(args: String*): Unit = LogHandler.use(ProoVerLogHandler()) {
           sys.exit(1)
         }
 
-        checkTstpDerivation(OnDiskInputFile(path))
+        checkTstpDerivation(path.toString)
       }
 
       Await.result(future, 28.seconds)

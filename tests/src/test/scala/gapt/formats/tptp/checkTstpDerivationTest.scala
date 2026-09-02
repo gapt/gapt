@@ -1171,7 +1171,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
     }
   }
 
-  spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i)(using r))
+  spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i.fileName)(using r))
 }
 
 class checkTstpDerivationExampleTest extends Specification {
@@ -1205,7 +1205,7 @@ class checkTstpDerivationExampleTest extends Specification {
 
     s2"""
     |checkProof1
-    |${spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i)(using r))}
+    |${spec((i: InputFile) => (r: FileNameResolver) ?=> checkTstpDerivation(i.fileName)(using r))}
   """.stripMargin
   }
 }
@@ -1397,6 +1397,15 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
       "fail on skolemization step with multiple skolemize(_,_)" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0), skolemize(X, sK1)], [nc]))."
+        )
+        TstpDerivation.fromInputFile(input) must beLeft {
+          (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]
+        }
+      }
+
+      "fail on skolemization step where skolemize record starts with constant" in {
+        val input = simpleSkolemConstantDerivation(
+          "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(a, sK0)], [nc]))."
         )
         TstpDerivation.fromInputFile(input) must beLeft {
           (x: TstpDerivationError) => x must beAnInstanceOf[UnexpectedInput]

@@ -109,7 +109,6 @@ type VerifiedUnknownReason =
   UnexpectedException
     | InputSyntaxError
     | CannotHandleInput
-    | NoConjectureFound
     | UnexpectedInput
     | CannotHandleIncludeDirectives
     | FileNotFound
@@ -464,7 +463,10 @@ object TstpDerivation {
       case Seq(term)     => term.asInstanceOf[FOLConst]
     }
     val boundVariableSkolemTermPairs = inference.usefulInfo.collect {
-      case TptpTerm("skolemize", boundVariable, skolemTerm: FOLTerm) => (boundVariable.asInstanceOf[FOLVar], skolemTerm)
+      case TptpTerm("skolemize", boundVariable: FOLVar, skolemTerm: FOLTerm) =>
+        (boundVariable, skolemTerm)
+      case TptpTerm("skolemize", _*) =>
+        break(Left(UnexpectedInput("expected skolemize(X,t) term where X is a variable and t is a term")))
     }
     val (boundVariable, skolemTerm) = boundVariableSkolemTermPairs match {
       case Seq()         => break(Left(SkolemizationStepWithoutBinding(name)))
@@ -1119,15 +1121,15 @@ object FileNameResolver {
 * @param resolver The resolver to use for resolving file names.
 * @return The [[SzsStatus]] of the check.
 */
-def checkTstpDerivation(file: InputFile)(using resolver: FileNameResolver): SzsStatus = {
+def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): SzsStatus = {
   val result =
     try {
       for
-        input <- resolver(file.fileName)
+        input <- resolver(fileName)
         inputFile = InputFile.fromString(input)
         derivation <- TstpDerivation.fromInputFile(inputFile)
         _ <- checkDerivationHasRefutation(derivation)
-        _ <- checkDerivationHasCorrectFileDirectives(derivation, file.fileName)
+        _ <- checkDerivationHasCorrectFileDirectives(derivation, fileName)
         _ <- checkDerivationHasCorrectStatuses(derivation)
         _ <- checkDerivationHasNoIncorrectInferences(derivation)
       yield ()
@@ -1140,11 +1142,11 @@ def checkTstpDerivation(file: InputFile)(using resolver: FileNameResolver): SzsS
   }
 }
 
-def checkDerivationHasRefutation(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = boundary {
-  derivation.nonConjectureRefutationLabels.headOption.getOrElse {
-    break(Left(NoRefutationFound()))
-  }
-  Right(())
+def checkDerivationHasRefutation(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = {
+  if derivation.nonConjectureRootRefutationLabels.isEmpty then
+    Left(NoRefutationFound())
+  else
+    Right(())
 }
 
 def checkDerivationHasCorrectStatuses(derivation: TstpDerivation): Either[TstpDerivationError, Unit] = boundary {
@@ -1524,10 +1526,6 @@ case class NoRefutationFound() extends TstpDerivationError {
 
 case class AmbiguousRefutationLabelsFound(labels: Seq[String]) extends TstpDerivationError {
   def message: String = s"no refutation found as there are multiple $$false formulas in the derivation: ${labels.mkString(", ")}"
-}
-
-case class NoConjectureFound() extends TstpDerivationError {
-  def message: String = s"no conjecture found: $message"
 }
 
 case class UnexpectedInput(message: String) extends TstpDerivationError
