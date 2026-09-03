@@ -88,10 +88,17 @@ enum SzsStatus {
 def buildTstpDerivationToProofContext(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization, Context] = boundary { outer ?=>
-  val verifiedSkolemizationsByStepName = verifiedSkolemizations(derivation).getOrBreak
+): Either[IncorrectInference | IncorrectSkolemization, Context] =
+  VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
+    buildTstpDerivationToProofContext(_, prover)
+  }
+
+def buildTstpDerivationToProofContext(
+    derivation: VerifiedSkolemizationsTstpDerivation,
+    prover: ResolutionProver
+): Either[IncorrectInference, Context] = boundary { outer ?=>
   val deoverloadedDerivation = deoverloadSymbols(derivation)
-  val ctx = buildTstpDerivationContext(deoverloadedDerivation, verifiedSkolemizationsByStepName)
+  val ctx = buildTstpDerivationContext(deoverloadedDerivation)
   given context: MutableContext = ctx.newMutable
 
   def addToContext(update: => Update) = {
@@ -130,7 +137,7 @@ def buildTstpDerivationToProofContext(
       }
 
       case s: ParsedTstpNegatedConjectureStep => {
-        val parentFormula = deoverloadedDerivation.get(s.parent).get.formula
+        val parentFormula = deoverloadedDerivation.structurallyCorrect.get(s.parent).get.formula
 
         // in the following we construct a proof of Neg(conjecture) :- s.formula
         // which is the only thing that is necessary for the refutation.
@@ -158,12 +165,12 @@ def buildTstpDerivationToProofContext(
       }
 
       case s: ParsedTstpSkolemizationStep => {
-        val skolemizationStep = verifiedSkolemizationsByStepName(s.name)
+        val skolemizationStep = derivation.verifiedSkolemization(s.name).get
         addToContext(proofDeclaration(s.name, skolemizationStep.proof, Seq(s.parent)))
       }
 
       case s: ParsedTstpPlainInferenceStep => {
-        val parentFormulas = s.parents.map(p => deoverloadedDerivation.get(p).get.formula)
+        val parentFormulas = s.parents.map(p => deoverloadedDerivation.structurallyCorrect.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
         addToContext(proofDeclaration(s.name, proof, s.parents))
@@ -171,7 +178,7 @@ def buildTstpDerivationToProofContext(
     }
   }
 
-  deoverloadedDerivation.stepsTopologicallyOrdered.foreach(handleStep)
+  deoverloadedDerivation.structurallyCorrect.stepsTopologicallyOrdered.foreach(handleStep)
 
   Right(context.toImmutable)
 }
@@ -185,10 +192,17 @@ def buildTstpDerivationToProofContext(
 def checkDerivationHasNoIncorrectInferences(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] = boundary {
-  val verifiedSkolemizationsByStepName = verifiedSkolemizations(derivation).getOrBreak
+): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] =
+  VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
+    checkDerivationHasNoIncorrectInferences(_, prover)
+  }
+
+def checkDerivationHasNoIncorrectInferences(
+    derivation: VerifiedSkolemizationsTstpDerivation,
+    prover: ResolutionProver
+): Either[IncorrectInference | StepsWithOverloadedSymbols, Unit] = boundary {
   val deoverloadedDerivation = deoverloadSymbols(derivation)
-  val ctx = buildTstpDerivationContext(deoverloadedDerivation, verifiedSkolemizationsByStepName)
+  val ctx = buildTstpDerivationContext(deoverloadedDerivation)
   val context: MutableContext = ctx.newMutable
 
   def isValid(inferenceName: String, sequentToProve: Sequent[FOLFormula]): Boolean = {
@@ -196,14 +210,14 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  val futures: Seq[Future[(ParsedTstpDerivationStep, Boolean)]] = deoverloadedDerivation.stepsIterator.toSeq.flatMap {
+  val futures: Seq[Future[(ParsedTstpDerivationStep, Boolean)]] = deoverloadedDerivation.structurallyCorrect.stepsIterator.toSeq.flatMap {
     case s: ParsedTstpPlainInferenceStep => {
-      val parentFormulas = s.parents.map(p => deoverloadedDerivation.get(p).get.formula)
+      val parentFormulas = s.parents.map(p => deoverloadedDerivation.structurallyCorrect.get(p).get.formula)
       val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
       Seq(Future { (s, isValid(s.name, sequentToProve)) })
     }
     case s: ParsedTstpNegatedConjectureStep => {
-      val parentFormula = deoverloadedDerivation.get(s.parent).get.formula
+      val parentFormula = deoverloadedDerivation.structurallyCorrect.get(s.parent).get.formula
       Seq(
         Future {
           val negatedConjectureToFormulaProof =
@@ -255,11 +269,13 @@ private def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A
   }
 }
 
-private def deoverloadSymbols(derivation: StructurallyCorrectTstpDerivation): StructurallyCorrectTstpDerivation = {
+private def deoverloadSymbols(
+    derivation: VerifiedSkolemizationsTstpDerivation
+): VerifiedSkolemizationsTstpDerivation = {
   import scala.collection.mutable
   val constTable = mutable.Map.empty[String, mutable.Set[(Const, ParsedTstpDerivationStep)]]
 
-  derivation.stepsIterator.foreach { s =>
+  derivation.structurallyCorrect.stepsIterator.foreach { s =>
     constants.all(s.formula).foreach { c =>
       constTable.getOrElseUpdate(c.name, mutable.Set.empty).add((c, s))
     }
@@ -287,7 +303,9 @@ private def deoverloadSymbols(derivation: StructurallyCorrectTstpDerivation): St
   }
 }
 
-private def buildTstpDerivationContext(derivation: StructurallyCorrectTstpDerivation, verifiedSkolemizationsByStepName: Map[String, VerifiedSkolemization]): ImmutableContext = {
+private def buildTstpDerivationContext(
+    derivation: VerifiedSkolemizationsTstpDerivation
+): ImmutableContext = {
   val context: MutableContext = MutableContext.default()
   context += Sort(Ti)
 
@@ -296,18 +314,16 @@ private def buildTstpDerivationContext(derivation: StructurallyCorrectTstpDeriva
     then context += c
   }
 
-  derivation.stepsIterator.foreach { s =>
+  derivation.structurallyCorrect.stepsIterator.foreach { s =>
     constants.all(s.formula).foreach { c =>
       addConstantToContextIfNotPresent(c)
     }
   }
 
-  verifiedSkolemizationsByStepName.foreach {
-    case (_, skolemization) => {
-      import gapt.proofs.context.facet.skolemFunsFacet
-      addConstantToContextIfNotPresent(skolemization.skolemSymbol)
-      context += { ctx => ctx.state.update[SkolemFunctions](_ + (skolemization.skolemSymbol, skolemization.skolemDefinition)) }
-    }
+  derivation.verifiedSkolemizations.foreach { skolemization =>
+    import gapt.proofs.context.facet.skolemFunsFacet
+    addConstantToContextIfNotPresent(skolemization.skolemSymbol)
+    context += { ctx => ctx.state.update[SkolemFunctions](_ + (skolemization.skolemSymbol, skolemization.skolemDefinition)) }
   }
 
   context.toImmutable
@@ -367,7 +383,8 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
         _ <- checkDerivationHasRefutation(derivation)
         _ <- checkDerivationHasCorrectFileDirectives(derivation, fileName)
         _ <- checkDerivationHasCorrectStatuses(derivation)
-        _ <- checkDerivationHasNoIncorrectInferences(derivation)
+        verifiedDerivation <- VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation)
+        _ <- checkDerivationHasNoIncorrectInferences(verifiedDerivation, Escargot)
       yield ()
     } catch e => Left(UnexpectedException(e))
 

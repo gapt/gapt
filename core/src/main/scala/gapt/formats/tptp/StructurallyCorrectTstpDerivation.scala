@@ -62,7 +62,6 @@ final class StructurallyCorrectTstpDerivation private[check] (
 }
 
 object StructurallyCorrectTstpDerivation {
-
   def fromInputFile(
       input: InputFile
   ): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =

@@ -20,22 +20,46 @@ import scala.util.boundary
 import scala.util.boundary.Label
 import boundary.break
 
-private[check] def verifiedSkolemizations(
-    derivation: StructurallyCorrectTstpDerivation
-): Either[IncorrectSkolemization, Map[String, VerifiedSkolemization]] = boundary {
-  val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
-    case step: ParsedTstpSkolemizationStep => {
-      val parentFormula = derivation.get(step.parent).get.formula
-      val locallyCorrectSkolemization =
-        VerifiedSkolemization.fromTstpSkolemizationStepAndParentFormula(step, parentFormula).getOrBreak
+/**
+ * A structurally correct TSTP derivation for which every skolemization step has
+ * been checked, and whose Skolem definitions are globally compatible and fresh
+ * with respect to the input formulas.
+ */
+final class VerifiedSkolemizationsTstpDerivation private (
+    val structurallyCorrect: StructurallyCorrectTstpDerivation,
+    private val verifiedSkolemizationsByStepName: Map[String, VerifiedSkolemization]
+) {
+  private[check] def verifiedSkolemization(stepName: String): Option[VerifiedSkolemization] =
+    verifiedSkolemizationsByStepName.get(stepName)
 
-      (step.name, locallyCorrectSkolemization)
-    }
-  }.toMap
+  private[check] def verifiedSkolemizations: Iterable[VerifiedSkolemization] =
+    verifiedSkolemizationsByStepName.values
 
-  val verifiedSkolemDefinitions = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
-  val _ = ensureSkolemSymbolsDistinctFromInput(derivation, verifiedSkolemDefinitions).getOrBreak
-  Right(verifiedSkolemizationsByStepName)
+  private[check] def mapSteps(
+      transform: ParsedTstpDerivationStep => ParsedTstpDerivationStep
+  ): VerifiedSkolemizationsTstpDerivation = {
+    val mappedStructurallyCorrect = structurallyCorrect.mapSteps(transform)
+    VerifiedSkolemizationsTstpDerivation(mappedStructurallyCorrect, verifiedSkolemizationsByStepName)
+  }
+}
+
+object VerifiedSkolemizationsTstpDerivation {
+  def fromStructurallyCorrect(
+      derivation: StructurallyCorrectTstpDerivation
+  ): Either[IncorrectSkolemization, VerifiedSkolemizationsTstpDerivation] = boundary {
+    val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
+      case step: ParsedTstpSkolemizationStep =>
+        val parentFormula = derivation.get(step.parent).get.formula
+        val locallyCorrectSkolemization =
+          VerifiedSkolemization.fromTstpSkolemizationStepAndParentFormula(step, parentFormula).getOrBreak
+
+        step.name -> locallyCorrectSkolemization
+    }.toMap
+
+    val verifiedSkolemDefinitions = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
+    val _ = ensureSkolemSymbolsDistinctFromInput(derivation, verifiedSkolemDefinitions).getOrBreak
+    Right(new VerifiedSkolemizationsTstpDerivation(derivation, verifiedSkolemizationsByStepName))
+  }
 }
 
 type SkolemDefinition = Expr
