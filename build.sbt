@@ -170,10 +170,13 @@ lazy val root = project.in(file("."))
 
       val archiveFile = file(".") / "target" / s"gapt-$version.tar.gz"
 
-      Process(
+      val latexExit = Process(
         List("latexmk", "-pdf", "-silent", "user_manual.tex"),
         baseDir / "doc"
       ) !
+
+      if (latexExit != 0)
+        sys.error(s"latexmk failed with exit code $latexExit")
 
       val filesToIncludeAsIs = List(
         "COPYING",
