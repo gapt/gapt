@@ -1,22 +1,13 @@
 import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+import sbtassembly.Assembly.{JarEntry, Library}
 import sys.process._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
 val Version = "2.20.0-SNAPSHOT"
-
-def filterUnidocScalacOptions(options: Seq[String]): Seq[String] = {
-  val optionsWithValuesToRemove = Set("-semanticdb-target", "-project")
-  val optionsToRemove = optionsWithValuesToRemove + "-Xsemanticdb"
-  options.zipWithIndex.filterNot {
-    case (option, index) =>
-      val isRemovedOption = optionsToRemove(option)
-      val isValueOfRemovedOption =
-        options.lift(index - 1).exists(optionsWithValuesToRemove)
-      isRemovedOption || isValueOfRemovedOption
-  }.map(_._1)
-}
+val ScalaVersion = "3.9.0"
+val PPrintVersion = "0.9.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 Global / semanticdbEnabled := true
@@ -38,7 +29,7 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some("scm:git:git@github.com:gapt/gapt.git")
   )),
-  scalaVersion := "3.9.0",
+  scalaVersion := ScalaVersion,
   developers := List(
     Developer(
       id = "fachammer",
@@ -156,6 +147,22 @@ lazy val root = project.in(file("."))
     // Release stuff
     assembly / mainClass := Some("gapt.cli.CLIMain"),
     assembly / aggregate := false,
+    assembly / assemblyMergeStrategy := {
+      case "module-info.class" => discardJLineModuleInfo
+      case PathList(
+            "scala",
+            "collection",
+            "internal",
+            "pprint",
+            file
+          )
+          if Set(
+            "CollectionName.class",
+            "CollectionName$.class",
+            "CollectionName.tasty"
+          )(file) => mergePPrintCollectionName
+      case path => (assembly / assemblyMergeStrategy).value(path)
+    },
     releaseDist := {
       val baseDir = file(".")
       val version = Keys.version.value
@@ -249,7 +256,7 @@ lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
     "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
     "org.apache.commons" % "commons-lang3" % "3.12.0",
     "com.lihaoyi" %% "os-lib" % "0.9.3",
-    "com.lihaoyi" %% "pprint" % "0.9.0",
+    "com.lihaoyi" %% "pprint" % PPrintVersion,
     "de.uni-freiburg.informatik.ultimate" % "smtinterpol" % "2.5",
     "com.github.scopt" %% "scopt" % "4.0.1",
     "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6",
@@ -337,7 +344,69 @@ lazy val evalUserManual = TaskKey[Unit](
 
 lazy val scripts = TaskKey[Unit]("scripts", "Creates scripts in target/")
 
-def recursiveListFiles(f: File): Seq[File] =
+def recursiveListFiles(f: File): Seq[File] = {
   if (f.getName == "target") Seq()
   else if (f.isDirectory) IO.listFiles(f).flatMap(recursiveListFiles)
   else Seq(f)
+}
+
+val mergePPrintCollectionName =
+  CustomMergeStrategy("prefer-pprint-collection-name") { conflicts =>
+    val expectedModules = Set(
+      ("com.lihaoyi", "pprint_3", PPrintVersion),
+      ("org.scala-lang", "scala3-repl_3", ScalaVersion)
+    )
+    val actualModules = conflicts.flatMap(_.module).map { module =>
+      (module.organization, module.name, module.version)
+    }.toSet
+
+    if (conflicts.size != 2 || actualModules != expectedModules)
+      Left(
+        s"Unexpected CollectionName conflict: ${actualModules.toSeq.sorted.mkString(", ")}"
+      )
+    else
+      conflicts.collectFirst {
+        case dependency: Library
+            if dependency.moduleCoord.organization == "com.lihaoyi" &&
+              dependency.moduleCoord.name == "pprint_3" &&
+              dependency.moduleCoord.version == PPrintVersion =>
+          JarEntry(dependency.target, dependency.stream)
+      } match {
+        case Some(entry) => Right(Vector(entry))
+        case None        => Left("Missing pprint CollectionName entry")
+      }
+  }
+
+val discardJLineModuleInfo =
+  CustomMergeStrategy("discard-jline-module-info") { conflicts =>
+    val expectedModuleNames = Set(
+      "jline-native",
+      "jline-reader",
+      "jline-terminal",
+      "jline-terminal-jni"
+    )
+    val unexpectedOrigins = conflicts.filterNot {
+      case dependency: Library =>
+        dependency.moduleCoord.organization == "org.jline" &&
+        expectedModuleNames(dependency.moduleCoord.name)
+      case _ => false
+    }
+
+    if (unexpectedOrigins.isEmpty) Right(Vector.empty)
+    else
+      Left(
+        s"module-info.class has unexpected origins: ${unexpectedOrigins.mkString(", ")}"
+      )
+  }
+
+def filterUnidocScalacOptions(options: Seq[String]): Seq[String] = {
+  val optionsWithValuesToRemove = Set("-semanticdb-target", "-project")
+  val optionsToRemove = optionsWithValuesToRemove + "-Xsemanticdb"
+  options.zipWithIndex.filterNot {
+    case (option, index) =>
+      val isRemovedOption = optionsToRemove(option)
+      val isValueOfRemovedOption =
+        options.lift(index - 1).exists(optionsWithValuesToRemove)
+      isRemovedOption || isValueOfRemovedOption
+  }.map(_._1)
+}
