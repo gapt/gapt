@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some("scm:git:git@github.com:gapt/gapt.git")
   )),
-  scalaVersion := "3.8.2",
+  scalaVersion := "3.9.0",
   developers := List(
     Developer(
       id = "fachammer",

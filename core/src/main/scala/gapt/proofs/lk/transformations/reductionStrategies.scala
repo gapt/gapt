@@ -17,10 +17,10 @@ class UppermostFirstStrategy(reduction: Reduction) extends ReductionStrategy {
   def run(proof: LKProof): LKProof = {
     new LKVisitor[Unit] {
       override def recurse(proof: LKProof, u: Unit): (LKProof, SequentConnector) = {
-        val (intermediaryProof, intermediaryConnector): (LKProof, SequentConnector) = super.recurse(proof, u)
+        val (intermediaryProof, intermediaryConnector) = super.recurse(proof, u)
         reduction.reduce(intermediaryProof) match {
           case Some(intermediaryProof2) => {
-            val (finalProof, _): (LKProof, SequentConnector) = recurse(intermediaryProof2, u)
+            val (finalProof, _) = recurse(intermediaryProof2, u)
             (
               finalProof,
               SequentConnector.guessInjection(

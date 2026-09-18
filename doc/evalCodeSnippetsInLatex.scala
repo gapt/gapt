@@ -80,7 +80,7 @@ class CommandEvaluator {
   val outPrintStream = new PrintStream(new WriterOutputStream(outWriter), true)
 
   val repl = new ReplDriver(
-    Array("-usejavacp", "-color:never", "-Vrepl-max-print-characters:766"),
+    Array("-usejavacp", "-color:never"),
     outPrintStream
   )
   var state = repl.initialState
@@ -101,7 +101,13 @@ class CommandEvaluator {
     var o = out.result()
     o = lambdaRegex.replaceAllIn(o, "<function>")
     o = elidedRegex.replaceAllIn(o, "... elided")
-    o
+    val lines = o.linesIterator.toSeq
+    val linesTruncated = lines.take(20)
+    val truncatedString = linesTruncated.mkString("\n")
+    if linesTruncated.length < lines.length then
+      truncatedString + "\n... output truncated\n"
+    else
+      truncatedString + "\n"
   }
 
   def runCommand(cmd: String): String = {

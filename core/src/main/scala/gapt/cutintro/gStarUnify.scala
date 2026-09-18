@@ -69,8 +69,8 @@ object gStarUnify {
 
     // nameOfPos and nameOfNeg are the names of the corresponding atoms that have to be equal. Otherwise, there is no unified literal.
     // In the case that the names are equal, we call the unify function with the arguments argsP and argsN of the corresponding literals.
-    val Apps(nameOfPos, argsP): Formula = posAt
-    val Apps(nameOfNeg, argsN): Formula = negAt
+    val Apps(nameOfPos, argsP) = posAt
+    val Apps(nameOfNeg, argsN) = negAt
 
     val unifiedLiteral: Option[Formula] = nameOfPos match {
       case t if ((nameOfNeg == t) && (argsP.length == argsN.length)) => {
