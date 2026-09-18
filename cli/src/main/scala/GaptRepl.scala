@@ -15,11 +15,6 @@ import dotty.tools.dotc.printing.SyntaxHighlighting
 import dotty.tools.repl.Rendering.showUser
 
 case class GaptRepl() {
-
-  class GaptTerminal extends JLineTerminal {
-    override protected def promptStr: String = "gapt"
-  }
-
   class GaptReplDriver(out: PrintStream = Console.out) extends ReplDriver(Array(
         "-usejavacp",
         "-feature",
@@ -36,7 +31,9 @@ case class GaptRepl() {
       // However, this means that future changes in the scala repl might have to be incorporated here.
 
       // These first two lines are new
-      val terminal = new GaptTerminal
+      val terminal = new JLineTerminal {
+        override protected def promptStr: String = "gapt"
+      }
       out.println(welcomeMessage)
 
       // The rest is copied from the implementation linked above

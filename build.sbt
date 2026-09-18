@@ -6,6 +6,18 @@ import xerial.sbt.Sonatype.sonatypeCentralHost
 
 val Version = "2.20.0-SNAPSHOT"
 
+def filterUnidocScalacOptions(options: Seq[String]): Seq[String] = {
+  val optionsWithValuesToRemove = Set("-semanticdb-target", "-project")
+  val optionsToRemove = optionsWithValuesToRemove + "-Xsemanticdb"
+  options.zipWithIndex.filterNot {
+    case (option, index) =>
+      val isRemovedOption = optionsToRemove(option)
+      val isValueOfRemovedOption =
+        options.lift(index - 1).exists(optionsWithValuesToRemove)
+      isRemovedOption || isValueOfRemovedOption
+  }.map(_._1)
+}
+
 Global / onChangedBuildSource := ReloadOnSourceChanges
 Global / semanticdbEnabled := true
 Global / semanticdbVersion := scalafixSemanticdb.revision
@@ -97,6 +109,7 @@ lazy val root = project.in(file("."))
     publish / skip := true,
     packagedArtifacts := Map(),
     apiURL := Some(url("https://logic.at/gapt/api/")),
+    ScalaUnidoc / unidoc / scalacOptions ~= filterUnidocScalacOptions,
     ScalaUnidoc / unidoc / scalacOptions ++= Seq(
       "-doc-title",
       "gapt",

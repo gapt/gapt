@@ -344,7 +344,7 @@ object CASCData {
 
   /**
    * Creates a list of input files in the TPTP library hierarchy
-   * @param prefix the path prefix of the library (files must be in $prefix/Problems/XYZ
+   * @param prefix the path prefix of the library (files must be in \$prefix/Problems/XYZ)
    * @return the input problems
    */
   def prepareInputProblems(prefix: String) = {
