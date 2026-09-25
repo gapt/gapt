@@ -88,7 +88,7 @@ def buildTstpDerivationToProofContext(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization, Context] =
-  verifySkolemizationsAfterDeoverloading(derivation).flatMap {
+  VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
     buildTstpDerivationToProofContext(_, prover)
   }
 
@@ -191,7 +191,7 @@ def checkDerivationHasNoIncorrectInferences(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] =
-  verifySkolemizationsAfterDeoverloading(derivation).flatMap {
+  VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
     checkDerivationHasNoIncorrectInferences(_, prover)
   }
 
@@ -265,15 +265,6 @@ private def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A
     result.future
   }
 }
-
-private def verifySkolemizationsAfterDeoverloading(
-    derivation: StructurallyCorrectTstpDerivation
-): Either[IncorrectSkolemization, VerifiedSkolemizationsTstpDerivation] =
-  checkSkolemSymbolsAreNotOverloaded(derivation).flatMap { _ =>
-    VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(
-      StructurallyCorrectTstpDerivation.deoverloadSymbols(derivation)
-    )
-  }
 
 private def buildTstpDerivationContext(
     derivation: VerifiedSkolemizationsTstpDerivation
@@ -355,7 +346,7 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
         _ <- checkDerivationHasRefutation(derivation)
         _ <- checkDerivationHasCorrectFileDirectives(derivation, fileName)
         _ <- checkDerivationHasCorrectStatuses(derivation)
-        verifiedDerivation <- verifySkolemizationsAfterDeoverloading(derivation)
+        verifiedDerivation <- VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation)
         _ <- checkDerivationHasNoIncorrectInferences(verifiedDerivation, Escargot)
       yield ()
     } catch e => Left(UnexpectedException(e))

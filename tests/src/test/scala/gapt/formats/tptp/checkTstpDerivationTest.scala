@@ -2248,6 +2248,18 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
   }
 
   "tstpDerivationToProofContext" should {
+    "reject an invalid skolemization through the public verified factory" in {
+      val input = InputFile.fromString("""
+        |fof(a, axiom, ?[X] : (p(X) & q(c)), file('problem.p', a)).
+        |fof(s, plain, p(c) & q(c), inference(skolemize, [status(esa), new_symbols(skolem, [c]), skolemize(X, c)], [a])).
+      """.stripMargin)
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
+
+      VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation) must beLeft.like {
+        case IncorrectSkolemization(_: SkolemSymbolIsAConstantExistingInTheInput) => ok
+      }
+    }
+
     "return proof with negated conjecture in antecedent" in {
       val input = InputFile.fromString("""
       |fof(a, axiom, ![X]: p(X), file('problem.p', a)).

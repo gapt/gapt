@@ -40,6 +40,13 @@ final class VerifiedSkolemizationsTstpDerivation private (
 object VerifiedSkolemizationsTstpDerivation {
   def fromStructurallyCorrect(
       derivation: StructurallyCorrectTstpDerivation
+  ): Either[IncorrectSkolemization, VerifiedSkolemizationsTstpDerivation] =
+    checkSkolemSymbolsAreNotOverloaded(derivation).flatMap { _ =>
+      fromNormalizedAndFresh(StructurallyCorrectTstpDerivation.deoverloadSymbols(derivation))
+    }
+
+  private[check] def fromNormalizedAndFresh(
+      derivation: StructurallyCorrectTstpDerivation
   ): Either[IncorrectSkolemization, VerifiedSkolemizationsTstpDerivation] = boundary {
     val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
       case step: ParsedTstpSkolemizationStep =>
@@ -55,7 +62,7 @@ object VerifiedSkolemizationsTstpDerivation {
   }
 }
 
-def checkSkolemSymbolsAreNotOverloaded(
+private[check] def checkSkolemSymbolsAreNotOverloaded(
     derivation: StructurallyCorrectTstpDerivation
 ): Either[IncorrectSkolemization, Unit] = boundary {
   val declaredSkolemSymbols = derivation.stepsIterator.collect {
