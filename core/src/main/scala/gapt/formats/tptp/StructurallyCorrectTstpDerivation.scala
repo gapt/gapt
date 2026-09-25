@@ -94,14 +94,14 @@ final class StructurallyCorrectTstpDerivation private[check] (
 
   val nonConjectureRootLabels: Set[String] = {
     val referencedLabels = map.valuesIterator.flatMap(_.parents).toSet
-    map.keysIterator
-      .filter(label => map(label).role != "conjecture" && !referencedLabels.contains(label))
+    labelsInSourceOrder.iterator
+      .filter(label => map(label).role != TstpRole.Conjecture && !referencedLabels.contains(label))
       .toSet
   }
 
   val nonConjectureRefutationLabels: Set[String] =
     map.collect {
-      case (label, step) if step.role != "conjecture" && step.formula == Bottom() => label
+      case (label, step) if step.role != TstpRole.Conjecture && step.formula == Bottom() => label
     }.toSet
 
   val nonConjectureRootRefutationLabels: Set[String] =
@@ -173,21 +173,18 @@ object StructurallyCorrectTstpDerivation {
         val annotations = renamedAnnotations(step.annotations)
         step.copy(
           formula = renamedFormula(step.formula),
-          annotations = annotations,
-          source = annotations.source.asInstanceOf[Source.Inference]
+          annotations = annotations
         )
       case step: ParsedTstpPlainInferenceStep =>
         val annotations = renamedAnnotations(step.annotations)
         step.copy(
           formula = renamedFormula(step.formula),
-          annotations = annotations,
-          source = annotations.source.asInstanceOf[Source.Inference]
+          annotations = annotations
         )
       case step: ParsedTstpSkolemizationStep =>
         val annotations = renamedAnnotations(step.annotations)
         step.copy(
           formula = renamedFormula(step.formula),
-          source = annotations.source.asInstanceOf[Source.Inference],
           newSkolemSymbol = renamedTerm(step.newSkolemSymbol).asInstanceOf[gapt.expr.formula.fol.FOLFunctionConst],
           annotations = annotations
         )
@@ -232,15 +229,15 @@ object StructurallyCorrectTstpDerivation {
     if conjectures.size > 1 then
       break(Left(MultipleConjectures(conjectures.map(_.name))))
 
-    negatedConjectures.find(step => derivation.parentsOf(step.name).exists(_.role != "conjecture")).foreach { step =>
+    negatedConjectures.find(step => derivation.parentsOf(step.name).exists(_.role != TstpRole.Conjecture)).foreach { step =>
       break(Left(NegatedConjectureStepWithNonConjectureParent(step.name)))
     }
 
     if negatedConjectures.size > 1 then
       break(Left(UnexpectedInput("got more than one negated conjecture")))
 
-    derivation.stepsInSourceOrderIterator.filter(_.role == "plain")
-      .find(step => derivation.parentsOf(step.name).exists(_.role == "conjecture"))
+    derivation.stepsInSourceOrderIterator.filter(_.role == TstpRole.Plain)
+      .find(step => derivation.parentsOf(step.name).exists(_.role == TstpRole.Conjecture))
       .foreach { step =>
         break(Left(PlainInferenceWithConjectureParent(step)))
       }

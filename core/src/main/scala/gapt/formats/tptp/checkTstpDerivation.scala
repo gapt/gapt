@@ -15,6 +15,7 @@ import gapt.expr.ty.Ti
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
 import gapt.formats.tptp.*
+import TstpCheckSyntax.*
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Ant
 import gapt.proofs.Sequent
@@ -78,6 +79,22 @@ enum SzsStatus {
   def isUnknown: Boolean = this.isInstanceOf[Unknown]
 
   def statusLine: String = s"% SZS status $status"
+}
+
+enum TstpStatus(val value: String) {
+  case Thm extends TstpStatus("thm")
+  case Cth extends TstpStatus("cth")
+  case Esa extends TstpStatus("esa")
+  case Other(override val value: String) extends TstpStatus(value)
+}
+
+object TstpStatus {
+  def fromValue(value: String): TstpStatus = value match {
+    case Thm.value => Thm
+    case Cth.value => Cth
+    case Esa.value => Esa
+    case other     => Other(other)
+  }
 }
 
 /**
@@ -292,7 +309,7 @@ private def buildTstpDerivationContext(
   context.toImmutable
 }
 
-def renameConsts(renaming: PartialFunction[Const, String])(expr: Expr): Expr = expr match {
+private[check] def renameConsts(renaming: PartialFunction[Const, String])(expr: Expr): Expr = expr match {
   case v: Var         => v
   case c: Const       => Const(renaming.applyOrElse(c, _ => c.name), c.ty, c.params)
   case App(head, arg) => App(renameConsts(renaming)(head), renameConsts(renaming)(arg))
@@ -365,12 +382,12 @@ def checkDerivationHasRefutation(derivation: StructurallyCorrectTstpDerivation):
 
 def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = boundary {
   derivation.stepsIterator.foreach {
-    case s: ParsedTstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Set("cth")) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq("cth"))))
-    case s: ParsedTstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Set("thm")) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq("thm"))))
-    case s: ParsedTstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Set("esa")) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq("esa"))))
+    case s: ParsedTstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Seq(TstpStatus.Cth)) =>
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq(TstpStatus.Cth))))
+    case s: ParsedTstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Seq(TstpStatus.Thm)) =>
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq(TstpStatus.Thm))))
+    case s: ParsedTstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Seq(TstpStatus.Esa)) =>
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq(TstpStatus.Esa))))
     case _ =>
   }
   Right(())
@@ -413,8 +430,8 @@ def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpD
         case Seq(a) => a
       }
 
-      if fileDirectiveFormula.role != s.role then {
-        break(Left(FileDirectiveStepDoesNotMatchRole(s.name, fileName, label, s.role, fileDirectiveFormula.role)))
+      if fileDirectiveFormula.role != s.role.value then {
+        break(Left(FileDirectiveStepDoesNotMatchRole(s.name, fileName, label, s.role.value, fileDirectiveFormula.role)))
       }
 
       if !fileDirectiveFormula.formula.alphaEquals(s.formula) then {
@@ -432,106 +449,69 @@ def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpD
   Right(())
 }
 
-extension (annotations: Option[Annotations]) {
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    val ann = annotations.getOrElse { break(false) }
-    val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
-    val inferenceStatus = inferenceSource.statuses.toSet.singleOption.getOrElse { break(false) }
+private object TstpCheckSyntax {
+  extension (annotations: Option[Annotations])
+    def hasUnambiguousStatusAmong(statuses: Seq[TstpStatus]): Boolean = boundary {
+      val ann = annotations.getOrElse { break(false) }
+      val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
+      val inferenceStatus = inferenceSource.statuses.toSet.singleOption.getOrElse { break(false) }
 
-    statuses.contains(inferenceStatus)
-  }
-}
+      statuses.contains(inferenceStatus)
+    }
 
-extension (step: ParsedTstpDerivationStep) {
-  def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
-    step.annotationsOption.hasUnambiguousStatusAmong(statuses)
-  }
-}
+  extension (step: ParsedTstpDerivationStep)
+    def hasUnambiguousStatusAmong(statuses: Seq[TstpStatus]): Boolean = boundary {
+      step.annotationsOption.hasUnambiguousStatusAmong(statuses)
+    }
 
-extension (gt: GeneralTerm) {
-  def asStatus: Option[String] = gt match {
-    case TptpTerm("status", TptpTerm(value)) => Some(value)
-    case _                                   => None
-  }
-}
+  extension (gt: GeneralTerm)
+    def asStatus: Option[TstpStatus] = gt match {
+      case TptpTerm("status", TptpTerm(value)) => Some(TstpStatus.fromValue(value))
+      case _                                   => None
+    }
 
-extension (usefulInfo: Seq[GeneralTerm]) {
-  def statusSet: Seq[String] =
-    usefulInfo.flatMap(_.asStatus)
-}
+  extension (usefulInfo: Seq[GeneralTerm])
+    def statuses: Seq[TstpStatus] = usefulInfo.flatMap(_.asStatus)
 
-extension (inference: Source.Inference) {
-  def statuses: Seq[String] =
-    inference.usefulInfo.statusSet
-}
+  extension (inference: Source.Inference)
+    def statuses: Seq[TstpStatus] = inference.usefulInfo.statuses
 
-extension (step: ParsedTstpPlainInferenceStep) {
-  def statuses: Seq[String] = step.source.statuses
-}
+  extension (step: ParsedTstpPlainInferenceStep)
+    def statuses: Seq[TstpStatus] = step.annotations.source.asInferenceOption.map(_.statuses).getOrElse(Seq.empty)
 
-extension (step: ParsedTstpNegatedConjectureStep) {
-  def statuses: Seq[String] = step.source.statuses
-}
+  extension (step: ParsedTstpNegatedConjectureStep)
+    def statuses: Seq[TstpStatus] = step.annotations.source.asInferenceOption.map(_.statuses).getOrElse(Seq.empty)
 
-extension (step: ParsedTstpSkolemizationStep) {
-  def statuses: Seq[String] = step.source.statuses
-}
+  extension (step: ParsedTstpSkolemizationStep)
+    def statuses: Seq[TstpStatus] = step.annotations.source.asInferenceOption.map(_.statuses).getOrElse(Seq.empty)
 
-extension (annotatedFormula: AnnotatedFormula) {
-  def parentLabels: Seq[String] = boundary {
-    val annotations = annotatedFormula.annotations.getOrElse { break(Seq.empty) }
-    annotations.source.parentLabels
-  }
-}
+  extension (annotatedFormula: AnnotatedFormula)
+    def parentLabels: Seq[String] = annotatedFormula.annotations match {
+      case None        => Seq.empty
+      case Some(value) => TstpSourceSyntax.parentLabels(value.source)
+    }
 
-extension (source: Source) {
-  def asInferenceOption: Option[Source.Inference] = source match {
-    case s @ Source.Inference(rule, usefulInfo, parents) => Some(s)
-    case _                                               => None
-  }
+  extension (source: Source)
+    def asInferenceOption: Option[Source.Inference] = source match {
+      case s @ Source.Inference(_, _, _) => Some(s)
+      case _                             => None
+    }
 
-  def parentLabels: Seq[String] = source match {
-    case Source.Name(name)                                => Seq(name)
-    case Source.Inference(_, _, parents)                  => parents.flatMap(_.source.parentLabels)
-    case Source.Internal(_, _, parents)                   => parents.flatMap(_.source.parentLabels)
-    case Source.File(_, _)                                => Seq.empty // for now we treat file sources as axioms that don't have parents
-    case Source.Theory(_, _)                              => Seq.empty
-    case Source.Creator(_, _, parents)                    => parents.flatMap(_.source.parentLabels)
-    case Source.Unknown                                   => Seq.empty
-    case Source.List(sources)                             => sources.flatMap(_.parentLabels)
-    case Source.General(GeneralColon(TptpTerm(label), _)) => Seq(label)
-    case Source.General(TptpTerm(dagSource))              => Seq(dagSource)
-    case Source.General(term)                             => throw IllegalArgumentException(s"parent must be a simple term. got: $term")
-  }
-}
+  extension (step: ParsedTstpDerivationStep)
+    def annotationsOption: Option[Annotations] = step match {
+      case s: ParsedTstpConjectureStep        => s.annotationsOption
+      case s: ParsedTstpAxiomStep             => s.annotationsOption
+      case s: ParsedTstpPlainInferenceStep    => Some(s.annotations)
+      case s: ParsedTstpNegatedConjectureStep => Some(s.annotations)
+      case s: ParsedTstpSkolemizationStep     => Some(s.annotations)
+    }
 
-extension (step: ParsedTstpDerivationStep) {
-  def annotationsOption: Option[Annotations] = step match {
-    case s: ParsedTstpConjectureStep =>
-      s.annotationsOption
-    case s: ParsedTstpAxiomStep =>
-      s.annotationsOption
-    case s: ParsedTstpPlainInferenceStep =>
-      Some(s.annotations)
-    case s: ParsedTstpNegatedConjectureStep =>
-      Some(s.annotations)
-    case s: ParsedTstpSkolemizationStep =>
-      Some(s.annotations)
-  }
-}
-
-extension [T](a: IterableOnce[T]) {
-  def single: T = a.iterator.take(2).toSeq match {
-    case Seq()  => throw new NoSuchElementException
-    case Seq(x) => x
-    case _      => throw new IllegalArgumentException("Expected at most one element, got " + a)
-  }
-
-  def singleOption: Option[T] = a.iterator.take(2).toSeq match {
-    case Seq()  => None
-    case Seq(x) => Some(x)
-    case _      => None
-  }
+  extension [T](a: IterableOnce[T])
+    def singleOption: Option[T] = a.iterator.take(2).toSeq match {
+      case Seq()  => None
+      case Seq(x) => Some(x)
+      case _      => None
+    }
 }
 
 case class InputSyntaxError(
@@ -552,8 +532,8 @@ case class InferenceCycle() extends VerifiedBadReason {
 
 case class StepWithInvalidStatus(
     stepName: String,
-    actualStatuses: Seq[String],
-    validStatuses: Seq[String]
+    actualStatuses: Seq[TstpStatus],
+    validStatuses: Seq[TstpStatus]
 ) extends VerifiedBadReason {
   override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
 }
@@ -642,22 +622,13 @@ sealed trait IncorrectSkolemizationReason {
   def message: String
 }
 
-case class NoExistentialQuantifierAfterRootUniversalBlock(
-    stepName: String,
-    claimedBoundVariable: FOLVar,
-    innerFormula: FOLFormula,
-    parentFormula: FOLFormula
-) extends IncorrectSkolemizationReason {
-  def message: String = s"skolemization step $stepName claims to skolemize bound variable $claimedBoundVariable, but there is no existential quantifier following after the outermost universal quantifiers. got $innerFormula inside universal quantifier block of parent formula $parentFormula"
-}
-
 case class BoundVariableMismatch(
     stepName: String,
     claimedBoundVariable: FOLVar,
     actualBoundVariable: FOLVar,
     parentFormula: FOLFormula
 ) extends IncorrectSkolemizationReason {
-  def message: String = s"skolemization step $stepName claims to skolemize bound variable $claimedBoundVariable, but the actual outer most existential variable in $parentFormula is $actualBoundVariable"
+  def message: String = s"skolemization step $stepName claims to skolemize bound variable $claimedBoundVariable, but the actual quantified variable in $parentFormula is $actualBoundVariable"
 }
 
 case class ContextVariableMismatch(

@@ -12,7 +12,7 @@ import gapt.expr.formula.hol.containsStrongQuantifier
 import gapt.expr.formula.hol.universalClosure
 import gapt.expr.util.freeVariables
 import gapt.formats.InputFile
-import gapt.formats.tptp.check.parentLabels
+import gapt.formats.tptp.TstpSourceSyntax.parentLabels
 import gapt.logic.Polarity
 import gapt.logic.clauseSubsumption
 import gapt.logic.hol.CNFn

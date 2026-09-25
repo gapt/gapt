@@ -142,7 +142,6 @@ object VerifiedSkolemization {
       name,
       claimedSkolemizedFormula,
       parent,
-      source,
       newSkolemSymbol,
       claimedContextVariables,
       claimedBoundVariable,
@@ -313,7 +312,7 @@ object CreateSkolemizationProof {
   def apply(unskolemized: FOLFormula, skolemized: FOLFormula, skVar: FOLVar, skTerm: FOLTerm, innerFormula: FOLFormula, pathToSk: HOLPosition, polarity: Polarity): LKProof = {
     if unskolemized == skolemized then
       LogicalAxiom(skolemized)
-    if pathToSk.isEmpty then {
+    else if pathToSk.isEmpty then {
       val innerSubstituted = innerFormula.substitute(skVar -> skTerm)
       val axiom = LogicalAxiom(innerSubstituted)
       if polarity == Negative then

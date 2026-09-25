@@ -9,14 +9,36 @@ import gapt.expr.formula.fol.FOLTerm
 import gapt.expr.formula.fol.FOLVar
 import gapt.formats.InputFile
 import gapt.formats.tptp.*
+import gapt.formats.tptp.TstpSourceSyntax.*
 import gapt.utils.getOrBreak
 
 import scala.util.boundary
 import scala.util.boundary.break
 
+enum TstpRole(val value: String) {
+  case Axiom extends TstpRole("axiom")
+  case Conjecture extends TstpRole("conjecture")
+  case NegatedConjecture extends TstpRole("negated_conjecture")
+  case Plain extends TstpRole("plain")
+}
+
+enum TstpInferenceRule(val value: String) {
+  case Skolemize extends TstpInferenceRule("skolemize")
+  case NegatedConjecture extends TstpInferenceRule("negated_conjecture")
+  case Other(override val value: String) extends TstpInferenceRule(value)
+}
+
+object TstpInferenceRule {
+  def fromValue(value: String): TstpInferenceRule = value match {
+    case Skolemize.value         => Skolemize
+    case NegatedConjecture.value => NegatedConjecture
+    case other                   => Other(other)
+  }
+}
+
 sealed trait ParsedTstpDerivationStep {
   def name: String
-  def role: String
+  def role: TstpRole
   def formula: FOLFormula
   def parents: Seq[String]
 }
@@ -33,7 +55,7 @@ case class ParsedTstpConjectureStep(
     problemFileLabel: String
 ) extends ParsedTstpDerivationStep with FileSourceStep {
   def parents: Seq[String] = Seq.empty
-  def role: String = "conjecture"
+  def role: TstpRole = TstpRole.Conjecture
 }
 
 case class ParsedTstpAxiomStep(
@@ -43,27 +65,25 @@ case class ParsedTstpAxiomStep(
     problemFileLabel: String
 ) extends ParsedTstpDerivationStep with FileSourceStep {
   def parents: Seq[String] = Seq.empty
-  def role: String = "axiom"
+  def role: TstpRole = TstpRole.Axiom
 }
 
 case class ParsedTstpPlainInferenceStep(
     name: String,
     formula: FOLFormula,
     parents: Seq[String],
-    annotations: Annotations,
-    source: Source.Inference
+    annotations: Annotations
 ) extends ParsedTstpDerivationStep {
-  def role: String = "plain"
+  def role: TstpRole = TstpRole.Plain
 }
 
 case class ParsedTstpNegatedConjectureStep(
     name: String,
     formula: FOLFormula,
     parent: String,
-    annotations: Annotations,
-    source: Source.Inference
+    annotations: Annotations
 ) extends ParsedTstpDerivationStep {
-  def role: String = "negated_conjecture"
+  def role: TstpRole = TstpRole.NegatedConjecture
   def parents: Seq[String] = Seq(parent)
 }
 
@@ -71,14 +91,13 @@ case class ParsedTstpSkolemizationStep(
     name: String,
     formula: FOLFormula,
     parent: String,
-    source: Source.Inference,
     newSkolemSymbol: FOLFunctionConst,
     contextVariables: Seq[FOLVar],
     skolemizedSymbol: FOLVar,
     annotations: Annotations
 ) extends ParsedTstpDerivationStep {
   def parents: Seq[String] = Seq(parent)
-  def role: String = "plain"
+  def role: TstpRole = TstpRole.Plain
 }
 
 case class ParsedTstpDerivation(steps: Seq[ParsedTstpDerivationStep])
@@ -188,13 +207,13 @@ object ParsedTstpDerivation {
       case inference: Source.Inference => inference
       case _                           => break(Left(UnexpectedInput(s"got negated conjecture inference without inference record: $name")))
     }
-    val expectedRule = "negated_conjecture"
-    if inference.rule != expectedRule then
-      break(Left(StepWithInvalidInferenceRule(name, inference.rule, expectedRule)))
+    val expectedRule = TstpInferenceRule.NegatedConjecture
+    if TstpInferenceRule.fromValue(inference.rule) != expectedRule then
+      break(Left(StepWithInvalidInferenceRule(name, inference.rule, expectedRule.value)))
 
     inference.parentLabels.distinct match {
       case Seq()       => break(Left(NegatedConjectureWithoutParent(name)))
-      case Seq(parent) => Right(ParsedTstpNegatedConjectureStep(name, folFormula, parent, annotations, inference))
+      case Seq(parent) => Right(ParsedTstpNegatedConjectureStep(name, folFormula, parent, annotations))
       case Seq(_, _*)  => break(Left(NegatedConjectureWithMultipleDistinctParents()))
     }
   }
@@ -214,10 +233,10 @@ object ParsedTstpDerivation {
       case _                           => break(Left(PlainInferenceWithoutSource(name)))
     }
 
-    inference.rule match {
-      case "skolemize" => parseSkolemizationStep(name, folFormula, inference, annotations.optionalInfo)
+    TstpInferenceRule.fromValue(inference.rule) match {
+      case TstpInferenceRule.Skolemize => parseSkolemizationStep(name, folFormula, inference, annotations.optionalInfo)
       case _ =>
-        Right(ParsedTstpPlainInferenceStep(name, folFormula, inference.parentLabels, annotations, inference))
+        Right(ParsedTstpPlainInferenceStep(name, folFormula, inference.parentLabels, annotations))
     }
   }
 
@@ -271,7 +290,6 @@ object ParsedTstpDerivation {
       name,
       formula,
       parent,
-      inference,
       skolemFunctionConst,
       contextVariables,
       boundVariable,

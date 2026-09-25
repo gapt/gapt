@@ -1354,7 +1354,6 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           (skolemStep.newSkolemSymbol must_== FOLFunctionConst("p_0", 0))
             .and(constants.all(skolemStep.formula).map(_.name) must contain("p_0"))
             .and(overloadSymbols must not contain "p_0")
-            .and(skolemStep.source.usefulInfo.flatMap(constants.all).map(_.name) must contain("p_0"))
         }
       }
 
@@ -1596,8 +1595,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         checkDerivation("/input") must beLike {
           case SzsStatus.VerifiedBad(reason: StepWithInvalidStatus) =>
             (reason.stepName must_== "refute")
-              .and(reason.actualStatuses must_== Seq("esa"))
-              .and(reason.validStatuses must_== Seq("thm"))
+              .and(reason.actualStatuses must_== Seq(TstpStatus.Esa))
+              .and(reason.validStatuses must_== Seq(TstpStatus.Thm))
         }
       }
 
@@ -2318,6 +2317,12 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
   }
 
   "CreateSkolemizationProof" should {
+    "return an axiom when the formulas are already identical" in {
+      val formula = fof"P(x)"
+      val proof = CreateSkolemizationProof(formula, formula, fov"y", fot"f(x)", fof"P(y)", HOLPosition(List(1)), Negative)
+      proof.endSequent must_== fos"$formula :- $formula"
+    }
+    
     "Create a skolemization proof for a ∀x∃y P(x,y) / ∀x P(x,f(x))" in {
       val unskolemized = fof"∀x∃y P(x,y)"
       val skolemized = fof"∀x P(x,f(x))"
