@@ -4,10 +4,10 @@
 % SZS output start Proof for martin02
 fof(f1,axiom,(
   ! [X0,X1] : ? [X2] : (p(X0) & q(X0,X2,X1))),
-  file('/home/marty/Projects/gapt/tests/src/test/resources/proover_competition/Proofs/Problems/martin02.p',a)).
+  file('Problems/martin02.p',a)).
 fof(f2,conjecture,(
   ! [X0,X1] : ? [X2] : (p(X0) | q(X0,X2,X1))),
-  file('/home/marty/Projects/gapt/tests/src/test/resources/proover_competition/Proofs/Problems/martin02.p',c)).
+  file('Problems/martin02.p',c)).
 fof(f3,negated_conjecture,(
   ~ ! [X0,X1] : ? [X2] : (p(X0) | q(X0,X2,X1))),
   inference(negated_conjecture,[status(cth)],[f2])).

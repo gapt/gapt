@@ -22,13 +22,13 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
   trait Cwd { def path: Path }
   object RepoRoot extends Cwd { def path: Path = os.pwd / os.up }
   object TestResources extends Cwd {
-    def path: Path = RepoRoot.path / "tests" / "src" / "test" / "resources" / "proover_competition"
+    def path: Path = RepoRoot.path / "tests" / "src" / "test" / "resources" / "ProofChecking"
   }
 
   val prooVerCLIZip = RepoRoot.path / "target" / "gapt-ProoVer.zip"
   val prooVerCLIZipUnpackDirectory = RepoRoot.path / "target" / "gapt-ProoVer"
   val prooVerCLIScript = RepoRoot.path / "target" / "gapt-ProoVer" / "gapt-check"
-  val testDerivations = TestResources.path / "Proofs"
+  val testDerivations = TestResources.path
 
   private def prepareGaptCheckScript(): Unit = {
     assert(os.exists(prooVerCLIZip))
@@ -82,21 +82,21 @@ class prooVerCLITest extends Specification with BeforeAll with AfterAll {
 
     def nonExistentPath: Result = {
       val (exitCode, stdout, stderr) =
-        proofCheckerProcess("./Proofs/non_existing_file.p").!!!
+        proofCheckerProcess("./non_existing_file.p").!!!
 
       (exitCode must beGreaterThan(0)).and(stdout must beEmpty).and(stderr must startWith("file not found"))
     }
 
     def relativePaths: Result = {
       val (exitCode, _, _) =
-        proofCheckerProcess("./Proofs/correct_example1_c_proof.p").!!!
+        proofCheckerProcess("./correct_example1_c_proof.p").!!!
 
       exitCode must_== 0
     }
 
     def absolutePaths: Result = {
       val (exitCode, _, _) =
-        proofCheckerProcess(s"${cwd.path}/Proofs/correct_example1_c_proof.p").!!!
+        proofCheckerProcess(s"${cwd.path}/correct_example1_c_proof.p").!!!
 
       exitCode must_== 0
     }

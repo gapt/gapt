@@ -31,7 +31,7 @@ import gapt.proofs.lk.rules.ProofLink
 import gapt.expr.formula.Bottom
 
 val testResourcesRoot = os.Path(this.getClass.getResource("/").toURI)
-val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "proover_competition" / "Proofs"
+val fileDirectiveRoot = os.pwd / "src" / "test" / "resources" / "ProofChecking"
 given resolver: FileNameResolver = FileNameResolver.absolute.relativeTo(fileDirectiveRoot)
 
 class checkTstpDerivationUnitTest extends mutable.Specification {
@@ -1579,12 +1579,12 @@ class checkTstpDerivationExampleTest extends Specification {
     }
 
     def spec(check: InputFile => FileNameResolver ?=> SzsStatus): Fragments = {
-      val correctProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("correct_"))) { example =>
+      val correctProofs = foreachPath(os.walk(testResourcesRoot / "ProofChecking").filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.VerifiedGood)
       }
 
-      val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "proover_competition" / "Proofs").filter(_.baseName.startsWith("incorrect_"))) { example =>
+      val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "ProofChecking").filter(_.baseName.startsWith("incorrect_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.VerifiedBad])
       }
@@ -2286,7 +2286,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
     }
 
     "work on example1_c" in {
-      val input = ClasspathInputFile("proover_competition/Proofs/correct_example1_c_proof.p")
+      val input = ClasspathInputFile("ProofChecking/correct_example1_c_proof.p")
       val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
@@ -2299,7 +2299,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
     }
 
     "work on example2_c" in {
-      val derivationFile = ClasspathInputFile("proover_competition/Proofs/correct_example2_c_proof.p")
+      val derivationFile = ClasspathInputFile("ProofChecking/correct_example2_c_proof.p")
       val derivation = StructurallyCorrectTstpDerivation.fromInputFile(derivationFile).get
 
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }

@@ -69,4 +69,7 @@ doc/*.tex.backup
 # metals
 /.metals
 
+# bsp
+.bsp/
+
 **/.DS_Store

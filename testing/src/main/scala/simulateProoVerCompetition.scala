@@ -39,7 +39,7 @@ def simulateProoVerCompetition() = {
   val solverPwd = os.Path("target/ProoVer", os.pwd)
   val solverPath = solverPwd / "gapt-check"
 
-  val derivationsPath = os.Path("tests/src/test/resources/ProoVer_competition/Proofs/ProoVer2026", os.pwd)
+  val derivationsPath = os.Path("tests/src/test/resources/ProoVerCompetition/ProoVer2026", os.pwd)
   val derivationPaths = os.list(derivationsPath).filter(_.ext == "s")
 
   def buildSolverProcess(derivationPath: os.Path): ProcessBuilder = {

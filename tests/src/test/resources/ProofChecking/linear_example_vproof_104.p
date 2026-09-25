@@ -3,13 +3,13 @@
 % SZS output start Proof for linear_example_104
 fof(f1,axiom,(
   ! [X0] : ('P'(X0) => 'P'(s(X0)))),
-  file('../../ProoVer_competition/Proofs/Problems/linear_example_104.p',a0)).
+  file('Problems/linear_example_104.p',a0)).
 fof(f2,axiom,(
   'P'('0')),
-  file('../../ProoVer_competition/Proofs/Problems/linear_example_104.p',a1)).
+  file('Problems/linear_example_104.p',a1)).
 fof(f3,conjecture,(
   'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
-  file('../../ProoVer_competition/Proofs/Problems/linear_example_104.p',c)).
+  file('Problems/linear_example_104.p',c)).
 fof(f4,negated_conjecture,(
   ~'P'(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s('0')))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))),
   inference(negated_conjecture,[status(cth)],[f3])).
