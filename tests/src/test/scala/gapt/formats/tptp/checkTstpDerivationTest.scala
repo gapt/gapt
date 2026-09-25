@@ -455,6 +455,21 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       }
 
       "skolemization" in {
+        "reject a skolemization step whose parent is a conjecture" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(c, conjecture, ?[X]: (p(X) & ~p(X)), file('/Problems/problem.p', c)).
+              |fof(c_skolem, plain, p(sK0) & ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [c])).
+              |fof(refutation, plain, $false, inference(falsum, [status(thm)], [c_skolem])).""".stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(c, conjecture, ?[X]: (p(X) & ~p(X))).
+            """.stripMargin)
+          }
+          checkDerivation("/input") must beLike {
+            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
+          }
+        }
+
         "fail on skolemization step without esa status" in {
           given resolver: FileNameResolver = {
             case "/input" => Right("""

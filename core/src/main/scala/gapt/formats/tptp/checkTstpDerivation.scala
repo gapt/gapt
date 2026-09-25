@@ -617,7 +617,7 @@ case class NegatedConjectureWithMultipleDistinctParents() extends VerifiedBadRea
 }
 
 case class PlainInferenceWithConjectureParent(
-    step: ParsedTstpPlainInferenceStep
+    step: ParsedTstpDerivationStep
 ) extends VerifiedBadReason {
   def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
 }

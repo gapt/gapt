@@ -91,7 +91,7 @@ object StructurallyCorrectTstpDerivation {
     if negatedConjectures.size > 1 then
       break(Left(UnexpectedInput("got more than one negated conjecture")))
 
-    derivation.stepsIterator.collect { case step: ParsedTstpPlainInferenceStep => step }
+    derivation.stepsIterator.filter(_.role == "plain")
       .find(step => derivation.parentsOf(step.name).exists(_.role == "conjecture"))
       .foreach { step =>
         break(Left(PlainInferenceWithConjectureParent(step)))
