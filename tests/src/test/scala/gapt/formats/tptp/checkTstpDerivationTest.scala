@@ -2068,12 +2068,10 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         """.stripMargin)
         val Right(derivation) = StructurallyCorrectTstpDerivation.fromInputFile(input): @unchecked
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
-          case IncorrectSkolemization(e: MultipleIncompatibleSkolemDefinitionsOfSameSymbol) => {
+          case IncorrectSkolemization(e: SkolemSymbolWithDifferentArities) => {
             (e.skolemSymbol must_== "sK0")
-              .and(e.stepDefinitions("s1").skolemSymbol must_== FOLConst("sK0"))
-              .and(e.stepDefinitions("s2").skolemSymbol must_== FOLFunctionConst("sK0", 1))
-              .and(e.stepDefinitions("s1").skolemDefinition must_=== le"?x p(x)")
-              .and(e.stepDefinitions("s2").skolemDefinition must_=== le"^y ?x q(y, x)")
+              .and(e.declarations("s1") must_== FOLConst("sK0"))
+              .and(e.declarations("s2") must_== FOLFunctionConst("sK0", 1))
           }
         }
       }
@@ -2342,6 +2340,21 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
         buildTstpDerivationToProofContext(derivation) must beRight
       }
 
+      "keeps skolemization proofs synchronized with deoverloaded parent formulas" in {
+        val input = InputFile.fromString(
+          """
+            |fof(a, axiom, ?[X]: (p(X) & p(X, a)), file('problem.p', a)).
+            |fof(s, plain, p(sK0) & p(sK0, a), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0)], [a])).
+          """.stripMargin
+        )
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
+        gapt.expr.util.constants.all(derivation.get("a").get.formula).filter(_.name == "p") must haveSize(2)
+        buildTstpDerivationToProofContext(derivation) must beRight.like { context =>
+          context.check(ProofLink("s")(using context))
+          ok
+        }
+      }
+
       "succeeds on derivation that ends in a formula containing a skolem symbol without context variables" in {
         val input = InputFile.fromString(
           """
@@ -2429,13 +2442,11 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
 
         val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
         buildTstpDerivationToProofContext(derivation) must beLeft.like {
-          case IncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbol, stepDefinitions)) =>
+          case IncorrectSkolemization(SkolemSymbolWithDifferentArities(skolemSymbol, declarations)) =>
             (skolemSymbol must_=== "sK0")
-              .and(stepDefinitions must haveSize(2))
-              .and(stepDefinitions("ncs1").skolemSymbol must_=== FOLFunctionConst("sK0", 0))
-              .and(stepDefinitions("ncs2").skolemSymbol must_=== FOLFunctionConst("sK0", 1))
-              .and(stepDefinitions("ncs1").skolemDefinition must_=== le"?x ~p(x)")
-              .and(stepDefinitions("ncs2").skolemDefinition must_=== le"^y ?x q(x)")
+              .and(declarations must haveSize(2))
+              .and(declarations("ncs1") must_=== FOLFunctionConst("sK0", 0))
+              .and(declarations("ncs2") must_=== FOLFunctionConst("sK0", 1))
         }
       }
 

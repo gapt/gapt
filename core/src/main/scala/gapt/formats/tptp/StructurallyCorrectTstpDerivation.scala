@@ -1,8 +1,11 @@
 package gapt.formats.tptp.check
 
+import gapt.expr.Const
 import gapt.expr.formula.Bottom
+import gapt.expr.formula.fol.FOLFormula
+import gapt.expr.util.constants
 import gapt.formats.InputFile
-import gapt.utils.linearizeStrictPartialOrder
+import gapt.utils.{NameGenerator, linearizeStrictPartialOrder}
 
 import scala.util.boundary
 import scala.util.boundary.break
@@ -46,22 +49,45 @@ final class StructurallyCorrectTstpDerivation private[check] (
   val nonConjectureRootRefutationLabels: Set[String] =
     nonConjectureRootLabels.intersect(nonConjectureRefutationLabels)
 
-  private[check] def mapSteps(
-      transform: ParsedTstpDerivationStep => ParsedTstpDerivationStep
-  ): StructurallyCorrectTstpDerivation = {
-    val transformedMap = map.map {
-      case (label, step) =>
-        val transformed = transform(step)
-        require(transformed.name == step.name)
-        require(transformed.parents == step.parents)
-        require(transformed.getClass == step.getClass)
-        label -> transformed
-    }
-    StructurallyCorrectTstpDerivation(transformedMap, topologicallyOrderedFromSinksToSources)
-  }
 }
 
 object StructurallyCorrectTstpDerivation {
+  private[check] def deoverloadSymbols(
+      derivation: StructurallyCorrectTstpDerivation
+  ): StructurallyCorrectTstpDerivation = {
+    import scala.collection.mutable
+
+    val constTable = mutable.Map.empty[String, mutable.Set[Const]]
+    derivation.stepsIterator.foreach { step =>
+      constants.all(step.formula).foreach { constant =>
+        constTable.getOrElseUpdate(constant.name, mutable.Set.empty).add(constant)
+      }
+    }
+
+    val renamingTable = mutable.Map.empty[Const, String]
+    val nameGenerator = new NameGenerator(Iterable.empty)
+    constTable.foreach { (symbolName, constants) =>
+      constants.foreach { constant =>
+        assert(constant.name == symbolName)
+        renamingTable.getOrElseUpdate(constant, nameGenerator.fresh(constant.name))
+      }
+    }
+
+    def renamedFormula(formula: FOLFormula): FOLFormula =
+      renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
+
+    def renamedStep(step: ParsedTstpDerivationStep): ParsedTstpDerivationStep = step match {
+      case step: ParsedTstpAxiomStep             => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpConjectureStep        => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpNegatedConjectureStep => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpPlainInferenceStep    => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpSkolemizationStep     => step.copy(formula = renamedFormula(step.formula))
+    }
+
+    val renamedMap = derivation.map.view.mapValues(renamedStep).toMap
+    new StructurallyCorrectTstpDerivation(renamedMap, derivation.topologicallyOrderedFromSinksToSources)
+  }
+
   def fromInputFile(
       input: InputFile
   ): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =

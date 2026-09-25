@@ -54,7 +54,6 @@ import scala.util.boundary
 import scala.util.control.NonFatal
 
 import boundary.break
-import gapt.utils.NameGenerator
 
 sealed trait TstpDerivationError {
   def message: String
@@ -89,7 +88,7 @@ def buildTstpDerivationToProofContext(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization, Context] =
-  VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
+  verifySkolemizationsAfterDeoverloading(derivation).flatMap {
     buildTstpDerivationToProofContext(_, prover)
   }
 
@@ -97,8 +96,7 @@ def buildTstpDerivationToProofContext(
     derivation: VerifiedSkolemizationsTstpDerivation,
     prover: ResolutionProver
 ): Either[IncorrectInference, Context] = boundary { outer ?=>
-  val deoverloadedDerivation = deoverloadSymbols(derivation)
-  val ctx = buildTstpDerivationContext(deoverloadedDerivation)
+  val ctx = buildTstpDerivationContext(derivation)
   given context: MutableContext = ctx.newMutable
 
   def addToContext(update: => Update) = {
@@ -137,7 +135,7 @@ def buildTstpDerivationToProofContext(
       }
 
       case s: ParsedTstpNegatedConjectureStep => {
-        val parentFormula = deoverloadedDerivation.structurallyCorrect.get(s.parent).get.formula
+        val parentFormula = derivation.structurallyCorrect.get(s.parent).get.formula
 
         // in the following we construct a proof of Neg(conjecture) :- s.formula
         // which is the only thing that is necessary for the refutation.
@@ -170,7 +168,7 @@ def buildTstpDerivationToProofContext(
       }
 
       case s: ParsedTstpPlainInferenceStep => {
-        val parentFormulas = s.parents.map(p => deoverloadedDerivation.structurallyCorrect.get(p).get.formula)
+        val parentFormulas = s.parents.map(p => derivation.structurallyCorrect.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
         addToContext(proofDeclaration(s.name, proof, s.parents))
@@ -178,7 +176,7 @@ def buildTstpDerivationToProofContext(
     }
   }
 
-  deoverloadedDerivation.structurallyCorrect.stepsTopologicallyOrdered.foreach(handleStep)
+  derivation.structurallyCorrect.stepsTopologicallyOrdered.foreach(handleStep)
 
   Right(context.toImmutable)
 }
@@ -193,7 +191,7 @@ def checkDerivationHasNoIncorrectInferences(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
 ): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] =
-  VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
+  verifySkolemizationsAfterDeoverloading(derivation).flatMap {
     checkDerivationHasNoIncorrectInferences(_, prover)
   }
 
@@ -201,8 +199,7 @@ def checkDerivationHasNoIncorrectInferences(
     derivation: VerifiedSkolemizationsTstpDerivation,
     prover: ResolutionProver
 ): Either[IncorrectInference | StepsWithOverloadedSymbols, Unit] = boundary {
-  val deoverloadedDerivation = deoverloadSymbols(derivation)
-  val ctx = buildTstpDerivationContext(deoverloadedDerivation)
+  val ctx = buildTstpDerivationContext(derivation)
   val context: MutableContext = ctx.newMutable
 
   def isValid(inferenceName: String, sequentToProve: Sequent[FOLFormula]): Boolean = {
@@ -210,14 +207,14 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  val futures: Seq[Future[(ParsedTstpDerivationStep, Boolean)]] = deoverloadedDerivation.structurallyCorrect.stepsIterator.toSeq.flatMap {
+  val futures: Seq[Future[(ParsedTstpDerivationStep, Boolean)]] = derivation.structurallyCorrect.stepsIterator.toSeq.flatMap {
     case s: ParsedTstpPlainInferenceStep => {
-      val parentFormulas = s.parents.map(p => deoverloadedDerivation.structurallyCorrect.get(p).get.formula)
+      val parentFormulas = s.parents.map(p => derivation.structurallyCorrect.get(p).get.formula)
       val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
       Seq(Future { (s, isValid(s.name, sequentToProve)) })
     }
     case s: ParsedTstpNegatedConjectureStep => {
-      val parentFormula = deoverloadedDerivation.structurallyCorrect.get(s.parent).get.formula
+      val parentFormula = derivation.structurallyCorrect.get(s.parent).get.formula
       Seq(
         Future {
           val negatedConjectureToFormulaProof =
@@ -269,39 +266,14 @@ private def firstCompletedMatching[A](futures: Iterable[Future[A]])(predicate: A
   }
 }
 
-private def deoverloadSymbols(
-    derivation: VerifiedSkolemizationsTstpDerivation
-): VerifiedSkolemizationsTstpDerivation = {
-  import scala.collection.mutable
-  val constTable = mutable.Map.empty[String, mutable.Set[(Const, ParsedTstpDerivationStep)]]
-
-  derivation.structurallyCorrect.stepsIterator.foreach { s =>
-    constants.all(s.formula).foreach { c =>
-      constTable.getOrElseUpdate(c.name, mutable.Set.empty).add((c, s))
-    }
+private def verifySkolemizationsAfterDeoverloading(
+    derivation: StructurallyCorrectTstpDerivation
+): Either[IncorrectSkolemization, VerifiedSkolemizationsTstpDerivation] =
+  checkSkolemSymbolsAreNotOverloaded(derivation).flatMap { _ =>
+    VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(
+      StructurallyCorrectTstpDerivation.deoverloadSymbols(derivation)
+    )
   }
-
-  val renamingTable = mutable.Map.empty[Const, String]
-  val nameGenerator = new NameGenerator(Iterable.empty)
-  constTable.foreach { (symbolName, constSteps) =>
-    val constToSteps = constSteps.groupMap(_._1)(_._2)
-    constToSteps.keys.foreach { const =>
-      assert(const.name == symbolName)
-      renamingTable.getOrElseUpdate(const, nameGenerator.fresh(const.name))
-    }
-  }
-
-  def renamedFormula(formula: FOLFormula): FOLFormula =
-    renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
-
-  derivation.mapSteps {
-    case s: ParsedTstpAxiomStep             => s.copy(formula = renamedFormula(s.formula))
-    case s: ParsedTstpConjectureStep        => s.copy(formula = renamedFormula(s.formula))
-    case s: ParsedTstpNegatedConjectureStep => s.copy(formula = renamedFormula(s.formula))
-    case s: ParsedTstpPlainInferenceStep    => s.copy(formula = renamedFormula(s.formula))
-    case s: ParsedTstpSkolemizationStep     => s.copy(formula = renamedFormula(s.formula))
-  }
-}
 
 private def buildTstpDerivationContext(
     derivation: VerifiedSkolemizationsTstpDerivation
@@ -383,7 +355,7 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
         _ <- checkDerivationHasRefutation(derivation)
         _ <- checkDerivationHasCorrectFileDirectives(derivation, fileName)
         _ <- checkDerivationHasCorrectStatuses(derivation)
-        verifiedDerivation <- VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation)
+        verifiedDerivation <- verifySkolemizationsAfterDeoverloading(derivation)
         _ <- checkDerivationHasNoIncorrectInferences(verifiedDerivation, Escargot)
       yield ()
     } catch e => Left(UnexpectedException(e))
@@ -723,6 +695,22 @@ case class SkolemSymbolIsAConstantExistingInTheInput(
     const: Const
 ) extends IncorrectSkolemizationReason {
   def message: String = s"skolemization step $skolemizationStepName introduces skolem symbol $const that is already used in the input in step $inputStepName"
+}
+
+case class SkolemSymbolWithDifferentArity(
+    skolemizationStepName: String,
+    skolemSymbol: Const,
+    occurrenceStepName: String,
+    occurrence: Const
+) extends IncorrectSkolemizationReason {
+  def message: String = s"skolemization step $skolemizationStepName introduces skolem symbol $skolemSymbol, but step $occurrenceStepName uses $occurrence with the same name and a different arity"
+}
+
+case class SkolemSymbolWithDifferentArities(
+    skolemSymbol: String,
+    declarations: Map[String, Const]
+) extends IncorrectSkolemizationReason {
+  def message: String = s"skolem symbol $skolemSymbol is introduced with different arities: ${declarations.map { case (step, symbol) => s"$step: $symbol" }.mkString(", ")}"
 }
 
 case class NonRectifiedFormula(

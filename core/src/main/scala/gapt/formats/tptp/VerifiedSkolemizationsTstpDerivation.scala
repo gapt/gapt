@@ -35,12 +35,6 @@ final class VerifiedSkolemizationsTstpDerivation private (
   private[check] def verifiedSkolemizations: Iterable[VerifiedSkolemization] =
     verifiedSkolemizationsByStepName.values
 
-  private[check] def mapSteps(
-      transform: ParsedTstpDerivationStep => ParsedTstpDerivationStep
-  ): VerifiedSkolemizationsTstpDerivation = {
-    val mappedStructurallyCorrect = structurallyCorrect.mapSteps(transform)
-    VerifiedSkolemizationsTstpDerivation(mappedStructurallyCorrect, verifiedSkolemizationsByStepName)
-  }
 }
 
 object VerifiedSkolemizationsTstpDerivation {
@@ -56,10 +50,60 @@ object VerifiedSkolemizationsTstpDerivation {
         step.name -> locallyCorrectSkolemization
     }.toMap
 
-    val verifiedSkolemDefinitions = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
-    val _ = ensureSkolemSymbolsDistinctFromInput(derivation, verifiedSkolemDefinitions).getOrBreak
+    val _ = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
     Right(new VerifiedSkolemizationsTstpDerivation(derivation, verifiedSkolemizationsByStepName))
   }
+}
+
+def checkSkolemSymbolsAreNotOverloaded(
+    derivation: StructurallyCorrectTstpDerivation
+): Either[IncorrectSkolemization, Unit] = boundary {
+  val declaredSkolemSymbols = derivation.stepsIterator.collect {
+    case step: ParsedTstpSkolemizationStep => step.name -> step.newSkolemSymbol
+  }.toMap
+
+  val skolemSymbolsByName = declaredSkolemSymbols.groupMap(_._2.name)(_._2)
+  skolemSymbolsByName.foreach { (symbolName, symbols) =>
+    if symbols.toSet.size > 1 then {
+      reportIncorrectSkolemization(
+        SkolemSymbolWithDifferentArities(symbolName, declaredSkolemSymbols.filter((_, symbol) => symbol.name == symbolName))
+      )
+    }
+  }
+
+  declaredSkolemSymbols.foreach { (skolemizationStepName, skolemSymbol) =>
+    derivation.stepsIterator.foreach { step =>
+      constants.all(step.formula).filter(_.name == skolemSymbol.name).foreach { symbol =>
+        if symbol != skolemSymbol then {
+          reportIncorrectSkolemization(
+            SkolemSymbolWithDifferentArity(
+              skolemizationStepName,
+              skolemSymbol,
+              step.name,
+              symbol
+            )
+          )
+        }
+      }
+    }
+  }
+
+  val inputSymbols = derivation.stepsIterator.collect {
+    case step: ParsedTstpAxiomStep      => step.name -> constants.nonLogical(step.formula)
+    case step: ParsedTstpConjectureStep => step.name -> constants.nonLogical(step.formula)
+  }
+  inputSymbols.foreach { (inputStepName, symbols) =>
+    symbols.foreach { symbol =>
+      declaredSkolemSymbols.find((_, skolemSymbol) => skolemSymbol.name == symbol.name).foreach {
+        (skolemizationStepName, _) =>
+          reportIncorrectSkolemization(
+            SkolemSymbolIsAConstantExistingInTheInput(inputStepName, skolemizationStepName, symbol)
+          )
+      }
+    }
+  }
+
+  Right(())
 }
 
 type SkolemDefinition = Expr
@@ -187,6 +231,9 @@ private def ensureCompatibleSkolemDefinitions(
 private def incompatibleSkolemDefinitions(
     skolemizationsByStepName: Map[String, VerifiedSkolemization]
 ): Map[String, VerifiedSkolemization] = {
+  // TPTP requires each Skolem symbol to be introduced by exactly one step.
+  // Therefore, repeated declarations are incompatible even if their inferred
+  // definitions are syntactically identical.
   skolemizationsByStepName.toSeq.combinations(2).foldLeft(Map.empty) {
     case (acc, Seq((leftStep, leftSkolemization), (rightStep, rightSkolemization))) => {
       val leftSymbol = leftSkolemization.skolemSymbol
@@ -196,30 +243,6 @@ private def incompatibleSkolemDefinitions(
     }
     case _ => throw new AssertionError("cannot happen as we only select 2 combinations")
   }
-}
-
-private def ensureSkolemSymbolsDistinctFromInput(
-    derivation: StructurallyCorrectTstpDerivation,
-    verifiedSkolemDefinitions: Map[String, (FOLFunctionConst, Expr, Set[String])]
-): Either[IncorrectSkolemization, Unit] = boundary {
-  val inputSymbols = derivation.stepsIterator.collect {
-    case s: ParsedTstpAxiomStep      => s.name -> constants.nonLogical(s.formula)
-    case s: ParsedTstpConjectureStep => s.name -> constants.nonLogical(s.formula)
-  }.toMap
-
-  inputSymbols.foreach { (stepName, symbols) =>
-    symbols.foreach { symbol =>
-      verifiedSkolemDefinitions.get(symbol.name).foreach { (_, _, skolemizationStepNames) =>
-        reportIncorrectSkolemization(SkolemSymbolIsAConstantExistingInTheInput(
-          stepName,
-          skolemizationStepNames.head,
-          symbol
-        ))
-      }
-    }
-  }
-
-  Right(())
 }
 
 private def reportIncorrectSkolemization[T](
