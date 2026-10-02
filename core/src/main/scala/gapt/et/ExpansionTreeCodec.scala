@@ -7,11 +7,15 @@ import gapt.proofs.Sequent
 import io.circe.derivation._
 
 import scala.util.Try
+import scala.annotation.nowarn
 
 object ExpansionTreeCodec {
   implicit val conf: Configuration = Configuration.default.withDiscriminator("name")
 
   private[json] val _expansionTreeTermEncoder: Encoder[ETt] = ConfiguredEncoder.derived
+
+  @nowarn("msg=Skipping coverage instrumentation for large value initializer")
+  // Circe derives a lot of code, but we do not need to include this in coverage
   private[json] val _expansionTreeTermDecoder: Decoder[ETt] = ConfiguredDecoder.derived
 
   private[json] val _expansionTreeEncoder: Encoder[ExpansionTree] = ConfiguredEncoder.derived

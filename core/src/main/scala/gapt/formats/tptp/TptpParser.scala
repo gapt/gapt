@@ -28,6 +28,7 @@ import gapt.proofs.lk.util.instantiateProof
 import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
 import gapt.formats.tptp.check.{StructurallyCorrectTstpDerivation, buildTstpDerivationToProofContext, checkDerivationHasRefutation, TstpDerivationError}
+import scala.annotation.nowarn
 
 class TptpParser(val input: ParserInput) extends Parser {
   import CharPredicate._
@@ -172,6 +173,9 @@ class TptpParser(val input: ParserInput) extends Parser {
     formula_data | general_function | atomic_word ~> (FOLConst(_)) |
       variable | (number ~> (FOLConst(_))) | (distinct_object ~> (FOLConst(_)))
   }
+
+  @nowarn("msg=Skipping coverage instrumentation for large method body")
+  // fastparse generates a lot of code, but we do not need to include this in coverage
   private def formula_data: Rule1[Expr] = rule {
     ((capture("$" ~ ("thf" | "tff" | "fof" | "cnf")) ~ "(" ~ Ws ~ formula ~ ")" ~ Ws) |
       (capture("$fot") ~ "(" ~ Ws ~ term ~ ")" ~ Ws)) ~> (TptpTerm(_: String, _: Expr))

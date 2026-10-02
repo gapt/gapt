@@ -35,6 +35,7 @@ import io.circe.Decoder.Result
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
+import scala.annotation.nowarn
 
 object LKProofCodec {
   private[json] val lkCollectionEncoder: Encoder[ProofCollection[LKProof]] = ProofCollectionCodec.proofCollectionEncoder[LKProof](encodeLK)
@@ -58,6 +59,8 @@ object LKProofCodec {
   /**
    * Given an encoder for subproofs, this encodes a single LK proof.
    */
+  @nowarn("msg=Skipping coverage instrumentation for large method body")
+  // Circe generates a lot of encoding code, but we do not need to include this in coverage
   private def encodeLK(subEncoder: Encoder[LKProof]): Encoder[LKProof] = {
     implicit val e: Encoder[LKProof] = subEncoder
 
@@ -97,6 +100,8 @@ object LKProofCodec {
   /**
    * Given a rule name, a cursor, and a decoder for subproofs, this decodes a single LK proof.
    */
+  @nowarn("msg=Skipping coverage instrumentation for large method body")
+  // Circe generates a lot of decoding code, but we do not need to include this in coverage
   private def decodeLK(name: String, c: ACursor, subDecoder: Decoder[LKProof]): Result[LKProof] = {
     implicit val d: Decoder[LKProof] = subDecoder
     name match {

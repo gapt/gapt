@@ -3,6 +3,7 @@ package gapt.formats.leancop
 import gapt.expr.formula.Eq
 import gapt.expr.formula.fol.{FOLAtom, FOLFunction, FOLTerm}
 import gapt.proofs.FOLClause
+import scala.annotation.nowarn
 
 object LeanCoP21Parser {
   sealed trait Lit
@@ -49,6 +50,8 @@ object LeanCoP21Parser {
   def hash[X: P]: P[Lit] = P("#").map(_ => Hash)
   def negHash[X: P]: P[Lit] = P("-" ~ "#").map(_ => NegHash)
 
+  @nowarn("msg=Skipping coverage instrumentation for large method body")
+  // fastparse generates a lot of code, but we do not need to include this in coverage
   def atom[X: P]: P[FOLAtom] = P((ident ~ ("(" ~ term.rep(sep = ",") ~ ")").? ~ ("=" ~ term).?)
     .map {
       case (n, as, None)      => FOLAtom(n, as.getOrElse(Nil))

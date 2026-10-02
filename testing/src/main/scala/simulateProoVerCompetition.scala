@@ -9,6 +9,21 @@ import java.util.concurrent.TimeoutException
 import scala.util.Random
 import scala.sys.process.ProcessLogger
 
+enum DerivationStatus {
+  case Correct
+  case Incorrect
+  case Removed
+}
+enum SolverResult {
+  case VerifiedGood
+  case VerifiedBad
+  case Unknown
+  case SignaledTimeout
+  case UnsignaledTimeout
+  case Crashed
+  case InvalidOutput
+}
+
 @main
 def simulateProoVerCompetition() = {
   val timeout = 30.seconds
@@ -46,20 +61,6 @@ def simulateProoVerCompetition() = {
     Process(Seq(solverPath.toString, derivationPath.toString), solverPwd.toIO)
   }
 
-  enum DerivationStatus {
-    case Correct
-    case Incorrect
-    case Removed
-  }
-  enum SolverResult {
-    case VerifiedGood
-    case VerifiedBad
-    case Unknown
-    case SignaledTimeout
-    case UnsignaledTimeout
-    case Crashed
-    case InvalidOutput
-  }
   val results = Random.shuffle(derivationPaths).map { derivationPath =>
     Console.println(s"Running solver on ${derivationPath.baseName}")
 
@@ -146,17 +147,28 @@ def simulateProoVerCompetition() = {
     record
   }
 
-  Console.println("\nRESULTS")
-  results.sortBy(r => r.derivation.baseName.split("_").last).foreach { result =>
-    val derivationStatusText = result.derivationStatus match {
-      case DerivationStatus.Correct   => "😇"
-      case DerivationStatus.Incorrect => "😈"
-      case DerivationStatus.Removed   => "😶"
-    }
-    val padding = " " * (30 - result.derivation.baseName.length)
-    Console.println(s"${result.derivation.baseName}$padding ${derivationStatusText}: ${scoreMark(result.score)} ${result.solverResult}, score: ${result.score}, time: ${formatDuration(result.duration)}")
-  }
+  printResults(results)
+}
 
+type CompetitionResult = (derivation: os.Path, derivationStatus: DerivationStatus, solverResult: SolverResult, score: Int, duration: FiniteDuration)
+
+def printResults(results: IndexedSeq[CompetitionResult]): Unit = {
+  Console.println("\nRESULTS")
+  results.sortBy(r => r.derivation.baseName.split("_").last).foreach(printResult)
+  printResultSummary(results)
+}
+
+private def printResult(result: CompetitionResult): Unit = {
+  val derivationStatusText = result.derivationStatus match {
+    case DerivationStatus.Correct   => "😇"
+    case DerivationStatus.Incorrect => "😈"
+    case DerivationStatus.Removed   => "😶"
+  }
+  val padding = " " * (30 - result.derivation.baseName.length)
+  Console.println(s"${result.derivation.baseName}$padding ${derivationStatusText}: ${scoreMark(result.score)} ${result.solverResult}, score: ${result.score}, time: ${formatDuration(result.duration)}")
+}
+
+private def printResultSummary(results: IndexedSeq[CompetitionResult]): Unit = {
   val numberOfTests = results.length
   val maxScore =
     results.count(_.derivationStatus == DerivationStatus.Correct)

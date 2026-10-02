@@ -75,443 +75,516 @@ object cleanStructuralRules {
     case InitialSequent(sequent) =>
       (proof, SequentConnector(sequent))
 
-    case p @ WeakeningLeftRule(subProof, formula) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-      (subProofNew, subConnector * p.getSequentConnector.inv)
+    case p: WeakeningLeftRule    => cleanWeakeningLeft(p, reductive)
+    case p: WeakeningRightRule   => cleanWeakeningRight(p, reductive)
+    case p: ContractionLeftRule  => cleanContractionLeft(p, reductive)
+    case p: ContractionRightRule => cleanContractionRight(p, reductive)
+    case p: CutRule              => cleanCut(p, reductive)
+    case p: InductionRule        => cleanInduction(p, reductive)
+    case p: NegLeftRule          => cleanNegLeft(p, reductive)
+    case p: NegRightRule         => cleanNegRight(p, reductive)
+    case p: AndLeftRule          => cleanAndLeft(p, reductive)
+    case p: AndRightRule         => cleanAndRight(p, reductive)
+    case p: OrLeftRule           => cleanOrLeft(p, reductive)
+    case p: OrRightRule          => cleanOrRight(p, reductive)
+    case p: ImpLeftRule          => cleanImpLeft(p, reductive)
+    case p: ImpRightRule         => cleanImpRight(p, reductive)
+    case p: ForallLeftRule       => cleanForallLeft(p, reductive)
+    case p: ForallRightRule      => cleanForallRight(p, reductive)
+    case p: ForallSkRightRule    => cleanForallSkRight(p, reductive)
+    case p: ExistsLeftRule       => cleanExistsLeft(p, reductive)
+    case p: ExistsSkLeftRule     => cleanExistsSkLeft(p, reductive)
+    case p: ExistsRightRule      => cleanExistsRight(p, reductive)
+    case p: EqualityLeftRule     => cleanEqualityLeft(p, reductive)
+    case p: EqualityRightRule    => cleanEqualityRight(p, reductive)
+    case p: ConversionLeftRule   => cleanConversionLeft(p, reductive)
+    case p: ConversionRightRule  => cleanConversionRight(p, reductive)
+  }
 
-    case p @ WeakeningRightRule(subProof, formula) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-      (subProofNew, subConnector * p.getSequentConnector.inv)
+  private def cleanWeakeningLeft(p: WeakeningLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val WeakeningLeftRule(subProof, _) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+    (subProofNew, subConnector * p.getSequentConnector.inv)
+  }
 
-    case p @ ContractionLeftRule(subProof, aux1, aux2) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+  private def cleanWeakeningRight(p: WeakeningRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val WeakeningRightRule(subProof, _) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+    (subProofNew, subConnector * p.getSequentConnector.inv)
+  }
 
-      (subConnector.children(aux1), subConnector.children(aux2)) match {
-        case (Seq(a1), Seq(a2)) => // The contraction is performed on two non-weak occurrences → just do it
-          val proofNew = ContractionLeftRule(subProofNew, a1, a2)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+  private def cleanContractionLeft(p: ContractionLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ContractionLeftRule(subProof, aux1, aux2) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-        case _ => // At least one of the occurrences is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
+    (subConnector.children(aux1), subConnector.children(aux2)) match {
+      case (Seq(a1), Seq(a2)) => // The contraction is performed on two non-weak occurrences → just do it
+        val proofNew = ContractionLeftRule(subProofNew, a1, a2)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case _ => // At least one of the occurrences is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanContractionRight(p: ContractionRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ContractionRightRule(subProof, aux1, aux2) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    (subConnector.children(aux1), subConnector.children(aux2)) match {
+      case (Seq(a1), Seq(a2)) => // The contraction is performed on two non-weak occurrences → just do it
+        val proofNew = ContractionRightRule(subProofNew, a1, a2)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case _ => // At least one of the occurrences is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanCut(p: CutRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val CutRule(leftSubProof, aux1, rightSubProof, aux2) = p
+    val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
+    val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
+
+    if (reductive) // We may throw away subproofs
+      (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
+
+        case (Seq(a1), Seq(a2)) => // Neither cut formula is weak → just do it
+          val proofNew = CutRule(leftSubProofNew, a1, rightSubProofNew, a2)
+          (
+            proofNew,
+            (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
+              + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
+          )
+
+        case (Seq(), _) => // The left cut formula is weak → throw away the right proof
+          (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
+
+        case (Seq(a1), Seq()) => // The right cut formula is weak → throw away the left proof
+          (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
+      }
+    else { // Not allowed to throw away subproofs, so we have to perform some weakenings
+      val (leftSubProofNew_, leftSubConnector_) =
+        introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
+      val (rightSubProofNew_, rightSubConnector_) =
+        introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
+
+      val proofNew = CutRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
+
+      (
+        proofNew,
+        (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
+          + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
+      )
+    }
+  }
+
+  private def cleanInduction(p: InductionRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val InductionRule(cases, main, term) = p
+    if (cases.isEmpty)
+      (p, SequentConnector(p.endSequent))
+    else {
+      // First run the algorithm on all induction cases
+      val (subProofsNew, subConnectors) = cases.map { c => apply_(c.proof, reductive) }.unzip
+
+      // Tests whether the ith induction case is "weak", i.e. all hypotheses and the conclusion are weak.
+      def isWeak(i: Int): Boolean = {
+        val weakHypos = for (h <- cases(i).hypotheses) yield subConnectors(i).children(h).isEmpty
+        weakHypos.forall(_ == true) && subConnectors(i).children(cases(i).conclusion).isEmpty
       }
 
-    case p @ ContractionRightRule(subProof, aux1, aux2) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+      // Find the first weak induction case
+      val weakIndex = cases.indices.find(isWeak)
 
-      (subConnector.children(aux1), subConnector.children(aux2)) match {
-        case (Seq(a1), Seq(a2)) => // The contraction is performed on two non-weak occurrences → just do it
-          val proofNew = ContractionRightRule(subProofNew, a1, a2)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+      if (reductive && weakIndex.nonEmpty) {
+        // We may throw away subproofs and there is a weak case → throw away everything else
+        val i = weakIndex.get
+        val (subProofNew, subConnector) = (subProofsNew(i), subConnectors(i))
 
-        case _ => // At least one of the occurrences is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
+        (subProofNew, subConnector * p.occConnectors(i).inv)
 
-    case p @ CutRule(leftSubProof, aux1, rightSubProof, aux2) =>
-      val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
-      val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
-
-      if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
-
-          case (Seq(a1), Seq(a2)) => // Neither cut formula is weak → just do it
-            val proofNew = CutRule(leftSubProofNew, a1, rightSubProofNew, a2)
-            (
-              proofNew,
-              (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
-                + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
-            )
-
-          case (Seq(), _) => // The left cut formula is weak → throw away the right proof
-            (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
-
-          case (Seq(a1), Seq()) => // The right cut formula is weak → throw away the left proof
-            (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
-        }
-      else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val (leftSubProofNew_, leftSubConnector_) =
-          introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
-        val (rightSubProofNew_, rightSubConnector_) =
-          introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
-
-        val proofNew = CutRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
-
-        (
-          proofNew,
-          (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
-            + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
-        )
-      }
-
-    case p @ InductionRule(cases, main, term) =>
-      if (cases.isEmpty)
-        (p, SequentConnector(p.endSequent))
-      else {
-        // First run the algorithm on all induction cases
-        val (subProofsNew, subConnectors) = cases.map { c => apply_(c.proof, reductive) }.unzip
-
-        // Tests whether the ith induction case is "weak", i.e. all hypotheses and the conclusion are weak.
-        def isWeak(i: Int): Boolean = {
-          val weakHypos = for (h <- cases(i).hypotheses) yield subConnectors(i).children(h).isEmpty
-          weakHypos.forall(_ == true) && subConnectors(i).children(cases(i).conclusion).isEmpty
-        }
-
-        // Find the first weak induction case
-        val weakIndex = cases.indices.find(isWeak)
-
-        if (reductive && weakIndex.nonEmpty) {
-          // We may throw away subproofs and there is a weak case → throw away everything else
-          val i = weakIndex.get
-          val (subProofNew, subConnector) = (subProofsNew(i), subConnectors(i))
-
-          (subProofNew, subConnector * p.occConnectors(i).inv)
-
-        } else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-          val (casesNew, subConnectorsNew) = (for (i <- cases.indices) yield {
-            val c = cases(i)
-            val (subProofNew, subConnector) = (subProofsNew(i), subConnectors(i))
-            val (subProofNew_, subConnector_) =
-              introduceWeakenings(c.proof, subProofNew, subConnector, c.hypotheses :+ c.conclusion)
-            val hypothesesNew = c.hypotheses.map { h => subConnector_.child(h) }
-            val conclusionNew = subConnector_.child(c.conclusion)
-
-            (InductionCase(subProofNew_, c.constructor, hypothesesNew, c.eigenVars, conclusionNew), subConnector_)
-          }).unzip
-
-          val proofNew = InductionRule(casesNew, main, term)
-          val occConnectorsNew = for (i <- p.immediateSubProofs.indices)
-            yield proofNew.occConnectors(i) * subConnectorsNew(i) * p.occConnectors(i).inv
-
-          val occConnectorNew = occConnectorsNew.reduceLeft(_ + _)
-          (proofNew, occConnectorNew)
-        }
-      }
-
-    case p @ NegLeftRule(subProof, aux) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-
-      subConnector.children(aux) match { // The negation is performed on a non-weak formula → just do it
-        case Seq(a) =>
-          val proofNew = NegLeftRule(subProofNew, a)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
-
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
-
-    case p @ NegRightRule(subProof, aux) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-
-      subConnector.children(aux) match {
-        case Seq(a) => // The negation is performed on a non-weak formula → just do it
-          val proofNew = NegRightRule(subProofNew, a)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
-
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
-
-    case p @ AndLeftRule(subProof, aux1, aux2) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-
-      (subConnector.children(aux1), subConnector.children(aux2)) match {
-
-        case (Seq(a1), Seq(a2)) => // Neither conjunct is weak → just perform the inference
-          val proofNew = AndLeftRule(subProofNew, a1, a2)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
-
-        case (Seq(), Seq()) => // Both conjuncts are weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-
-        case _ => // One conjunct is weak → perform the weakening, then the ∧:l inference
-          val (subProofNew_, subConnector_) =
-            introduceWeakenings(subProof, subProofNew, subConnector, Seq(aux1, aux2))
-          val proofNew = AndLeftRule(subProofNew_, subConnector_.child(aux1), subConnector_.child(aux2))
-          (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
-      }
-
-    case p @ AndRightRule(leftSubProof, aux1, rightSubProof, aux2) =>
-      val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
-      val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
-
-      if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
-
-          case (Seq(a1), Seq(a2)) => // Neither conjunct is weak → just do it
-            val proofNew = AndRightRule(leftSubProofNew, a1, rightSubProofNew, a2)
-            (
-              proofNew,
-              (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
-                + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
-            )
-
-          case (Seq(), _) => // The left conjunct is weak → throw away the right proof
-            (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
-
-          case (Seq(a1), Seq()) => // The right conjunct is weak → throw away the left proof
-            (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
-        }
-      else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val (leftSubProofNew_, leftSubConnector_) =
-          introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
-        val (rightSubProofNew_, rightSubConnector_) =
-          introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
-
-        val proofNew = AndRightRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
-
-        (
-          proofNew,
-          (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
-            + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
-        )
-      }
-
-    case p @ OrLeftRule(leftSubProof, aux1, rightSubProof, aux2) =>
-      val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
-      val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
-
-      if (reductive) // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
-
-          case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just do it
-            val proofNew = OrLeftRule(leftSubProofNew, a1, rightSubProofNew, a2)
-            (
-              proofNew,
-              (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
-                + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
-            )
-
-          case (Seq(), _) => // The left disjunct is weak → throw away the right proof
-            (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
-
-          case (Seq(a1), Seq()) => // The right disjunct is weak → throw away the left proof
-            (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
-        }
-      else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val (leftSubProofNew_, leftSubConnector_) =
-          introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
-        val (rightSubProofNew_, rightSubConnector_) =
-          introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
-
-        val proofNew = OrLeftRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
-
-        (
-          proofNew,
-          (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
-            + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
-        )
-      }
-
-    case p @ OrRightRule(subProof, aux1, aux2) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-
-      (subConnector.children(aux1), subConnector.children(aux2)) match {
-
-        case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just perform the inference
-          val proofNew = OrRightRule(subProofNew, a1, a2)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
-
-        case (Seq(), Seq()) => // Both disjuncts are weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-
-        case _ => // One disjunct is weak → perform the weakening, then the ∨:r inference
-          val (subProofNew_, subConnector_) =
-            introduceWeakenings(subProof, subProofNew, subConnector, Seq(aux1, aux2))
-          val proofNew = OrRightRule(subProofNew_, subConnector_.child(aux1), subConnector_.child(aux2))
-          (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
-      }
-
-    case p @ ImpLeftRule(leftSubProof, aux1, rightSubProof, aux2) =>
-      val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
-      val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
-
-      if (reductive) { // We may throw away subproofs
-        (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
-
-          case (Seq(a1), Seq(a2)) => // Neither aux formula is weak → just do it
-            val proofNew = ImpLeftRule(leftSubProofNew, a1, rightSubProofNew, a2)
-            (
-              proofNew,
-              (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
-                + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
-            )
-
-          case (Seq(), _) => // The premise is weak → throw away the right proof
-            (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
-
-          case (Seq(a1), Seq()) => // The conclusion is weak → throw away the left proof
-            (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
-        }
       } else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val (leftSubProofNew_, leftSubConnector_) =
-          introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
-        val (rightSubProofNew_, rightSubConnector_) =
-          introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
-
-        val proofNew = ImpLeftRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
-
-        (
-          proofNew,
-          (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
-            + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
-        )
-      }
-
-    case p @ ImpRightRule(subProof, aux1, aux2) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
-
-      (subConnector.children(aux1), subConnector.children(aux2)) match {
-
-        case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just perform the inference
-          val proofNew = ImpRightRule(subProofNew, a1, a2)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
-
-        case (Seq(), Seq()) => // Both aux formulas are weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-
-        case _ => // One aux formula is weak → perform the weakening, then the →:r inference
+        val (casesNew, subConnectorsNew) = (for (i <- cases.indices) yield {
+          val c = cases(i)
+          val (subProofNew, subConnector) = (subProofsNew(i), subConnectors(i))
           val (subProofNew_, subConnector_) =
-            introduceWeakenings(subProof, subProofNew, subConnector, Seq(aux1, aux2))
-          val proofNew = ImpRightRule(subProofNew_, subConnector_.child(aux1), subConnector_.child(aux2))
-          (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
+            introduceWeakenings(c.proof, subProofNew, subConnector, c.hypotheses :+ c.conclusion)
+          val hypothesesNew = c.hypotheses.map { h => subConnector_.child(h) }
+          val conclusionNew = subConnector_.child(c.conclusion)
+
+          (InductionCase(subProofNew_, c.constructor, hypothesesNew, c.eigenVars, conclusionNew), subConnector_)
+        }).unzip
+
+        val proofNew = InductionRule(casesNew, main, term)
+        val occConnectorsNew = for (i <- p.immediateSubProofs.indices)
+          yield proofNew.occConnectors(i) * subConnectorsNew(i) * p.occConnectors(i).inv
+
+        val occConnectorNew = occConnectorsNew.reduceLeft(_ + _)
+        (proofNew, occConnectorNew)
       }
+    }
+  }
 
-    case p @ ForallLeftRule(subProof, aux, f, term, v) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+  private def cleanNegLeft(p: NegLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val NegLeftRule(subProof, aux) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-      subConnector.children(aux) match {
+    subConnector.children(aux) match { // The negation is performed on a non-weak formula → just do it
+      case Seq(a) =>
+        val proofNew = NegLeftRule(subProofNew, a)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ForallLeftRule(subProofNew, a, f, term, v)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
+  private def cleanNegRight(p: NegRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val NegRightRule(subProof, aux) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    subConnector.children(aux) match {
+      case Seq(a) => // The negation is performed on a non-weak formula → just do it
+        val proofNew = NegRightRule(subProofNew, a)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanAndLeft(p: AndLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val AndLeftRule(subProof, aux1, aux2) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    (subConnector.children(aux1), subConnector.children(aux2)) match {
+
+      case (Seq(a1), Seq(a2)) => // Neither conjunct is weak → just perform the inference
+        val proofNew = AndLeftRule(subProofNew, a1, a2)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case (Seq(), Seq()) => // Both conjuncts are weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+
+      case _ => // One conjunct is weak → perform the weakening, then the ∧:l inference
+        val (subProofNew_, subConnector_) =
+          introduceWeakenings(subProof, subProofNew, subConnector, Seq(aux1, aux2))
+        val proofNew = AndLeftRule(subProofNew_, subConnector_.child(aux1), subConnector_.child(aux2))
+        (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanAndRight(p: AndRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val AndRightRule(leftSubProof, aux1, rightSubProof, aux2) = p
+    val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
+    val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
+
+    if (reductive) // We may throw away subproofs
+      (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
+
+        case (Seq(a1), Seq(a2)) => // Neither conjunct is weak → just do it
+          val proofNew = AndRightRule(leftSubProofNew, a1, rightSubProofNew, a2)
+          (
+            proofNew,
+            (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
+              + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
+          )
+
+        case (Seq(), _) => // The left conjunct is weak → throw away the right proof
+          (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
+
+        case (Seq(a1), Seq()) => // The right conjunct is weak → throw away the left proof
+          (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
       }
+    else { // Not allowed to throw away subproofs, so we have to perform some weakenings
+      val (leftSubProofNew_, leftSubConnector_) =
+        introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
+      val (rightSubProofNew_, rightSubConnector_) =
+        introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
 
-    case p @ ForallRightRule(subProof, aux, eigen, quant) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+      val proofNew = AndRightRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
 
-      subConnector.children(aux) match {
+      (
+        proofNew,
+        (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
+          + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
+      )
+    }
+  }
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ForallRightRule(subProofNew, a, eigen, quant)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+  private def cleanOrLeft(p: OrLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val OrLeftRule(leftSubProof, aux1, rightSubProof, aux2) = p
+    val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
+    val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
+    if (reductive) // We may throw away subproofs
+      (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
+
+        case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just do it
+          val proofNew = OrLeftRule(leftSubProofNew, a1, rightSubProofNew, a2)
+          (
+            proofNew,
+            (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
+              + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
+          )
+
+        case (Seq(), _) => // The left disjunct is weak → throw away the right proof
+          (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
+
+        case (Seq(a1), Seq()) => // The right disjunct is weak → throw away the left proof
+          (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
       }
+    else { // Not allowed to throw away subproofs, so we have to perform some weakenings
+      val (leftSubProofNew_, leftSubConnector_) =
+        introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
+      val (rightSubProofNew_, rightSubConnector_) =
+        introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
 
-    case p @ ForallSkRightRule(subProof, aux, main, skTerm) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+      val proofNew = OrLeftRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
 
-      subConnector.children(aux) match {
+      (
+        proofNew,
+        (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
+          + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
+      )
+    }
+  }
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ForallSkRightRule(subProofNew, a, main, skTerm)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+  private def cleanOrRight(p: OrRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val OrRightRule(subProof, aux1, aux2) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
+    (subConnector.children(aux1), subConnector.children(aux2)) match {
+
+      case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just perform the inference
+        val proofNew = OrRightRule(subProofNew, a1, a2)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case (Seq(), Seq()) => // Both disjuncts are weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+
+      case _ => // One disjunct is weak → perform the weakening, then the ∨:r inference
+        val (subProofNew_, subConnector_) =
+          introduceWeakenings(subProof, subProofNew, subConnector, Seq(aux1, aux2))
+        val proofNew = OrRightRule(subProofNew_, subConnector_.child(aux1), subConnector_.child(aux2))
+        (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanImpLeft(p: ImpLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ImpLeftRule(leftSubProof, aux1, rightSubProof, aux2) = p
+    val (leftSubProofNew, leftSubConnector) = apply_(leftSubProof, reductive)
+    val (rightSubProofNew, rightSubConnector) = apply_(rightSubProof, reductive)
+
+    if (reductive) { // We may throw away subproofs
+      (leftSubConnector.children(aux1), rightSubConnector.children(aux2)).runtimeChecked match {
+
+        case (Seq(a1), Seq(a2)) => // Neither aux formula is weak → just do it
+          val proofNew = ImpLeftRule(leftSubProofNew, a1, rightSubProofNew, a2)
+          (
+            proofNew,
+            (proofNew.getLeftSequentConnector * leftSubConnector * p.getLeftSequentConnector.inv)
+              + (proofNew.getRightSequentConnector * rightSubConnector * p.getRightSequentConnector.inv)
+          )
+
+        case (Seq(), _) => // The premise is weak → throw away the right proof
+          (leftSubProofNew, leftSubConnector * p.getLeftSequentConnector.inv)
+
+        case (Seq(a1), Seq()) => // The conclusion is weak → throw away the left proof
+          (rightSubProofNew, rightSubConnector * p.getRightSequentConnector.inv)
       }
+    } else { // Not allowed to throw away subproofs, so we have to perform some weakenings
+      val (leftSubProofNew_, leftSubConnector_) =
+        introduceWeakenings(leftSubProof, leftSubProofNew, leftSubConnector, Seq(aux1))
+      val (rightSubProofNew_, rightSubConnector_) =
+        introduceWeakenings(rightSubProof, rightSubProofNew, rightSubConnector, Seq(aux2))
 
-    case p @ ExistsLeftRule(subProof, aux, eigen, quant) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+      val proofNew = ImpLeftRule(leftSubProofNew_, leftSubConnector_.child(aux1), rightSubProofNew_, rightSubConnector_.child(aux2))
 
-      subConnector.children(aux) match {
+      (
+        proofNew,
+        (proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv)
+          + (proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv)
+      )
+    }
+  }
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ExistsLeftRule(subProofNew, a, eigen, quant)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+  private def cleanImpRight(p: ImpRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ImpRightRule(subProof, aux1, aux2) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
+    (subConnector.children(aux1), subConnector.children(aux2)) match {
 
-    case p @ ExistsSkLeftRule(subProof, aux, main, skTerm) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+      case (Seq(a1), Seq(a2)) => // Neither disjunct is weak → just perform the inference
+        val proofNew = ImpRightRule(subProofNew, a1, a2)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-      subConnector.children(aux) match {
+      case (Seq(), Seq()) => // Both aux formulas are weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ExistsSkLeftRule(subProofNew, a, main, skTerm)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+      case _ => // One aux formula is weak → perform the weakening, then the →:r inference
+        val (subProofNew_, subConnector_) =
+          introduceWeakenings(subProof, subProofNew, subConnector, Seq(aux1, aux2))
+        val proofNew = ImpRightRule(subProofNew_, subConnector_.child(aux1), subConnector_.child(aux2))
+        (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
+  private def cleanForallLeft(p: ForallLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ForallLeftRule(subProof, aux, f, term, v) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-    case p @ ExistsRightRule(subProof, aux, f, term, v) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+    subConnector.children(aux) match {
 
-      subConnector.children(aux) match {
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ForallLeftRule(subProofNew, a, f, term, v)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ExistsRightRule(subProofNew, a, f, term, v)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
+  private def cleanForallRight(p: ForallRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ForallRightRule(subProof, aux, eigen, quant) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-    case p @ EqualityLeftRule(subProof, eq, aux, con) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+    subConnector.children(aux) match {
 
-      subConnector.children(aux) match {
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ForallRightRule(subProofNew, a, eigen, quant)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-        case Seq() => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ =>
-          // The aux formula is not weak → introduce the equation by weakening,
-          // if necessary, then perform the inference
-          val (subProofNew_, subConnector_) =
-            introduceWeakenings(subProof, subProofNew, subConnector, Seq(eq))
-          val proofNew = EqualityLeftRule(subProofNew_, subConnector_.child(eq), subConnector_.child(aux), con)
-          (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
-      }
+  private def cleanForallSkRight(p: ForallSkRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ForallSkRightRule(subProof, aux, main, skTerm) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-    case p @ EqualityRightRule(subProof, eq, aux, con) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+    subConnector.children(aux) match {
 
-      subConnector.children(aux) match {
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ForallSkRightRule(subProofNew, a, main, skTerm)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-        case Seq() => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ =>
-          // The aux formula is not weak → introduce the equation by weakening,
-          // if necessary, then perform the inference
-          val (subProofNew_, subConnector_) = introduceWeakenings(subProof, subProofNew, subConnector, Seq(eq))
-          val proofNew = EqualityRightRule(subProofNew_, subConnector_.child(eq), subConnector_.child(aux), con)
-          (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
-      }
+  private def cleanExistsLeft(p: ExistsLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ExistsLeftRule(subProof, aux, eigen, quant) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-    case p @ ConversionLeftRule(subProof, aux, main) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+    subConnector.children(aux) match {
 
-      subConnector.children(aux) match {
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ExistsLeftRule(subProofNew, a, eigen, quant)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ConversionLeftRule(subProofNew, a, main)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
+  private def cleanExistsSkLeft(p: ExistsSkLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ExistsSkLeftRule(subProof, aux, main, skTerm) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
 
-    case p @ ConversionRightRule(subProof, aux, main) =>
-      val (subProofNew, subConnector) = apply_(subProof, reductive)
+    subConnector.children(aux) match {
 
-      subConnector.children(aux) match {
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ExistsSkLeftRule(subProofNew, a, main, skTerm)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
 
-        case Seq(a) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = ConversionRightRule(subProofNew, a, main)
-          (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
 
-        case _ => // The aux formula is weak → do nothing
-          (subProofNew, subConnector * p.getSequentConnector.inv)
-      }
+  private def cleanExistsRight(p: ExistsRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ExistsRightRule(subProof, aux, f, term, v) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    subConnector.children(aux) match {
+
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ExistsRightRule(subProofNew, a, f, term, v)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanEqualityLeft(p: EqualityLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val EqualityLeftRule(subProof, eq, aux, con) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    subConnector.children(aux) match {
+
+      case Seq() => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+
+      case _ =>
+        // The aux formula is not weak → introduce the equation by weakening,
+        // if necessary, then perform the inference
+        val (subProofNew_, subConnector_) =
+          introduceWeakenings(subProof, subProofNew, subConnector, Seq(eq))
+        val proofNew = EqualityLeftRule(subProofNew_, subConnector_.child(eq), subConnector_.child(aux), con)
+        (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanEqualityRight(p: EqualityRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val EqualityRightRule(subProof, eq, aux, con) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    subConnector.children(aux) match {
+
+      case Seq() => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+
+      case _ =>
+        // The aux formula is not weak → introduce the equation by weakening,
+        // if necessary, then perform the inference
+        val (subProofNew_, subConnector_) = introduceWeakenings(subProof, subProofNew, subConnector, Seq(eq))
+        val proofNew = EqualityRightRule(subProofNew_, subConnector_.child(eq), subConnector_.child(aux), con)
+        (proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanConversionLeft(p: ConversionLeftRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ConversionLeftRule(subProof, aux, main) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    subConnector.children(aux) match {
+
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ConversionLeftRule(subProofNew, a, main)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
+  }
+
+  private def cleanConversionRight(p: ConversionRightRule, reductive: Boolean): (LKProof, SequentConnector) = {
+    val ConversionRightRule(subProof, aux, main) = p
+    val (subProofNew, subConnector) = apply_(subProof, reductive)
+
+    subConnector.children(aux) match {
+
+      case Seq(a) => // The inference is performed on a non-weak formula → just do it
+        val proofNew = ConversionRightRule(subProofNew, a, main)
+        (proofNew, proofNew.getSequentConnector * subConnector * p.getSequentConnector.inv)
+
+      case _ => // The aux formula is weak → do nothing
+        (subProofNew, subConnector * p.getSequentConnector.inv)
+    }
   }
 
   /**

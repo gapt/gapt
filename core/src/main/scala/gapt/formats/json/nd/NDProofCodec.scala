@@ -6,6 +6,7 @@ import io.circe.Decoder.Result
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.auto._
+import scala.annotation.nowarn
 
 object NDProofCodec {
   private[json] val ndCollectionEncoder: Encoder[ProofCollection[NDProof]] = ProofCollectionCodec.proofCollectionEncoder[NDProof](encodeND)
@@ -29,6 +30,8 @@ object NDProofCodec {
   /**
    * Given an encoder for subproofs, this encodes a single LK proof.
    */
+  @nowarn("msg=Skipping coverage instrumentation for large method body")
+  // Circe generates a lot of encoding code, but we do not need to include this in coverage
   private def encodeND(subEncoder: Encoder[NDProof]): Encoder[NDProof] = {
     implicit val e: Encoder[NDProof] = subEncoder
 
@@ -64,6 +67,8 @@ object NDProofCodec {
   /**
    * Given a rule name, a cursor, and a decoder for subproofs, this decodes a single LK proof.
    */
+  @nowarn("msg=Skipping coverage instrumentation for large method body")
+  // Circe generates a lot of decoding code, but we do not need to include this in coverage
   private def decodeND(name: String, c: ACursor, subDecoder: Decoder[NDProof]): Result[NDProof] = {
     implicit val d: Decoder[NDProof] = subDecoder
     name match {

@@ -275,6 +275,8 @@ lazy val core = project.in(file("core")).settings(commonSettings: _*).settings(
 lazy val examples = project.in(file("examples")).dependsOn(core)
   .settings(commonSettings: _*).settings(
     name := "gapt-examples",
+    // Silence warnings for oversized generated proofs that coverage cannot instrument.
+    Compile / scalacOptions += "-Wconf:msg=Skipping coverage instrumentation:s",
     Compile / unmanagedSourceDirectories := Seq(baseDirectory.value),
     Compile / resourceDirectory := baseDirectory.value,
     Compile / unmanagedResources / excludeFilter := {
