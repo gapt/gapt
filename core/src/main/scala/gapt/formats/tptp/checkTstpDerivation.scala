@@ -359,11 +359,10 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
 }
 
 def checkDerivationHasRefutation(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = {
-  derivation.nonConjectureRootRefutationLabels.toSeq.sorted match {
-    case Seq() => Left(NoRefutationFound())
-    case labels @ Seq(_, _, _*) => Left(AmbiguousRefutationLabelsFound(labels))
-    case Seq(_) => Right(())
-  }
+  if derivation.nonConjectureRootRefutationLabels.isEmpty then
+    Left(NoRefutationFound())
+  else
+    Right(())
 }
 
 def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = boundary {
@@ -745,11 +744,7 @@ case class CannotHandleInput(stepName: String, reason: String) extends VerifiedU
 }
 
 case class NoRefutationFound() extends VerifiedBadReason {
-  def message: String = "no refutation found as there is no unique $false formula in the derivation"
-}
-
-case class AmbiguousRefutationLabelsFound(labels: Seq[String]) extends VerifiedBadReason {
-  def message: String = s"no refutation found as there are multiple $$false formulas in the derivation: ${labels.mkString(", ")}"
+  def message: String = "no refutation found as there is no $false formula in the derivation"
 }
 
 case class UnexpectedInput(message: String) extends VerifiedUnknownReason

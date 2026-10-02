@@ -1570,7 +1570,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
-      "reject if input has two root $false proof steps" in {
+      "check every inference when input has multiple root $false proof steps" in {
         given resolver: FileNameResolver = {
           case "/input" => Right("""
             |fof(a, axiom, p, file('/Problems/problem.p', a)).
@@ -1586,8 +1586,26 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
 
         checkDerivation("/input") must beLike {
-          case SzsStatus.VerifiedBad(AmbiguousRefutationLabelsFound(labels)) => labels must_== Seq("refute1", "refute2")
+          case SzsStatus.VerifiedBad(IncorrectInference(stepName)) => stepName must_== "refute2"
         }
+      }
+
+      "allow multiple valid root $false proof steps" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a, axiom, p, file('/Problems/problem.p', a)).
+            |fof(c, conjecture, p, file('/Problems/problem.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(refute1, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            |fof(refute2, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, p).
+            |fof(c, conjecture, p).
+            """.stripMargin)
+        }
+
+        checkDerivation("/input") must_== SzsStatus.VerifiedGood
       }
 
       "allow a valid refutation with an unrelated root" in {
@@ -1650,10 +1668,6 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
       }
 
       "do X on skolemization step with the same parent twice" in todo("specify")
-      "succeed if input has multiple $false proof steps whose induced refutations are all correct" in todo
-      "give up if input has more than one $false proof step that are roots" in todo
-      "fail if input has multiple $false proof steps and one of the induced refutations is incorrect" in todo
-
       "fail on fof inputs with higher-order formulas" in todo
       "succeed on derivation that derives $false only from axioms" in todo
       "give up if input has more than one conjecture" in todo
