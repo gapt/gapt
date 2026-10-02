@@ -6,10 +6,63 @@ import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.util.constants
 import gapt.formats.InputFile
 import gapt.formats.tptp.*
-import gapt.utils.{NameGenerator, linearizeStrictPartialOrder}
+import gapt.utils.{NameGenerator, getOrBreak, linearizeStrictPartialOrder}
 
 import scala.util.boundary
 import scala.util.boundary.break
+
+private[check] case class NamedTptpInputFile(fileName: String, content: String) extends InputFile {
+  override def read: String = content
+}
+
+private[check] enum TptpFileLoadingError {
+  case FileNotFound(fileName: String)
+  case InvalidSyntax(fileName: String)
+  case IncludeCycle(fileName: String)
+}
+
+private[check] def loadTptpFileWithIncludes(
+    inputFile: InputFile
+)(using resolver: FileNameResolver): Either[TptpFileLoadingError, TptpFile] = {
+  def go(
+      filePath: os.Path,
+      content: String,
+      includedFiles: Set[os.Path]
+  ): Either[TptpFileLoadingError, Seq[AnnotatedFormula]] = boundary {
+    val parsed =
+      try TptpImporter.loadWithoutIncludes(InputFile.fromString(content))
+      catch {
+        case _: IllegalArgumentException => break(Left(TptpFileLoadingError.InvalidSyntax(filePath.toString)))
+      }
+
+    val inputs = parsed.inputs.flatMap {
+      case a: AnnotatedFormula => Seq(a)
+      case IncludeDirective(includedFileName, selection) =>
+        val currentDirectory = filePath / os.up
+        val resolvedPath = os.Path(includedFileName, currentDirectory)
+        if includedFiles.contains(resolvedPath) then
+          break(Left(TptpFileLoadingError.IncludeCycle(resolvedPath.toString)))
+
+        val includedContent = resolver(resolvedPath.toString).getOrElse {
+          break(Left(TptpFileLoadingError.FileNotFound(resolvedPath.toString)))
+        }
+        val includedFile = go(
+          resolvedPath,
+          includedContent,
+          includedFiles + resolvedPath
+        ).getOrBreak
+        includedFile.filter {
+          case AnnotatedFormula(_, name, _, _, _) => selection.forall(_.contains(name))
+        }
+    }
+
+    Right(inputs)
+  }
+
+  val inputPath = os.Path(inputFile.fileName, os.pwd)
+  go(inputPath, inputFile.read, Set(inputPath))
+    .map(TptpFile(_))
+}
 
 /**
  * A parsed TSTP derivation whose parent relation is structurally well-formed.
@@ -73,7 +126,7 @@ object StructurallyCorrectTstpDerivation {
     }.toMap
 
     def renamedFormula(formula: FOLFormula): FOLFormula =
-    renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
+      renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
 
     def renamedTerm(term: Expr): Expr = renameConsts(renamingTable)(term)
 
@@ -99,7 +152,7 @@ object StructurallyCorrectTstpDerivation {
           usefulInfo.map(renamedTerm),
           parents.map(parent => parent.copy(source = renamedSource(parent.source), details = parent.details.map(renamedTerm)))
         )
-      case Source.Unknown => Source.Unknown
+      case Source.Unknown       => Source.Unknown
       case Source.List(sources) => Source.List(sources.map(renamedSource))
       case Source.General(term) => Source.General(renamedTerm(term))
     }
@@ -111,8 +164,8 @@ object StructurallyCorrectTstpDerivation {
       )
 
     def renamedStep(step: ParsedTstpDerivationStep): ParsedTstpDerivationStep = step match {
-      case step: ParsedTstpAxiomStep             => step.copy(formula = renamedFormula(step.formula))
-      case step: ParsedTstpConjectureStep        => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpAxiomStep      => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpConjectureStep => step.copy(formula = renamedFormula(step.formula))
       case step: ParsedTstpNegatedConjectureStep =>
         val annotations = renamedAnnotations(step.annotations)
         step.copy(
@@ -145,10 +198,12 @@ object StructurallyCorrectTstpDerivation {
     )
   }
 
-  def fromInputFile(
-      input: InputFile
-  ): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =
-    ParsedTstpDerivation.fromInputFile(input).flatMap(fromParsed)
+  def fromInputFile(input: InputFile)(using resolver: FileNameResolver): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =
+    loadTptpFileWithIncludes(input).left.map {
+      case TptpFileLoadingError.FileNotFound(fileName)  => IncludeFileNotFound(fileName)
+      case TptpFileLoadingError.InvalidSyntax(fileName) => IncludeInvalidSyntax(fileName)
+      case TptpFileLoadingError.IncludeCycle(fileName)  => IncludeCycle(fileName)
+    }.flatMap(tptpFile => ParsedTstpDerivation.parseTptpFile(tptpFile).flatMap(fromParsed))
 
   def fromParsed(
       parsed: ParsedTstpDerivation

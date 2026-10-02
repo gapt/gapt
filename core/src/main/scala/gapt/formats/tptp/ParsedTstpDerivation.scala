@@ -88,10 +88,15 @@ object ParsedTstpDerivation {
   def fromInputFile(input: InputFile): Either[TstpDerivationError, ParsedTstpDerivation] = {
     for
       tptp <- loadAsTptpFile(input)
-      formulas <- intoAnnotatedFormulas(tptp)
+      derivation <- parseTptpFile(tptp)
+    yield derivation
+  }
+
+  private[check] def parseTptpFile(tptpFile: TptpFile): Either[TstpDerivationError, ParsedTstpDerivation] =
+    for
+      formulas <- intoAnnotatedFormulas(tptpFile)
       steps <- parseSteps(formulas)
     yield ParsedTstpDerivation(steps)
-  }
 
   private def loadAsTptpFile(input: InputFile): Either[InputSyntaxError, TptpFile] = {
     try Right(TptpImporter.loadWithoutIncludes(input))

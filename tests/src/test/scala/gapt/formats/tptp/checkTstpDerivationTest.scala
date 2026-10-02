@@ -1498,18 +1498,31 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation("/input") must beAnInstanceOf[SzsStatus.Unknown]
         }
 
-        "not verify if input has include directives (we do not support this yet)" in {
-          todo
+        "verify proof and problem files with nested includes" in {
           given resolver: FileNameResolver = {
             case "/input" => Right("""
               |include('filename', [a]).
-              |fof(a1, axiom, p).
-              |fof(c, conjecture, p).
+              |fof(c, conjecture, p, file('/Problems/problem.p', c)).
               |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
-              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a1, nc])).""".stripMargin)
-
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [a, nc])).""".stripMargin)
+            case "/filename"           => Right("include('nested.p', [a]).")
+            case "/nested.p"           => Right("fof(a, axiom, p, file('/Problems/problem.p', a)).")
+            case "/Problems/problem.p" => Right("include('base.p', [a]).\nfof(c, conjecture, p).")
+            case "/Problems/base.p"    => Right("fof(a, axiom, p).")
           }
-          checkDerivation("/input") must beAnInstanceOf[SzsStatus.Unknown]
+          checkDerivation("/input") must_== SzsStatus.VerifiedGood
+        }
+
+        "reject include cycles" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("include('/a.p').")
+            case "/a.p"   => Right("include('/b.p').")
+            case "/b.p"   => Right("include('/a.p').")
+          }
+
+          checkDerivation("/input") must beLike {
+            case SzsStatus.Unknown(IncludeCycle("/a.p")) => ok
+          }
         }
 
         "verifiy input with overloaded symbols" in {

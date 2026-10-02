@@ -14,7 +14,6 @@ import gapt.expr.formula.fol.FOLVar
 import gapt.expr.ty.Ti
 import gapt.expr.util.constants
 import gapt.expr.util.freeVariables
-import gapt.formats.InputFile
 import gapt.formats.tptp.*
 import gapt.logic.hol.SkolemFunctions
 import gapt.proofs.Ant
@@ -338,8 +337,9 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
     try {
       for
         input <- resolver(fileName)
-        inputFile = InputFile.fromString(input)
-        derivation <- StructurallyCorrectTstpDerivation.fromInputFile(inputFile)
+        derivation <- StructurallyCorrectTstpDerivation.fromInputFile(
+          NamedTptpInputFile(fileName, input)
+        )
         _ <- checkDerivationHasRefutation(derivation)
         _ <- checkDerivationHasCorrectFileDirectives(derivation, fileName)
         _ <- checkDerivationHasCorrectStatuses(derivation)
@@ -377,7 +377,8 @@ def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivat
 
 def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpDerivation, fileName: String)(using resolver: FileNameResolver): Either[TstpDerivationError, Unit] = boundary {
   val parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
-  val innerResolver = resolver.relativeTo(os.Path(fileName, os.pwd) / os.up)
+  val proofDirectory = os.Path(fileName, os.pwd) / os.up
+  val innerResolver = resolver.relativeTo(proofDirectory)
   derivation.stepsIterator.foreach {
     case s: FileSourceStep => {
       val (fileName, label) = (s.problemFile, s.problemFileLabel)
@@ -386,11 +387,15 @@ def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpD
           val tptpFileContent = innerResolver(fileName).getOrElse {
             break(Left(FileDirectiveFileNotFound(s.name, fileName)))
           }
-          try TptpImporter.loadWithoutIncludes(InputFile.fromString(tptpFileContent))
-          catch {
-            case _: IllegalArgumentException =>
-              break(Left(FileDirectiveInvalidSyntax(s.name, fileName)))
-          }
+          loadTptpFileWithIncludes(
+            NamedTptpInputFile(fileName, tptpFileContent)
+          ).left.map {
+            case TptpFileLoadingError.FileNotFound(includedFileName) =>
+              FileDirectiveFileNotFound(s.name, includedFileName)
+            case TptpFileLoadingError.InvalidSyntax(includedFileName) =>
+              FileDirectiveInvalidSyntax(s.name, includedFileName)
+            case TptpFileLoadingError.IncludeCycle(includedFileName) => IncludeCycle(includedFileName)
+          }.getOrBreak
         }
       )
 
@@ -734,6 +739,18 @@ case class SkolemizationStepWithoutBinding(
 
 case class CannotHandleIncludeDirectives() extends VerifiedUnknownReason {
   def message: String = "cannot handle include directives"
+}
+
+case class IncludeFileNotFound(fileName: String) extends VerifiedUnknownReason {
+  def message: String = s"included file not found: $fileName"
+}
+
+case class IncludeInvalidSyntax(fileName: String) extends VerifiedUnknownReason {
+  def message: String = s"included file has invalid TPTP syntax: $fileName"
+}
+
+case class IncludeCycle(fileName: String) extends VerifiedUnknownReason {
+  def message: String = s"include cycle detected at $fileName"
 }
 
 case class CannotHandleInput(stepName: String, reason: String) extends VerifiedUnknownReason {
