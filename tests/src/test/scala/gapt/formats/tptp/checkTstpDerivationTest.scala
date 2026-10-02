@@ -1523,7 +1523,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
-      "fail if input has two $false proof steps, one induces a correct refutation, the other induces an incorrect refutation" in {
+      "reject if input has two root $false proof steps" in {
         given resolver: FileNameResolver = {
           case "/input" => Right("""
             |fof(a, axiom, p, file('/Problems/problem.p', a)).
@@ -1539,7 +1539,48 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
 
         checkDerivation("/input") must beLike {
-          case SzsStatus.VerifiedBad(r: IncorrectInference) => r.stepName must_== "refute2"
+          case SzsStatus.VerifiedBad(AmbiguousRefutationLabelsFound(labels)) => labels must_== Seq("refute1", "refute2")
+        }
+      }
+
+      "allow a valid refutation with an unrelated root" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a, axiom, p, file('/Problems/problem.p', a)).
+            |fof(c, conjecture, p, file('/Problems/problem.p', c)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+            |fof(refute, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            |fof(unused, plain, q | ~q, inference(tautology, [status(thm)], [])).
+            """.stripMargin)
+          case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, p).
+            |fof(c, conjecture, p).
+            """.stripMargin)
+        }
+
+        checkDerivation("/input") must beLike {
+          case SzsStatus.VerifiedGood => ok
+        }
+      }
+
+      "reject derivations with multiple conjectures" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a, axiom, p, file('/Problems/problem.p', a)).
+            |fof(c1, conjecture, p, file('/Problems/problem.p', c1)).
+            |fof(c2, conjecture, p, file('/Problems/problem.p', c2)).
+            |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
+            |fof(refute, plain, $false, inference(falsum, [status(thm)], [a, nc])).
+            """.stripMargin)
+          case "/Problems/problem.p" => Right("""
+            |fof(a, axiom, p).
+            |fof(c1, conjecture, p).
+            |fof(c2, conjecture, p).
+            """.stripMargin)
+        }
+
+        checkDerivation("/input") must beLike {
+          case SzsStatus.VerifiedBad(MultipleConjectures(names)) => names must_== Seq("c1", "c2")
         }
       }
 

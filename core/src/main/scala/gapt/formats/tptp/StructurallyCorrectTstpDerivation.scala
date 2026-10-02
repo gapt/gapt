@@ -35,10 +35,10 @@ final class StructurallyCorrectTstpDerivation private[check] (
     map(formulaName).parents.map(map(_))
 
   val nonConjectureRootLabels: Set[String] = {
-    def isRoot(key: String): Boolean =
-      map(key).role != "conjecture" && map.forall((_, step) => !step.parents.contains(key))
-
-    map.keys.filter(isRoot).toSet
+    val referencedLabels = map.valuesIterator.flatMap(_.parents).toSet
+    map.keysIterator
+      .filter(label => map(label).role != "conjecture" && !referencedLabels.contains(label))
+      .toSet
   }
 
   val nonConjectureRefutationLabels: Set[String] =
@@ -110,6 +110,13 @@ object StructurallyCorrectTstpDerivation {
     val negatedConjectures = derivation.stepsIterator.collect {
       case step: ParsedTstpNegatedConjectureStep => step
     }.toSeq
+    val conjectures = derivation.stepsIterator.collect {
+      case step: ParsedTstpConjectureStep => step
+    }.toSeq
+
+    if conjectures.size > 1 then
+      break(Left(MultipleConjectures(conjectures.map(_.name).sorted)))
+
     negatedConjectures.find(step => derivation.parentsOf(step.name).exists(_.role != "conjecture")).foreach { step =>
       break(Left(NegatedConjectureStepWithNonConjectureParent(step.name)))
     }

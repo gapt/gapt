@@ -359,10 +359,11 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
 }
 
 def checkDerivationHasRefutation(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = {
-  if derivation.nonConjectureRootRefutationLabels.isEmpty then
-    Left(NoRefutationFound())
-  else
-    Right(())
+  derivation.nonConjectureRootRefutationLabels.toSeq.sorted match {
+    case Seq() => Left(NoRefutationFound())
+    case labels @ Seq(_, _, _*) => Left(AmbiguousRefutationLabelsFound(labels))
+    case Seq(_) => Right(())
+  }
 }
 
 def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = boundary {
@@ -583,6 +584,12 @@ case class PlainInferenceWithConjectureParent(
     step: ParsedTstpDerivationStep
 ) extends VerifiedBadReason {
   def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
+}
+
+case class MultipleConjectures(
+    stepNames: Seq[String]
+) extends VerifiedBadReason {
+  def message: String = s"derivation contains multiple conjectures: ${stepNames.sorted.mkString(", ")}"
 }
 
 case class PlainInferenceWithoutSource(
