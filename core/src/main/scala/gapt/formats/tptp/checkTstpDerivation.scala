@@ -315,10 +315,7 @@ extension [R <: FileNameResolver](r: R) {
 object FileNameResolver {
   val empty: FileNameResolver = fileName => Left(FileNotFound(fileName))
   val absolute: FileNameResolver = fileName => {
-    val path =
-      if Paths.get(fileName).isAbsolute() then os.Path(fileName)
-      else os.Path(fileName, os.pwd)
-
+    val path = os.Path(fileName, os.pwd)
     if os.exists(path) then Right(os.read(path))
     else Left(FileNotFound(fileName))
   }
@@ -380,7 +377,7 @@ def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivat
 
 def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpDerivation, fileName: String)(using resolver: FileNameResolver): Either[TstpDerivationError, Unit] = boundary {
   val parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
-  val innerResolver = resolver.relativeTo(os.Path(fileName) / os.up)
+  val innerResolver = resolver.relativeTo(os.Path(fileName, os.pwd) / os.up)
   derivation.stepsIterator.foreach {
     case s: FileSourceStep => {
       val (fileName, label) = (s.problemFile, s.problemFileLabel)
