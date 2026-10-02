@@ -1,6 +1,7 @@
 package gapt.formats.tptp.check
 
 import gapt.expr.formula.fol.FOLConst
+import gapt.expr.util.constants
 import gapt.formats.InputFile
 import gapt.proofs.SequentMatchers
 
@@ -1290,6 +1291,52 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must_== SzsStatus.VerifiedGood
+        }
+
+        "deoverload symbols in source order" in {
+          def derivation(overloadOrder: Seq[String]) = {
+            val steps = Map(
+              "overload0" -> "fof(overload0, plain, p | ~p, inference(tautology, [status(thm)], [])).",
+              "overload1" -> "fof(overload1, plain, q(p(a)) | ~q(p(a)), inference(tautology, [status(thm)], []))."
+            )
+            val input = InputFile.fromString(overloadOrder.map(steps).mkString("\n"))
+            StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
+          }
+
+          def symbolNames(derivation: StructurallyCorrectTstpDerivation, label: String) =
+            constants.all(derivation.get(label).get.formula).map(_.name)
+
+          val normalized1 = StructurallyCorrectTstpDerivation.deoverloadSymbols(
+            derivation(Seq("overload0", "overload1"))
+          )
+          val normalized2 = StructurallyCorrectTstpDerivation.deoverloadSymbols(
+            derivation(Seq("overload1", "overload0"))
+          )
+
+          (symbolNames(normalized1, "overload0") must contain("p"))
+            .and(symbolNames(normalized1, "overload1") must contain("p_0"))
+            .and(symbolNames(normalized2, "overload1") must contain("p"))
+            .and(symbolNames(normalized2, "overload0") must contain("p_0"))
+        }
+
+        "deoverloading overloaded symbols does not collide with Skolem definitions" in {
+          val input = InputFile.fromString("""
+            |fof(a, axiom, ?[X] : r(X), file('problem.p', a)).
+            |fof(overload0, plain, p | ~p, inference(tautology, [status(thm)], [])).
+            |fof(overload1, plain, q(p(a)) | ~q(p(a)), inference(tautology, [status(thm)], [])).
+            |fof(sk, plain, r(p_0), inference(skolemize, [status(esa), new_symbols(skolem, [p_0]), skolemize(X, p_0)], [a])).
+          """.stripMargin)
+          val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
+          val normalized = StructurallyCorrectTstpDerivation.deoverloadSymbols(derivation)
+          val skolemStep = normalized.get("sk").get.asInstanceOf[ParsedTstpSkolemizationStep]
+          val overloadSymbols = Seq("overload0", "overload1").flatMap { label =>
+            constants.all(normalized.get(label).get.formula).map(_.name)
+          }.toSet
+
+          (skolemStep.newSkolemSymbol must_== FOLFunctionConst("p_0", 0))
+            .and(constants.all(skolemStep.formula).map(_.name) must contain("p_0"))
+            .and(overloadSymbols must not contain "p_0")
+            .and(skolemStep.source.usefulInfo.flatMap(constants.all).map(_.name) must contain("p_0"))
         }
       }
 

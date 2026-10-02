@@ -1,10 +1,11 @@
 package gapt.formats.tptp.check
 
-import gapt.expr.Const
+import gapt.expr.Expr
 import gapt.expr.formula.Bottom
 import gapt.expr.formula.fol.FOLFormula
 import gapt.expr.util.constants
 import gapt.formats.InputFile
+import gapt.formats.tptp.*
 import gapt.utils.{NameGenerator, linearizeStrictPartialOrder}
 
 import scala.util.boundary
@@ -22,7 +23,8 @@ import scala.util.boundary.break
  */
 final class StructurallyCorrectTstpDerivation private[check] (
     private val map: Map[String, ParsedTstpDerivationStep],
-    private val topologicallyOrderedFromSinksToSources: Iterable[String]
+    private val topologicallyOrderedFromSinksToSources: Iterable[String],
+    private val labelsInSourceOrder: Seq[String]
 ) {
   def stepsIterator: Iterator[ParsedTstpDerivationStep] = map.valuesIterator
 
@@ -55,37 +57,92 @@ object StructurallyCorrectTstpDerivation {
   private[check] def deoverloadSymbols(
       derivation: StructurallyCorrectTstpDerivation
   ): StructurallyCorrectTstpDerivation = {
-    import scala.collection.mutable
-
-    val constTable = mutable.Map.empty[String, mutable.Set[Const]]
-    derivation.stepsIterator.foreach { step =>
-      constants.all(step.formula).foreach { constant =>
-        constTable.getOrElseUpdate(constant.name, mutable.Set.empty).add(constant)
-      }
-    }
-
-    val renamingTable = mutable.Map.empty[Const, String]
-    val nameGenerator = new NameGenerator(Iterable.empty)
-    constTable.foreach { (symbolName, constants) =>
-      constants.foreach { constant =>
-        assert(constant.name == symbolName)
-        renamingTable.getOrElseUpdate(constant, nameGenerator.fresh(constant.name))
-      }
-    }
+    val constantsInSourceOrder = derivation.labelsInSourceOrder.iterator
+      .map(derivation.map(_))
+      .flatMap(step => constants.all(step.formula))
+      .toSeq
+      .distinct
+    val constantsByName = constantsInSourceOrder.groupBy(_.name)
+    val nameGenerator = new NameGenerator(constantsByName.keys)
+    val renamingTable = constantsByName.toSeq.sortBy(_._1).flatMap { (symbolName, symbols) =>
+      if symbols.size == 1 then
+        Seq(symbols.head -> symbolName)
+      else
+        Seq(symbols.head -> symbolName) ++
+          symbols.tail.map(symbol => symbol -> nameGenerator.freshWithIndex(symbolName))
+    }.toMap
 
     def renamedFormula(formula: FOLFormula): FOLFormula =
-      renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
+    renameConsts(renamingTable)(formula).asInstanceOf[FOLFormula]
+
+    def renamedTerm(term: Expr): Expr = renameConsts(renamingTable)(term)
+
+    def renamedSource(source: Source): Source = source match {
+      case Source.Name(name) => Source.Name(name)
+      case Source.Inference(rule, usefulInfo, parents) =>
+        Source.Inference(
+          rule,
+          usefulInfo.map(renamedTerm),
+          parents.map(parent => parent.copy(source = renamedSource(parent.source), details = parent.details.map(renamedTerm)))
+        )
+      case Source.Internal(introType, usefulInfo, parents) =>
+        Source.Internal(
+          introType,
+          usefulInfo.map(renamedTerm),
+          parents.map(parent => parent.copy(source = renamedSource(parent.source), details = parent.details.map(renamedTerm)))
+        )
+      case Source.File(fileName, fileInfo) => Source.File(fileName, fileInfo)
+      case Source.Theory(name, usefulInfo) => Source.Theory(name, usefulInfo.map(renamedTerm))
+      case Source.Creator(name, usefulInfo, parents) =>
+        Source.Creator(
+          name,
+          usefulInfo.map(renamedTerm),
+          parents.map(parent => parent.copy(source = renamedSource(parent.source), details = parent.details.map(renamedTerm)))
+        )
+      case Source.Unknown => Source.Unknown
+      case Source.List(sources) => Source.List(sources.map(renamedSource))
+      case Source.General(term) => Source.General(renamedTerm(term))
+    }
+
+    def renamedAnnotations(annotations: Annotations): Annotations =
+      annotations.copy(
+        source = renamedSource(annotations.source),
+        optionalInfo = annotations.optionalInfo.map(renamedTerm)
+      )
 
     def renamedStep(step: ParsedTstpDerivationStep): ParsedTstpDerivationStep = step match {
       case step: ParsedTstpAxiomStep             => step.copy(formula = renamedFormula(step.formula))
       case step: ParsedTstpConjectureStep        => step.copy(formula = renamedFormula(step.formula))
-      case step: ParsedTstpNegatedConjectureStep => step.copy(formula = renamedFormula(step.formula))
-      case step: ParsedTstpPlainInferenceStep    => step.copy(formula = renamedFormula(step.formula))
-      case step: ParsedTstpSkolemizationStep     => step.copy(formula = renamedFormula(step.formula))
+      case step: ParsedTstpNegatedConjectureStep =>
+        val annotations = renamedAnnotations(step.annotations)
+        step.copy(
+          formula = renamedFormula(step.formula),
+          annotations = annotations,
+          source = annotations.source.asInstanceOf[Source.Inference]
+        )
+      case step: ParsedTstpPlainInferenceStep =>
+        val annotations = renamedAnnotations(step.annotations)
+        step.copy(
+          formula = renamedFormula(step.formula),
+          annotations = annotations,
+          source = annotations.source.asInstanceOf[Source.Inference]
+        )
+      case step: ParsedTstpSkolemizationStep =>
+        val annotations = renamedAnnotations(step.annotations)
+        step.copy(
+          formula = renamedFormula(step.formula),
+          source = annotations.source.asInstanceOf[Source.Inference],
+          newSkolemSymbol = renamedTerm(step.newSkolemSymbol).asInstanceOf[gapt.expr.formula.fol.FOLFunctionConst],
+          annotations = annotations
+        )
     }
 
     val renamedMap = derivation.map.view.mapValues(renamedStep).toMap
-    new StructurallyCorrectTstpDerivation(renamedMap, derivation.topologicallyOrderedFromSinksToSources)
+    new StructurallyCorrectTstpDerivation(
+      renamedMap,
+      derivation.topologicallyOrderedFromSinksToSources,
+      derivation.labelsInSourceOrder
+    )
   }
 
   def fromInputFile(
@@ -99,7 +156,7 @@ object StructurallyCorrectTstpDerivation {
     for
       map <- intoUniqueMap(parsed.steps)
       topologicalOrder <- sortTopologically(map)
-      derivation = StructurallyCorrectTstpDerivation(map, topologicalOrder)
+      derivation = StructurallyCorrectTstpDerivation(map, topologicalOrder, parsed.steps.map(_.name))
       _ <- checkRoleRelationships(derivation)
     yield derivation
   }

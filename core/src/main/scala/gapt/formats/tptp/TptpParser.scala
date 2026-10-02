@@ -22,7 +22,6 @@ import gapt.utils.getOrBreak
 
 import scala.util.{Failure, Success}
 import scala.util.Try
-import scala.util.boundary
 import gapt.proofs.lk.LKProof
 import scala.util.boundary
 import gapt.proofs.lk.util.instantiateProof
