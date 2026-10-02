@@ -68,8 +68,16 @@ doc/*.tex.backup
 
 # metals
 /.metals
+metals.sbt
 
 # bsp
 .bsp/
+
+# bloop
+.bloop/
+
+# direnv
+.envrc
+.direnv/
 
 **/.DS_Store
