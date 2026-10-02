@@ -8,7 +8,7 @@ addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "2.0.9")
 // Provides an assembly task which produces a fat jar with all dependencies included.
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.4.1")
 
-addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
+addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.6.1")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
 
