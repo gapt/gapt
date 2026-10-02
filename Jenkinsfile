@@ -72,7 +72,7 @@ pipeline {
                 subject: "FIXED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                 body: "See <${env.BUILD_URL}>",
                 recipientProviders: [developers(), requestor()],
-                to: 'gapt-group@googlegroups.com'
+                to: 'fabian.achammer@tuwien.ac.at,stefan.hetzl@tuwien.ac.at'
             )
         }
         failure {
@@ -80,7 +80,7 @@ pipeline {
                 subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                 body: "See <${env.BUILD_URL}>\n\n------------------------------------------\n\${BUILD_LOG}",
                 recipientProviders: [developers(), requestor()],
-                to: 'gapt-group@googlegroups.com'
+                to: 'fabian.achammer@tuwien.ac.at,stefan.hetzl@tuwien.ac.at'
             )
         }
   }
