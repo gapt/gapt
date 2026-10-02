@@ -79,7 +79,7 @@ def simulateProoVerCompetition() = {
         Console.println(s"Unknown derivation status for ${derivationPath.baseName}")
         sys.exit(1)
       }
-    val (solverProcess, solverFuture): (Process, Future[SolverResult]) = {
+    val (solverProcess, solverFuture) = {
       val processBuilder = buildSolverProcess(derivationPath)
       var solverOutput: Option[String] = None
       val solverProcess = processBuilder.run(

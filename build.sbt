@@ -3,6 +3,7 @@ import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
 import sbtassembly.Assembly.{JarEntry, Library}
+import sbtassembly.MergeStrategy
 import sys.process._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
@@ -149,22 +150,9 @@ lazy val root = project.in(file("."))
     // Release stuff
     assembly / mainClass := Some("gapt.cli.CLIMain"),
     assembly / aggregate := false,
-    assembly / assemblyMergeStrategy := {
-      case "module-info.class" => discardJLineModuleInfo
-      case PathList(
-            "scala",
-            "collection",
-            "internal",
-            "pprint",
-            file
-          )
-          if Set(
-            "CollectionName.class",
-            "CollectionName$.class",
-            "CollectionName.tasty"
-          )(file) => mergePPrintCollectionName
-      case path => (assembly / assemblyMergeStrategy).value(path)
-    },
+    assembly / assemblyMergeStrategy := gaptAssemblyMergeStrategy(
+      (assembly / assemblyMergeStrategy).value
+    ),
     releaseDist := {
       val baseDir = file(".")
       val version = Keys.version.value
@@ -333,6 +321,9 @@ lazy val cli = project.in(file("cli")).dependsOn(core, examples)
       assembly / mainClass := Some("gapt.cli.CLIMain")
     )),
     inConfig(ProoVerCLI)(baseAssemblySettings ++ Seq(
+      assembly / assemblyMergeStrategy := gaptAssemblyMergeStrategy(
+        (assembly / assemblyMergeStrategy).value
+      ),
       assembly / mainClass := Some("gapt.cli.prooVerCLI"),
       assembly / assemblyOutputPath := target.value / "gapt-prooVer-cli.jar",
       Test / test := (Test / test).dependsOn(prooVerDistNoTest).value,
@@ -455,6 +446,17 @@ def recursiveListFiles(f: File): Seq[File] = {
   else Seq(f)
 }
 
+def gaptAssemblyMergeStrategy(default: String => MergeStrategy): String => MergeStrategy = {
+  case "module-info.class" => discardJLineModuleInfo
+  case PathList("scala", "collection", "internal", "pprint", file)
+      if Set(
+        "CollectionName.class",
+        "CollectionName$.class",
+        "CollectionName.tasty"
+      )(file) => mergePPrintCollectionName
+  case path => default(path)
+}
+
 val mergePPrintCollectionName =
   CustomMergeStrategy("prefer-pprint-collection-name") { conflicts =>
     val expectedModules = Set(
@@ -514,6 +516,7 @@ def filterUnidocScalacOptions(options: Seq[String]): Seq[String] = {
         options.lift(index - 1).exists(optionsWithValuesToRemove)
       isRemovedOption || isValueOfRemovedOption
   }.map(_._1)
+}
 
 def zipDist(sourceDir: File, zipFile: File): Unit = {
   import java.io._
