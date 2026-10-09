@@ -2322,7 +2322,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       val proof = CreateSkolemizationProof(formula, formula, fov"y", fot"f(x)", fof"P(y)", HOLPosition(List(1)), Negative)
       proof.endSequent must_== fos"$formula :- $formula"
     }
-    
+
     "Create a skolemization proof for a ∀x∃y P(x,y) / ∀x P(x,f(x))" in {
       val unskolemized = fof"∀x∃y P(x,y)"
       val skolemized = fof"∀x P(x,f(x))"
