@@ -1596,8 +1596,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         checkDerivation("/input") must beLike {
           case SzsStatus.VerifiedBad(reason: StepWithInvalidStatus) =>
             (reason.stepName must_== "refute")
-              .and(reason.actualStatuses must_== Set("esa"))
-              .and(reason.validStatuses must_== Set("thm"))
+              .and(reason.actualStatuses must_== Seq("esa"))
+              .and(reason.validStatuses must_== Seq("thm"))
         }
       }
 
@@ -2381,6 +2381,32 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
   }
 
   "tstpDerivationToProofContext" should {
+    "report only the first incorrect skolemization in input step order" in {
+      val zStep = "fof(z_first, plain, r(skZ), inference(skolemize, [status(esa), new_symbols(skolem, [skZ]), skolemize(X, skZ)], [a]))."
+      val aStep = "fof(a_second, plain, s(skA), inference(skolemize, [status(esa), new_symbols(skolem, [skA]), skolemize(Y, skA)], [b]))."
+      def checkInOrder(firstStep: String, secondStep: String) = {
+        val input = InputFile.fromString(s"""
+          |fof(a, axiom, ?[X]: p(X), file('problem.p', a)).
+          |fof(b, axiom, ?[Y]: q(Y), file('problem.p', b)).
+          |$firstStep
+          |$secondStep
+        """.stripMargin)
+        val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
+        VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation)
+      }
+
+      val zThenA = checkInOrder(zStep, aStep)
+      val aThenZ = checkInOrder(aStep, zStep)
+      zThenA must beLeft.like {
+        case IncorrectSkolemization(NoStrongQuantifierFittingSkolemization(stepName, _, _, _, _)) =>
+          stepName must_== "z_first"
+      }
+      aThenZ must beLeft.like {
+        case IncorrectSkolemization(NoStrongQuantifierFittingSkolemization(stepName, _, _, _, _)) =>
+          stepName must_== "a_second"
+      }
+    }
+
     "reject an invalid skolemization through the public verified factory" in {
       val input = InputFile.fromString("""
         |fof(a, axiom, ?[X] : (p(X) & q(c)), file('problem.p', a)).

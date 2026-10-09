@@ -19,6 +19,7 @@ import gapt.utils.getOrBreak
 import scala.util.boundary
 import scala.util.boundary.Label
 import boundary.break
+import scala.collection.SeqMap
 
 /**
  * A structurally correct TSTP derivation for which every skolemization step has
@@ -27,7 +28,7 @@ import boundary.break
  */
 final class VerifiedSkolemizationsTstpDerivation private (
     val structurallyCorrect: StructurallyCorrectTstpDerivation,
-    private val verifiedSkolemizationsByStepName: Map[String, VerifiedSkolemization]
+    private val verifiedSkolemizationsByStepName: SeqMap[String, VerifiedSkolemization]
 ) {
   private[check] def verifiedSkolemization(stepName: String): Option[VerifiedSkolemization] =
     verifiedSkolemizationsByStepName.get(stepName)
@@ -48,39 +49,43 @@ object VerifiedSkolemizationsTstpDerivation {
   private[check] def fromNormalizedAndFresh(
       derivation: StructurallyCorrectTstpDerivation
   ): Either[IncorrectSkolemization, VerifiedSkolemizationsTstpDerivation] = boundary {
-    val verifiedSkolemizationsByStepName = derivation.stepsIterator.collect {
+    val verifiedSkolemizationsInSourceOrder = SeqMap.from(derivation.stepsInSourceOrderIterator.collect {
       case step: ParsedTstpSkolemizationStep =>
         val parentFormula = derivation.get(step.parent).get.formula
         val locallyCorrectSkolemization =
           VerifiedSkolemization.fromTstpSkolemizationStepAndParentFormula(step, parentFormula).getOrBreak
 
         step.name -> locallyCorrectSkolemization
-    }.toMap
+    })
 
-    val _ = ensureCompatibleSkolemDefinitions(verifiedSkolemizationsByStepName).getOrBreak
-    Right(new VerifiedSkolemizationsTstpDerivation(derivation, verifiedSkolemizationsByStepName))
+    ensureCompatibleSkolemDefinitions(verifiedSkolemizationsInSourceOrder).getOrBreak
+    Right(new VerifiedSkolemizationsTstpDerivation(derivation, verifiedSkolemizationsInSourceOrder))
   }
 }
 
 private[check] def checkSkolemSymbolsAreNotOverloaded(
     derivation: StructurallyCorrectTstpDerivation
 ): Either[IncorrectSkolemization, Unit] = boundary {
-  val declaredSkolemSymbols = derivation.stepsIterator.collect {
+  val declaredSkolemSymbols = SeqMap.from(derivation.stepsInSourceOrderIterator.collect {
     case step: ParsedTstpSkolemizationStep => step.name -> step.newSkolemSymbol
-  }.toMap
+  })
 
   val skolemSymbolsByName = declaredSkolemSymbols.groupMap(_._2.name)(_._2)
-  skolemSymbolsByName.foreach { (symbolName, symbols) =>
+  declaredSkolemSymbols.foreach { (_, skolemSymbol) =>
+    val symbols = skolemSymbolsByName(skolemSymbol.name)
     if symbols.toSet.size > 1 then {
       reportIncorrectSkolemization(
-        SkolemSymbolWithDifferentArities(symbolName, declaredSkolemSymbols.filter((_, symbol) => symbol.name == symbolName))
+        SkolemSymbolWithDifferentArities(
+          skolemSymbol.name,
+          SeqMap.from(declaredSkolemSymbols.filter((_, symbol) => symbol.name == skolemSymbol.name))
+        )
       )
     }
   }
 
   declaredSkolemSymbols.foreach { (skolemizationStepName, skolemSymbol) =>
-    derivation.stepsIterator.foreach { step =>
-      constants.all(step.formula).filter(_.name == skolemSymbol.name).foreach { symbol =>
+    derivation.stepsInSourceOrderIterator.foreach { step =>
+      constants.all(step.formula).toSeq.sortBy(_.toString).filter(_.name == skolemSymbol.name).foreach { symbol =>
         if symbol != skolemSymbol then {
           reportIncorrectSkolemization(
             SkolemSymbolWithDifferentArity(
@@ -95,12 +100,12 @@ private[check] def checkSkolemSymbolsAreNotOverloaded(
     }
   }
 
-  val inputSymbols = derivation.stepsIterator.collect {
+  val inputSymbols = derivation.stepsInSourceOrderIterator.collect {
     case step: ParsedTstpAxiomStep      => step.name -> constants.nonLogical(step.formula)
     case step: ParsedTstpConjectureStep => step.name -> constants.nonLogical(step.formula)
   }
   inputSymbols.foreach { (inputStepName, symbols) =>
-    symbols.foreach { symbol =>
+    symbols.toSeq.sortBy(_.toString).foreach { symbol =>
       declaredSkolemSymbols.find((_, skolemSymbol) => skolemSymbol.name == symbol.name).foreach {
         (skolemizationStepName, _) =>
           reportIncorrectSkolemization(
@@ -212,44 +217,23 @@ object VerifiedSkolemization {
 }
 
 private def ensureCompatibleSkolemDefinitions(
-    skolemizationsByStepName: Map[String, VerifiedSkolemization]
-): Either[IncorrectSkolemization, Map[String, (FOLFunctionConst, Expr, Set[String])]] = boundary {
+    skolemizationsInSourceOrder: SeqMap[String, VerifiedSkolemization]
+): Either[IncorrectSkolemization, Unit] = boundary {
   val skolemizationsBySkolemSymbolName =
-    skolemizationsByStepName.groupBy((_, skolemization) => skolemization.skolemSymbol.name)
+    skolemizationsInSourceOrder.groupBy((_, skolemization) => skolemization.skolemSymbol.name)
 
-  val verifiedSkolemDefinitions = skolemizationsBySkolemSymbolName.map {
-    case s @ (skolemSymbolName, definitionsByStepName) => {
-      val incompatibilities = incompatibleSkolemDefinitions(definitionsByStepName)
-      if incompatibilities.nonEmpty then {
-        reportIncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemSymbolName, incompatibilities))
-      }
+  skolemizationsInSourceOrder.foreachEntry { (stepName, skolemization) =>
+    val definitionsByStepName = skolemizationsBySkolemSymbolName(skolemization.skolemSymbol.name)
 
-      val uniqueDefinitions = definitionsByStepName.map((_, skolemization) => (skolemization.skolemSymbol, skolemization.skolemDefinition)).toSet
-      assert(uniqueDefinitions.size == 1, s"skolem symbol ${skolemSymbolName} has multiple incompatible definitions: $uniqueDefinitions")
-      val (skolemConst, definition) = uniqueDefinitions.head
-      val stepNames = definitionsByStepName.keySet
-      (skolemSymbolName, (skolemConst, definition, stepNames))
+    if definitionsByStepName.size > 1 then {
+      // TPTP requires each Skolem symbol to be introduced by exactly one step.
+      // Therefore, repeated declarations are incompatible even if their inferred
+      // definitions are syntactically identical.
+      reportIncorrectSkolemization(MultipleIncompatibleSkolemDefinitionsOfSameSymbol(skolemization.skolemSymbol.name, definitionsByStepName))
     }
-  }.toMap
-
-  Right(verifiedSkolemDefinitions)
-}
-
-private def incompatibleSkolemDefinitions(
-    skolemizationsByStepName: Map[String, VerifiedSkolemization]
-): Map[String, VerifiedSkolemization] = {
-  // TPTP requires each Skolem symbol to be introduced by exactly one step.
-  // Therefore, repeated declarations are incompatible even if their inferred
-  // definitions are syntactically identical.
-  skolemizationsByStepName.toSeq.combinations(2).foldLeft(Map.empty) {
-    case (acc, Seq((leftStep, leftSkolemization), (rightStep, rightSkolemization))) => {
-      val leftSymbol = leftSkolemization.skolemSymbol
-      val rightSymbol = rightSkolemization.skolemSymbol
-      assert(leftSymbol.name == rightSymbol.name, s"skolem symbol names do not match: ${leftSymbol.name} != ${rightSymbol.name}")
-      acc ++ Set((leftStep, leftSkolemization), (rightStep, rightSkolemization))
-    }
-    case _ => throw new AssertionError("cannot happen as we only select 2 combinations")
   }
+
+  Right(())
 }
 
 private def reportIncorrectSkolemization[T](

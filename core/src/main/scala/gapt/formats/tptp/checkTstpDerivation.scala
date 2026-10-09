@@ -53,6 +53,7 @@ import scala.util.boundary
 import scala.util.control.NonFatal
 
 import boundary.break
+import scala.collection.SeqMap
 
 sealed trait TstpDerivationError {
   def message: String
@@ -365,11 +366,11 @@ def checkDerivationHasRefutation(derivation: StructurallyCorrectTstpDerivation):
 def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = boundary {
   derivation.stepsIterator.foreach {
     case s: ParsedTstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Set("cth")) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("cth"))))
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq("cth"))))
     case s: ParsedTstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Set("thm")) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("thm"))))
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq("thm"))))
     case s: ParsedTstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Set("esa")) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Set("esa"))))
+      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq("esa"))))
     case _ =>
   }
   Right(())
@@ -435,7 +436,7 @@ extension (annotations: Option[Annotations]) {
   def hasUnambiguousStatusAmong(statuses: Set[String]): Boolean = boundary {
     val ann = annotations.getOrElse { break(false) }
     val inferenceSource = ann.source.asInferenceOption.getOrElse { break(false) }
-    val inferenceStatus = inferenceSource.statuses.singleOption.getOrElse { break(false) }
+    val inferenceStatus = inferenceSource.statuses.toSet.singleOption.getOrElse { break(false) }
 
     statuses.contains(inferenceStatus)
   }
@@ -455,25 +456,25 @@ extension (gt: GeneralTerm) {
 }
 
 extension (usefulInfo: Seq[GeneralTerm]) {
-  def statusSet: Set[String] =
-    usefulInfo.flatMap(_.asStatus).toSet
+  def statusSet: Seq[String] =
+    usefulInfo.flatMap(_.asStatus)
 }
 
 extension (inference: Source.Inference) {
-  def statuses: Set[String] =
+  def statuses: Seq[String] =
     inference.usefulInfo.statusSet
 }
 
 extension (step: ParsedTstpPlainInferenceStep) {
-  def statuses: Set[String] = step.source.statuses
+  def statuses: Seq[String] = step.source.statuses
 }
 
 extension (step: ParsedTstpNegatedConjectureStep) {
-  def statuses: Set[String] = step.source.statuses
+  def statuses: Seq[String] = step.source.statuses
 }
 
 extension (step: ParsedTstpSkolemizationStep) {
-  def statuses: Set[String] = step.source.statuses
+  def statuses: Seq[String] = step.source.statuses
 }
 
 extension (annotatedFormula: AnnotatedFormula) {
@@ -551,8 +552,8 @@ case class InferenceCycle() extends VerifiedBadReason {
 
 case class StepWithInvalidStatus(
     stepName: String,
-    actualStatuses: Iterable[String],
-    validStatuses: Iterable[String]
+    actualStatuses: Seq[String],
+    validStatuses: Seq[String]
 ) extends VerifiedBadReason {
   override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
 }
@@ -590,7 +591,7 @@ case class PlainInferenceWithConjectureParent(
 case class MultipleConjectures(
     stepNames: Seq[String]
 ) extends VerifiedBadReason {
-  def message: String = s"derivation contains multiple conjectures: ${stepNames.sorted.mkString(", ")}"
+  def message: String = s"derivation contains multiple conjectures: ${stepNames.mkString(", ")}"
 }
 
 case class PlainInferenceWithoutSource(
@@ -683,7 +684,7 @@ case class FormulaMismatch(
 
 case class MultipleIncompatibleSkolemDefinitionsOfSameSymbol(
     skolemSymbol: String,
-    stepDefinitions: Map[String, VerifiedSkolemization]
+    stepDefinitions: SeqMap[String, VerifiedSkolemization]
 ) extends IncorrectSkolemizationReason {
   def message: String = s"skolem symbol $skolemSymbol is introduced multiple times with conflicting definitions: ${stepDefinitions.map { case (step, skolemization) => s"in $step defined as skolem symbol ${skolemization.skolemSymbol} with ${skolemization.skolemDefinition}" }.mkString("; ")}"
 }
@@ -707,7 +708,7 @@ case class SkolemSymbolWithDifferentArity(
 
 case class SkolemSymbolWithDifferentArities(
     skolemSymbol: String,
-    declarations: Map[String, Const]
+    declarations: SeqMap[String, Const]
 ) extends IncorrectSkolemizationReason {
   def message: String = s"skolem symbol $skolemSymbol is introduced with different arities: ${declarations.map { case (step, symbol) => s"$step: $symbol" }.mkString(", ")}"
 }
@@ -838,6 +839,6 @@ case class UnexpectedException(e: Throwable) extends VerifiedUnknownReason {
   override def message: String = s"unexpected exception: ${e.getMessage}"
 }
 
-case class StepsWithOverloadedSymbols(symbolName: String, steps: Set[ParsedTstpDerivationStep]) extends VerifiedUnknownReason {
+case class StepsWithOverloadedSymbols(symbolName: String, steps: Seq[ParsedTstpDerivationStep]) extends VerifiedUnknownReason {
   override def message: String = s"cannot handle overloaded symbols. symbol $symbolName occurs overloaded in the following steps: ${steps.map(_.name).mkString(", ")}"
 }

@@ -81,6 +81,9 @@ final class StructurallyCorrectTstpDerivation private[check] (
 ) {
   def stepsIterator: Iterator[ParsedTstpDerivationStep] = map.valuesIterator
 
+  def stepsInSourceOrderIterator: Iterator[ParsedTstpDerivationStep] =
+    labelsInSourceOrder.iterator.map(map(_))
+
   def stepsTopologicallyOrdered: Iterable[ParsedTstpDerivationStep] =
     topologicallyOrderedFromSinksToSources.map(map(_))
 
@@ -219,15 +222,15 @@ object StructurallyCorrectTstpDerivation {
   private def checkRoleRelationships(
       derivation: StructurallyCorrectTstpDerivation
   ): Either[TstpDerivationError, Unit] = boundary {
-    val negatedConjectures = derivation.stepsIterator.collect {
+    val negatedConjectures = derivation.stepsInSourceOrderIterator.collect {
       case step: ParsedTstpNegatedConjectureStep => step
     }.toSeq
-    val conjectures = derivation.stepsIterator.collect {
+    val conjectures = derivation.stepsInSourceOrderIterator.collect {
       case step: ParsedTstpConjectureStep => step
     }.toSeq
 
     if conjectures.size > 1 then
-      break(Left(MultipleConjectures(conjectures.map(_.name).sorted)))
+      break(Left(MultipleConjectures(conjectures.map(_.name))))
 
     negatedConjectures.find(step => derivation.parentsOf(step.name).exists(_.role != "conjecture")).foreach { step =>
       break(Left(NegatedConjectureStepWithNonConjectureParent(step.name)))
@@ -236,7 +239,7 @@ object StructurallyCorrectTstpDerivation {
     if negatedConjectures.size > 1 then
       break(Left(UnexpectedInput("got more than one negated conjecture")))
 
-    derivation.stepsIterator.filter(_.role == "plain")
+    derivation.stepsInSourceOrderIterator.filter(_.role == "plain")
       .find(step => derivation.parentsOf(step.name).exists(_.role == "conjecture"))
       .foreach { step =>
         break(Left(PlainInferenceWithConjectureParent(step)))
