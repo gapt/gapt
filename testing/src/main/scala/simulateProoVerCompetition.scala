@@ -14,7 +14,7 @@ enum DerivationStatus {
   case Incorrect
   case Removed
 }
-enum SolverResult {
+enum CheckerResult {
   case VerifiedGood
   case VerifiedBad
   case Unknown
@@ -35,11 +35,11 @@ def simulateProoVerCompetition() = {
 
   val prooVerDistNoTestProcess = Process(Seq("sbt", "prooVerDistNoTest")).run()
   if prooVerDistNoTestProcess.exitValue() != 0 then {
-    Console.err.println("failed to build solver")
+    Console.err.println("failed to build checker")
     sys.exit(1)
   }
 
-  Console.println("unzipping solver...")
+  Console.println("unzipping checker...")
   val unzipProcess = Process(Seq("unzip", "-o", "gapt-ProoVer.zip", "-d", "ProoVer"), targetPath.toIO).run()
   if unzipProcess.exitValue() != 0 then {
     Console.err.println("could unzip gapt-ProoVer.zip into ProoVer")
@@ -51,18 +51,18 @@ def simulateProoVerCompetition() = {
     sys.exit(1)
   }
 
-  val solverPwd = os.Path("target/ProoVer", os.pwd)
-  val solverPath = solverPwd / "gapt-check"
+  val checkerPwd = os.Path("target/ProoVer", os.pwd)
+  val checkerPath = checkerPwd / "gapt-check"
 
   val derivationsPath = os.Path("tests/src/test/resources/ProoVerCompetition/ProoVer2026", os.pwd)
   val derivationPaths = os.list(derivationsPath).filter(_.ext == "s")
 
-  def buildSolverProcess(derivationPath: os.Path): ProcessBuilder = {
-    Process(Seq(solverPath.toString, derivationPath.toString), solverPwd.toIO)
+  def buildCheckerProcess(derivationPath: os.Path): ProcessBuilder = {
+    Process(Seq(checkerPath.toString, derivationPath.toString), checkerPwd.toIO)
   }
 
   val results = Random.shuffle(derivationPaths).map { derivationPath =>
-    Console.println(s"Running solver on ${derivationPath.baseName}")
+    Console.println(s"Running checker on ${derivationPath.baseName}")
 
     val derivationStatus =
       if derivationPath.baseName.startsWith("claimed_correct_")
@@ -80,40 +80,40 @@ def simulateProoVerCompetition() = {
         Console.println(s"Unknown derivation status for ${derivationPath.baseName}")
         sys.exit(1)
       }
-    val (solverProcess, solverFuture) = {
-      val processBuilder = buildSolverProcess(derivationPath)
-      var solverOutput: Option[String] = None
-      val solverProcess = processBuilder.run(
-        ProcessLogger(line => solverOutput = Some(line), line => Console.err.println(line))
+    val (checkerProcess, checkerFuture) = {
+      val processBuilder = buildCheckerProcess(derivationPath)
+      var checkerOutput: Option[String] = None
+      val checkerProcess = processBuilder.run(
+        ProcessLogger(line => checkerOutput = Some(line), line => Console.err.println(line))
       )
       (
-        solverProcess,
+        checkerProcess,
         Future {
           try {
-            val solverExitValue = solverProcess.exitValue()
-            if solverExitValue != 0 then {
-              throw new Exception(s"solver exited with code $solverExitValue")
+            val checkerExitValue = checkerProcess.exitValue()
+            if checkerExitValue != 0 then {
+              throw new Exception(s"checker exited with code $checkerExitValue")
             }
 
-            val solverStdOut = solverOutput.getOrElse {
-              throw new Exception("solver did not produce any output")
+            val checkerStdOut = checkerOutput.getOrElse {
+              throw new Exception("checker did not produce any output")
             }
 
-            if solverStdOut.startsWith("% SZS status VerifiedGood") then {
-              SolverResult.VerifiedGood
-            } else if solverStdOut.startsWith("% SZS status VerifiedBad") then {
-              SolverResult.VerifiedBad
-            } else if solverStdOut.startsWith("% SZS status Unknown") then {
-              SolverResult.Unknown
-            } else if solverStdOut.startsWith("% SZS status Timeout") then {
-              SolverResult.SignaledTimeout
+            if checkerStdOut.startsWith("% SZS status VerifiedGood") then {
+              CheckerResult.VerifiedGood
+            } else if checkerStdOut.startsWith("% SZS status VerifiedBad") then {
+              CheckerResult.VerifiedBad
+            } else if checkerStdOut.startsWith("% SZS status Unknown") then {
+              CheckerResult.Unknown
+            } else if checkerStdOut.startsWith("% SZS status Timeout") then {
+              CheckerResult.SignaledTimeout
             } else {
-              SolverResult.InvalidOutput
+              CheckerResult.InvalidOutput
             }
           } catch {
             case e => {
-              Console.err.println(s"failed to run solver on $derivationPath: ${e.getMessage}")
-              SolverResult.Crashed
+              Console.err.println(s"failed to run checker on $derivationPath: ${e.getMessage}")
+              CheckerResult.Crashed
             }
           }
         }
@@ -121,27 +121,27 @@ def simulateProoVerCompetition() = {
     }
 
     val timeStart = System.nanoTime()
-    val solverResult =
+    val checkerResult =
       try {
-        Await.result(solverFuture, timeout)
+        Await.result(checkerFuture, timeout)
       } catch {
-        case _: TimeoutException => SolverResult.UnsignaledTimeout
+        case _: TimeoutException => CheckerResult.UnsignaledTimeout
       } finally {
-        solverProcess.destroy()
+        checkerProcess.destroy()
       }
     val timeEnd = System.nanoTime()
     val timeElapsed = timeEnd - timeStart
     val duration = Duration(timeElapsed, NANOSECONDS)
 
-    val score = (derivationStatus, solverResult) match {
-      case (DerivationStatus.Correct, SolverResult.VerifiedGood)   => 1
-      case (DerivationStatus.Incorrect, SolverResult.VerifiedBad)  => 2
-      case (DerivationStatus.Correct, SolverResult.VerifiedBad)    => -1
-      case (DerivationStatus.Incorrect, SolverResult.VerifiedGood) => -10
-      case _                                                       => 0
+    val score = (derivationStatus, checkerResult) match {
+      case (DerivationStatus.Correct, CheckerResult.VerifiedGood)   => 1
+      case (DerivationStatus.Incorrect, CheckerResult.VerifiedBad)  => 2
+      case (DerivationStatus.Correct, CheckerResult.VerifiedBad)    => -1
+      case (DerivationStatus.Incorrect, CheckerResult.VerifiedGood) => -10
+      case _                                                        => 0
     }
 
-    val record = (derivation = derivationPath, derivationStatus = derivationStatus, solverResult = solverResult, score = score, duration = duration)
+    val record = (derivation = derivationPath, derivationStatus = derivationStatus, checkerResult = checkerResult, score = score, duration = duration)
 
     Console.println(s"${scoreMark(record.score)} $record")
     record
@@ -150,7 +150,7 @@ def simulateProoVerCompetition() = {
   printResults(results)
 }
 
-type CompetitionResult = (derivation: os.Path, derivationStatus: DerivationStatus, solverResult: SolverResult, score: Int, duration: FiniteDuration)
+type CompetitionResult = (derivation: os.Path, derivationStatus: DerivationStatus, checkerResult: CheckerResult, score: Int, duration: FiniteDuration)
 
 def printResults(results: IndexedSeq[CompetitionResult]): Unit = {
   Console.println("\nRESULTS")
@@ -165,7 +165,7 @@ private def printResult(result: CompetitionResult): Unit = {
     case DerivationStatus.Removed   => "😶"
   }
   val padding = " " * (30 - result.derivation.baseName.length)
-  Console.println(s"${result.derivation.baseName}$padding ${derivationStatusText}: ${scoreMark(result.score)} ${result.solverResult}, score: ${result.score}, time: ${formatDuration(result.duration)}")
+  Console.println(s"${result.derivation.baseName}$padding ${derivationStatusText}: ${scoreMark(result.score)} ${result.checkerResult}, score: ${result.score}, time: ${formatDuration(result.duration)}")
 }
 
 private def printResultSummary(results: IndexedSeq[CompetitionResult]): Unit = {
@@ -178,14 +178,16 @@ private def printResultSummary(results: IndexedSeq[CompetitionResult]): Unit = {
   Console.println(s"Number of tests:         $numberOfTests")
   Console.println(s"Total score:             $totalScore / $maxScore")
   Console.println(s"Total duration:          ${formatDuration(totalDuration)}")
-  Console.println(s"😇 VerifiedGood:         ${results.count(r => r.derivationStatus == DerivationStatus.Correct && r.solverResult == SolverResult.VerifiedGood)}")
-  Console.println(s"😈 VerifiedBad:          ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && r.solverResult == SolverResult.VerifiedBad)}")
-  Console.println(s"😇 VerifiedBad:          ${results.count(r => r.derivationStatus == DerivationStatus.Correct && r.solverResult == SolverResult.VerifiedBad)}")
-  Console.println(s"😈 VerifiedGood:         ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && r.solverResult == SolverResult.VerifiedGood)}")
-  Console.println(s"😇 non-timeout unknowns: ${results.count(r => r.derivationStatus == DerivationStatus.Correct && r.solverResult == SolverResult.Unknown)}")
-  Console.println(s"😈 non-timeout unknowns: ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && r.solverResult == SolverResult.Unknown)}")
-  Console.println(s"😇 timeout:              ${results.count(r => r.derivationStatus == DerivationStatus.Correct && (r.solverResult == SolverResult.UnsignaledTimeout || r.solverResult == SolverResult.SignaledTimeout))}")
-  Console.println(s"😈 timeout:              ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && (r.solverResult == SolverResult.UnsignaledTimeout || r.solverResult == SolverResult.SignaledTimeout))}")
+  Console.println(s"😇 VerifiedGood:         ${results.count(r => r.derivationStatus == DerivationStatus.Correct && r.checkerResult == CheckerResult.VerifiedGood)}")
+  Console.println(s"😈 VerifiedBad:          ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && r.checkerResult == CheckerResult.VerifiedBad)}")
+  Console.println(s"😇 VerifiedBad:          ${results.count(r => r.derivationStatus == DerivationStatus.Correct && r.checkerResult == CheckerResult.VerifiedBad)}")
+  Console.println(s"😈 VerifiedGood:         ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && r.checkerResult == CheckerResult.VerifiedGood)}")
+  Console.println(s"😇 non-timeout unknowns: ${results.count(r => r.derivationStatus == DerivationStatus.Correct && r.checkerResult == CheckerResult.Unknown)}")
+  Console.println(s"😈 non-timeout unknowns: ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && r.checkerResult == CheckerResult.Unknown)}")
+  Console.println(s"😇 timeout:              ${results.count(r => r.derivationStatus == DerivationStatus.Correct && (r.checkerResult == CheckerResult.UnsignaledTimeout || r.checkerResult == CheckerResult.SignaledTimeout))}")
+  Console.println(s"😈 timeout:              ${results.count(r => r.derivationStatus == DerivationStatus.Incorrect && (r.checkerResult == CheckerResult.UnsignaledTimeout || r.checkerResult == CheckerResult.SignaledTimeout))}")
+  Console.println(s"💥 Crashed:              ${results.count(_.checkerResult == CheckerResult.Crashed)}")
+  Console.println(s"⚠️  Invalid output:       ${results.count(_.checkerResult == CheckerResult.InvalidOutput)}")
 }
 
 def scoreMark(score: Int) = {
