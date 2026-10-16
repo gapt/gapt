@@ -55,6 +55,24 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         checkDerivation("/input") must_== SzsStatus.VerifiedGood
       }
 
+      "return unknown for a refutation that conflates a distinct object with an ordinary constant" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a,axiom,p(a),file('/problem.p',a)).
+            |fof(b,axiom,~p("a"),file('/problem.p',b)).
+            |fof(bot,plain,$false,inference(refute,[status(thm)],[a,b])).
+          """.stripMargin)
+          case "/problem.p" => Right("""
+            |fof(a,axiom,p(a)).
+            |fof(b,axiom,~p("a")).
+          """.stripMargin)
+        }
+        checkDerivation("/input") must beLike {
+          case SzsStatus.Unknown(InputSyntaxError(e)) =>
+            e.getMessage must_== "TPTP distinct objects are not supported"
+        }
+      }
+
       "reject a self-dependent Skolem definition" in {
         given resolver: FileNameResolver = {
           case "/input" => Right("""

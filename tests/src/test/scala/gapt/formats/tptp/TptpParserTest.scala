@@ -26,6 +26,12 @@ class TptpParserTest extends Specification {
   }
 
   "TPTP parser" should {
+    "reject distinct objects instead of conflating them with ordinary constants" in {
+      parse("fof(distinct, axiom, p(\"a\")).") must throwA[IllegalArgumentException].like {
+        case e => e.getMessage must_== "TPTP distinct objects are not supported"
+      }
+    }
+
     "parse annotations" in {
       val tptpFile = parse("fof(name, plain, p, inference(abc, [status(thm)], [a])).")
       tptpFile.inputs(0).asInstanceOf[AnnotatedFormula].annotations must beSome

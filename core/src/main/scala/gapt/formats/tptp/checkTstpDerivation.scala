@@ -410,7 +410,7 @@ def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpD
           ).left.map {
             case TptpFileLoadingError.FileNotFound(includedFileName) =>
               FileDirectiveFileNotFound(s.name, includedFileName)
-            case TptpFileLoadingError.InvalidSyntax(includedFileName) =>
+            case TptpFileLoadingError.InvalidSyntax(includedFileName, _) =>
               FileDirectiveInvalidSyntax(s.name, includedFileName)
             case TptpFileLoadingError.IncludeCycle(includedFileName) => IncludeCycle(includedFileName)
           }.getOrBreak

@@ -17,7 +17,7 @@ private[check] case class NamedTptpInputFile(fileName: String, content: String) 
 
 private[check] enum TptpFileLoadingError {
   case FileNotFound(fileName: String)
-  case InvalidSyntax(fileName: String)
+  case InvalidSyntax(fileName: String, cause: IllegalArgumentException)
   case IncludeCycle(fileName: String)
 }
 
@@ -32,7 +32,8 @@ private[check] def loadTptpFileWithIncludes(
     val parsed =
       try TptpImporter.loadWithoutIncludes(InputFile.fromString(content))
       catch {
-        case _: IllegalArgumentException => break(Left(TptpFileLoadingError.InvalidSyntax(filePath.toString)))
+        case e: IllegalArgumentException =>
+          break(Left(TptpFileLoadingError.InvalidSyntax(filePath.toString, e)))
       }
 
     val inputs = parsed.inputs.flatMap {
@@ -201,7 +202,9 @@ object StructurallyCorrectTstpDerivation {
   def fromInputFile(input: InputFile)(using resolver: FileNameResolver): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =
     loadTptpFileWithIncludes(input).left.map {
       case TptpFileLoadingError.FileNotFound(fileName)  => IncludeFileNotFound(fileName)
-      case TptpFileLoadingError.InvalidSyntax(fileName) => IncludeInvalidSyntax(fileName)
+      case TptpFileLoadingError.InvalidSyntax(fileName, cause)
+          if fileName == os.Path(input.fileName, os.pwd).toString => InputSyntaxError(cause)
+      case TptpFileLoadingError.InvalidSyntax(fileName, _) => IncludeInvalidSyntax(fileName)
       case TptpFileLoadingError.IncludeCycle(fileName)  => IncludeCycle(fileName)
     }.flatMap(tptpFile => ParsedTstpDerivation.parseTptpFile(tptpFile).flatMap(fromParsed))
 

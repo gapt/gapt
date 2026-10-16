@@ -193,7 +193,15 @@ class TptpParser(val input: ParserInput) extends Parser {
   private def single_quoted = rule { '\'' ~ sg_char.+ ~ '\'' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
   private def back_quoted = rule { '`' ~ capture(upper_word) }
 
-  private def distinct_object = rule { '"' ~ do_char.* ~ '"' ~ Ws ~> ((l: Seq[String]) => l.mkString) }
+  // Distinct objects are currently unsupported. Proper handling would require the parser to provide
+  // a mapping between GAPT constant names and TPTP distinct objects, and distinct-object semantics
+  // would need to be accounted for throughout the codebase (for example, during proof checking).
+  private def distinct_object = rule {
+    '"' ~ do_char.* ~ '"' ~ Ws ~> ((l: Seq[String]) => {
+      throw new IllegalArgumentException("TPTP distinct objects are not supported")
+      l.mkString
+    })
+  }
 
   private val alpha_numeric = UpperAlpha ++ LowerAlpha ++ Digit ++ CharPredicate("$_")
   private def upper_word = rule { UpperAlpha ~ alpha_numeric.* }
