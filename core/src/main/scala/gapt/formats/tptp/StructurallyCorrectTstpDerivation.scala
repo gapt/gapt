@@ -201,11 +201,11 @@ object StructurallyCorrectTstpDerivation {
 
   def fromInputFile(input: InputFile)(using resolver: FileNameResolver): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] =
     loadTptpFileWithIncludes(input).left.map {
-      case TptpFileLoadingError.FileNotFound(fileName)  => IncludeFileNotFound(fileName)
+      case TptpFileLoadingError.FileNotFound(fileName) => IncludeFileNotFound(fileName)
       case TptpFileLoadingError.InvalidSyntax(fileName, cause)
           if fileName == os.Path(input.fileName, os.pwd).toString => InputSyntaxError(cause)
       case TptpFileLoadingError.InvalidSyntax(fileName, _) => IncludeInvalidSyntax(fileName)
-      case TptpFileLoadingError.IncludeCycle(fileName)  => IncludeCycle(fileName)
+      case TptpFileLoadingError.IncludeCycle(fileName)     => IncludeCycle(fileName)
     }.flatMap(tptpFile => ParsedTstpDerivation.parseTptpFile(tptpFile).flatMap(fromParsed))
 
   def fromParsed(
