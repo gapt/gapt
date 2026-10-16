@@ -396,17 +396,18 @@ def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivat
 def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpDerivation, fileName: String)(using resolver: FileNameResolver): Either[TstpDerivationError, Unit] = boundary {
   val parseTptpMemoTable: scala.collection.mutable.Map[String, TptpFile] = scala.collection.mutable.Map.empty
   val proofDirectory = os.Path(fileName, os.pwd) / os.up
-  val innerResolver = resolver.relativeTo(proofDirectory)
   derivation.stepsIterator.foreach {
     case s: FileSourceStep => {
       val (fileName, label) = (s.problemFile, s.problemFileLabel)
+      val resolvedFileName =
+        if Paths.get(fileName).isAbsolute() then fileName else (proofDirectory / os.RelPath(fileName)).toString
       val tptpFile = parseTptpMemoTable.getOrElseUpdate(
         fileName, {
-          val tptpFileContent = innerResolver(fileName).getOrElse {
+          val tptpFileContent = resolver(resolvedFileName).getOrElse {
             break(Left(FileDirectiveFileNotFound(s.name, fileName)))
           }
           loadTptpFileWithIncludes(
-            NamedTptpInputFile(fileName, tptpFileContent)
+            NamedTptpInputFile(resolvedFileName, tptpFileContent)
           ).left.map {
             case TptpFileLoadingError.FileNotFound(includedFileName) =>
               FileDirectiveFileNotFound(s.name, includedFileName)

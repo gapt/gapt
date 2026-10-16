@@ -1174,6 +1174,24 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           checkDerivation("relative-proof.p") must_== SzsStatus.VerifiedGood
         }
 
+        "resolve includes in a relative problem file from the proof directory" in {
+          given resolver: FileNameResolver = {
+            case "/proofs/input.p" => Right("""
+              |fof(a1, axiom, p, file('problem.p', a)).
+              |fof(c1, conjecture, p, file('problem.p', c)).
+              |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c1])).
+              |fof(bot, plain, $false, inference(refute, [status(thm)], [a1, nc])).
+            """.stripMargin)
+            case "/proofs/problem.p" => Right("""
+              |include('base.p').
+              |fof(c, conjecture, p).
+            """.stripMargin)
+            case "/proofs/base.p" => Right("fof(a, axiom, p).")
+          }
+
+          checkDerivation("/proofs/input.p") must_== SzsStatus.VerifiedGood
+        }
+
         "fail if an unused axiom step has missing file directive even if derivation is otherwise correct" in {
           given resolver: FileNameResolver = {
             case "/input" => Right("""
