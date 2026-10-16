@@ -15,6 +15,7 @@ import gapt.proofs.{Ant, Suc}
 import gapt.proofs.lk.LKProof
 import gapt.proofs.lk.rules.*
 import gapt.utils.getOrBreak
+import gapt.utils.linearizeStrictPartialOrder
 
 import scala.util.boundary
 import scala.util.boundary.Label
@@ -59,6 +60,7 @@ object VerifiedSkolemizationsTstpDerivation {
     })
 
     ensureCompatibleSkolemDefinitions(verifiedSkolemizationsInSourceOrder).getOrBreak
+    ensureAcyclicSkolemDefinitions(verifiedSkolemizationsInSourceOrder).getOrBreak
     Right(new VerifiedSkolemizationsTstpDerivation(derivation, verifiedSkolemizationsInSourceOrder))
   }
 }
@@ -233,6 +235,29 @@ private def ensureCompatibleSkolemDefinitions(
   }
 
   Right(())
+}
+
+private def ensureAcyclicSkolemDefinitions(
+    skolemizationsInSourceOrder: SeqMap[String, VerifiedSkolemization]
+): Either[IncorrectSkolemization, Unit] = boundary {
+  val definitions = skolemizationsInSourceOrder.valuesIterator.map(s => s.skolemSymbol -> s.skolemDefinition).toMap
+  val symbolToStep = skolemizationsInSourceOrder.iterator.map { case (step, s) => s.skolemSymbol -> step }.toMap
+  val dependencies = for {
+    (symbol, definition) <- definitions
+    dependency <- constants.nonLogical(definition).collect { case c: FOLFunctionConst => c }
+    if definitions.contains(dependency)
+  } yield symbol -> dependency
+
+  linearizeStrictPartialOrder(definitions.keySet, dependencies) match {
+    case Left(cycle) => {
+      val dependenciesInCycle = cycle.sliding(2).collect {
+        case Seq(from: FOLFunctionConst, to: FOLFunctionConst) =>
+          SkolemDependency(symbolToStep(from), from.name, symbolToStep(to), to.name)
+      }.toSeq
+      reportIncorrectSkolemization(CyclicSkolemDefinitions(dependenciesInCycle))
+    }
+    case Right(_) => Right(())
+  }
 }
 
 private def reportIncorrectSkolemization[T](

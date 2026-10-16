@@ -660,6 +660,18 @@ case class MultipleIncompatibleSkolemDefinitionsOfSameSymbol(
   def message: String = s"skolem symbol $skolemSymbol is introduced multiple times with conflicting definitions: ${stepDefinitions.map { case (step, skolemization) => s"in $step defined as skolem symbol ${skolemization.skolemSymbol} with ${skolemization.skolemDefinition}" }.mkString("; ")}"
 }
 
+case class SkolemDependency(
+    stepName: String,
+    skolemSymbol: String,
+    dependsOnStepName: String,
+    dependencySymbol: String
+)
+
+case class CyclicSkolemDefinitions(dependencies: Seq[SkolemDependency]) extends IncorrectSkolemizationReason {
+  def message: String =
+    s"cyclic Skolem definitions: ${dependencies.map(d => s"step '${d.stepName}' defines '${d.skolemSymbol}', which depends on '${d.dependencySymbol}' defined by step '${d.dependsOnStepName}'").mkString("; ")}"
+}
+
 case class SkolemSymbolIsAConstantExistingInTheInput(
     inputStepName: String,
     skolemizationStepName: String,

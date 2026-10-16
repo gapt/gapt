@@ -55,6 +55,43 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         checkDerivation("/input") must_== SzsStatus.VerifiedGood
       }
 
+      "reject a self-dependent Skolem definition" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a,axiom, ![X]: f(X) != X, file('/problem.p',a)).
+            |fof(t,plain, ?[X]: X = f(s), inference(tautology,[status(thm)],[])).
+            |fof(sk,plain, s = f(s), inference(skolemize,[status(esa),new_symbols(skolem,[s]),skolemize(X,s)],[t])).
+            |fof(bot,plain,$false, inference(refute,[status(thm)],[a,sk])).
+          """.stripMargin)
+          case "/problem.p" => Right("fof(a,axiom, ![X]: f(X) != X).")
+        }
+        checkDerivation("/input") must beLike {
+          case SzsStatus.VerifiedBad(IncorrectSkolemization(CyclicSkolemDefinitions(dependencies))) =>
+            dependencies must_== Seq(SkolemDependency("sk", "s", "sk", "s"))
+        }
+      }
+
+      "reject a two-step Skolem dependency cycle" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |fof(a,axiom, ![X]: f(X) != X, file('/problem.p',a)).
+            |fof(t1,plain, ?[X]: X = f(s2), inference(tautology,[status(thm)],[])).
+            |fof(sk1,plain, s1 = f(s2), inference(skolemize,[status(esa),new_symbols(skolem,[s1]),skolemize(X,s1)],[t1])).
+            |fof(t2,plain, ?[X]: X = s1, inference(tautology,[status(thm)],[])).
+            |fof(sk2,plain, s2 = s1, inference(skolemize,[status(esa),new_symbols(skolem,[s2]),skolemize(X,s2)],[t2])).
+            |fof(bot,plain,$false, inference(refute,[status(thm)],[a,sk1,sk2])).
+          """.stripMargin)
+          case "/problem.p" => Right("fof(a,axiom, ![X]: f(X) != X).")
+        }
+        checkDerivation("/input") must beLike {
+          case SzsStatus.VerifiedBad(IncorrectSkolemization(CyclicSkolemDefinitions(dependencies))) =>
+            dependencies.toSet must_== Set(
+              SkolemDependency("sk1", "s1", "sk2", "s2"),
+              SkolemDependency("sk2", "s2", "sk1", "s1")
+            )
+        }
+      }
+
       "negated conjecture" in {
         "fail on negated conjecture if conclusion is not implied by negation of conjecture" in {
           given resolver: FileNameResolver = {
