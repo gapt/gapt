@@ -73,6 +73,23 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
       }
 
+      "return unknown for CNF derivations" in {
+        given resolver: FileNameResolver = {
+          case "/input" => Right("""
+            |cnf(a,axiom,p(X),file('/problem.p',a)).
+            |cnf(b,axiom,~p(a),file('/problem.p',b)).
+            |cnf(bot,plain,$false,inference(resolution,[status(thm)],[a,b])).
+          """.stripMargin)
+          case "/problem.p" => Right("""
+            |cnf(a,axiom,p(X)).
+            |cnf(b,axiom,~p(a)).
+          """.stripMargin)
+        }
+        checkDerivation("/input") must beLike {
+          case SzsStatus.Unknown(reason: UnexpectedInput) => reason.message must contain("cnf")
+        }
+      }
+
       "reject a self-dependent Skolem definition" in {
         given resolver: FileNameResolver = {
           case "/input" => Right("""
@@ -1781,12 +1798,13 @@ class checkTstpDerivationExampleTest extends Specification {
     }
 
     def spec(check: InputFile => FileNameResolver ?=> SzsStatus): Fragments = {
-      val correctProofs = foreachPath(os.walk(testResourcesRoot / "ProofChecking").filter(_.baseName.startsWith("correct_"))) { example =>
+      val proofExamples = os.walk(testResourcesRoot / "ProofChecking")
+      val correctProofs = foreachPath(proofExamples.filter(_.baseName.startsWith("correct_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"verify $relativePath correctly" ! (check(example) must_== SzsStatus.VerifiedGood)
       }
 
-      val incorrectProofs = foreachPath(os.walk(testResourcesRoot / "ProofChecking").filter(_.baseName.startsWith("incorrect_"))) { example =>
+      val incorrectProofs = foreachPath(proofExamples.filter(_.baseName.startsWith("incorrect_"))) { example =>
         val relativePath = example.relativeTo(testResourcesRoot)
         s"fail verification of $relativePath" ! (check(example) must beAnInstanceOf[SzsStatus.VerifiedBad])
       }

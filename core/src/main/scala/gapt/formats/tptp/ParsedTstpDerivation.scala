@@ -140,8 +140,10 @@ object ParsedTstpDerivation {
 
   private def parseStep(annotatedFormula: AnnotatedFormula): Either[TstpDerivationError, ParsedTstpDerivationStep] = boundary {
     val AnnotatedFormula(language, name, role, formula, annotations) = annotatedFormula
+    // CNF is not handled for now: supporting it requires mapping input clauses to the formulas
+    // passed to Escargot, so failures can be reported against the original CNF formulas.
     language match {
-      case "fof" | "cnf" =>
+      case "fof" =>
       case language =>
         break(Left(UnexpectedInput(s"unsupported input language $language. used in input $annotatedFormula")))
     }
