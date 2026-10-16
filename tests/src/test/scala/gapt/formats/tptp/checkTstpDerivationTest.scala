@@ -23,6 +23,7 @@ import gapt.expr.stringInterpolationForExpressions
 import gapt.logic.Polarity.Positive
 import gapt.expr.formula.hol.HOLPosition
 import gapt.formats.ClasspathInputFile
+import gapt.formats.tptp.Source
 import gapt.formats.tptp.check.FindSkolemizableInstance.QuantifierType
 import gapt.logic.Polarity.Negative
 import gapt.provers.escargot.Escargot
@@ -473,6 +474,61 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
           checkDerivation("/input") must beLike {
             case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
+          }
+        }
+
+        "return unknown for nested inference sources with a non-thm status" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a1, axiom, p, file('/Problems/problem.p', a)).
+              |fof(c, conjecture, p, file('/Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [c])).
+              |fof(inf_p, plain, p, inference(cnf, [status(thm)], [inference(bogus, [status(cth)], [a1])])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p).
+              |fof(c, conjecture, p).
+            """.stripMargin)
+          }
+          checkDerivation("/input") must beLike {
+            case SzsStatus.Unknown(PlainInferenceWithNonThmNestedInference("inf_p", Source.Inference("bogus", _, _))) => ok
+          }
+        }
+
+        "return unknown for negated conjecture with a nested inference" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a1, axiom, p, file('/Problems/problem.p', a)).
+              |fof(c, conjecture, p, file('/Problems/problem.p', c)).
+              |fof(nc, negated_conjecture, ~p, inference(negated_conjecture, [status(cth)], [inference(normalize, [status(thm)], [c])])).
+              |fof(inf_p, plain, p, inference(cnf, [status(thm)], [a1])).
+              |fof(cont, plain, $false, inference(falsum, [status(thm)], [inf_p, nc])).""".stripMargin)
+            case "/Problems/problem.p" => Right("""
+              |fof(a, axiom, p).
+              |fof(c, conjecture, p).
+            """.stripMargin)
+          }
+          checkDerivation("/input") must beLike {
+            case SzsStatus.Unknown(InferenceWithUnsupportedNestedInference("nc", rootInference, inlineInference)) =>
+              rootInference.rule must_== "negated_conjecture"
+              inlineInference.rule must_== "normalize"
+          }
+        }
+
+        "return unknown for an esa root inference with nested inferences" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("""
+              |fof(a,axiom, ![X]: f(X) != X, file('/problem.p',a)).
+              |fof(t,plain, ?[X]: X = f(s), inference(tautology,[status(thm)],[])).
+              |fof(sk,plain, s = f(s), inference(skolemize,[status(esa),new_symbols(skolem,[s]),skolemize(X,s)],[inference(normalize,[status(thm)],[t])])).
+              |fof(bot,plain,$false, inference(refute,[status(thm)],[a,sk])).
+            """.stripMargin)
+            case "/problem.p" => Right("fof(a,axiom, ![X]: f(X) != X).")
+          }
+          checkDerivation("/input") must beLike {
+            case SzsStatus.Unknown(InferenceWithUnsupportedNestedInference("sk", rootInference, inlineInference)) =>
+              rootInference.rule must_== "skolemize"
+              inlineInference.rule must_== "normalize"
           }
         }
 

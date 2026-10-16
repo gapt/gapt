@@ -381,13 +381,63 @@ def checkDerivationHasRefutation(derivation: StructurallyCorrectTstpDerivation):
 }
 
 def checkDerivationHasCorrectStatuses(derivation: StructurallyCorrectTstpDerivation): Either[TstpDerivationError, Unit] = boundary {
+  def invalidNestedSource(source: Source, isOuter: Boolean = false): Option[Source.Inference] = source match {
+    case inference @ Source.Inference(_, _, parents) =>
+      if !isOuter && inference.statuses.toSet != Set(TstpStatus.Thm) then Some(inference)
+      else parents.iterator.map(parent => invalidNestedSource(parent.source)).collectFirst { case Some(nested) => nested }
+    case Source.Internal(_, _, parents) =>
+      parents.iterator.map(parent => invalidNestedSource(parent.source)).collectFirst { case Some(nested) => nested }
+    case Source.Creator(_, _, parents) =>
+      parents.iterator.map(parent => invalidNestedSource(parent.source)).collectFirst { case Some(nested) => nested }
+    case Source.List(sources) =>
+      sources.iterator.map(invalidNestedSource(_)).collectFirst { case Some(nested) => nested }
+    case _ => None
+  }
+
+  def checkNestedStatuses(stepName: String, source: Source): Unit =
+    invalidNestedSource(source, isOuter = true).foreach { inference =>
+      break(Left(PlainInferenceWithNonThmNestedInference(stepName, inference)))
+    }
+
+  def firstNestedInference(source: Source): Option[Source.Inference] = source match {
+    case Source.Inference(_, _, parents) => parents.iterator.flatMap(parent => findInference(parent.source)).take(1).toSeq.headOption
+    case _                               => None
+  }
+
+  def findInference(source: Source): Option[Source.Inference] = source match {
+    case inference: Source.Inference    => Some(inference)
+    case Source.Internal(_, _, parents) => parents.iterator.flatMap(parent => findInference(parent.source)).take(1).toSeq.headOption
+    case Source.Creator(_, _, parents)  => parents.iterator.flatMap(parent => findInference(parent.source)).take(1).toSeq.headOption
+    case Source.List(sources)           => sources.iterator.flatMap(findInference).take(1).toSeq.headOption
+    case _                              => None
+  }
+
+  def breakOnNestedInferences(stepName: String, source: Source): Unit = source match {
+    case root: Source.Inference =>
+      firstNestedInference(root).foreach { nestedInference =>
+        break(Left(InferenceWithUnsupportedNestedInference(stepName, root, nestedInference)))
+      }
+    case _ =>
+  }
+
+  def checkUnambiguousStatus(step: ParsedTstpDerivationStep, allowedStatuses: Set[TstpStatus]): Unit = {
+    if !step.annotationsOption.hasUnambiguousStatusAmong(allowedStatuses.toSeq) then
+      break(Left(StepWithInvalidStatus(step.name, step.statuses, allowedStatuses.toSeq)))
+  }
+
   derivation.stepsIterator.foreach {
-    case s: ParsedTstpNegatedConjectureStep if !s.hasUnambiguousStatusAmong(Seq(TstpStatus.Cth)) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq(TstpStatus.Cth))))
-    case s: ParsedTstpPlainInferenceStep if !s.hasUnambiguousStatusAmong(Seq(TstpStatus.Thm)) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq(TstpStatus.Thm))))
-    case s: ParsedTstpSkolemizationStep if !s.hasUnambiguousStatusAmong(Seq(TstpStatus.Esa)) =>
-      break(Left(StepWithInvalidStatus(s.name, s.statuses, Seq(TstpStatus.Esa))))
+    case s: ParsedTstpPlainInferenceStep => {
+      checkUnambiguousStatus(s, Set(TstpStatus.Thm))
+      checkNestedStatuses(s.name, s.annotations.source)
+    }
+    case s: ParsedTstpNegatedConjectureStep => {
+      checkUnambiguousStatus(s, Set(TstpStatus.Cth))
+      breakOnNestedInferences(s.name, s.annotations.source)
+    }
+    case s: ParsedTstpSkolemizationStep => {
+      checkUnambiguousStatus(s, Set(TstpStatus.Esa))
+      breakOnNestedInferences(s.name, s.annotations.source)
+    }
     case _ =>
   }
   Right(())
@@ -477,14 +527,8 @@ private object TstpCheckSyntax {
   extension (inference: Source.Inference)
     def statuses: Seq[TstpStatus] = inference.usefulInfo.statuses
 
-  extension (step: ParsedTstpPlainInferenceStep)
-    def statuses: Seq[TstpStatus] = step.annotations.source.asInferenceOption.map(_.statuses).getOrElse(Seq.empty)
-
-  extension (step: ParsedTstpNegatedConjectureStep)
-    def statuses: Seq[TstpStatus] = step.annotations.source.asInferenceOption.map(_.statuses).getOrElse(Seq.empty)
-
-  extension (step: ParsedTstpSkolemizationStep)
-    def statuses: Seq[TstpStatus] = step.annotations.source.asInferenceOption.map(_.statuses).getOrElse(Seq.empty)
+  extension (step: ParsedTstpDerivationStep)
+    def statuses: Seq[TstpStatus] = step.annotationsOption.flatMap(_.source.asInferenceOption).map(_.statuses).getOrElse(Seq.empty)
 
   extension (annotatedFormula: AnnotatedFormula)
     def parentLabels: Seq[String] = annotatedFormula.annotations match {
@@ -740,6 +784,18 @@ case class IncludeCycle(fileName: String) extends VerifiedUnknownReason {
 
 case class CannotHandleInput(stepName: String, reason: String) extends VerifiedUnknownReason {
   def message: String = s"cannot handle input step with name $stepName: $reason"
+}
+
+case class PlainInferenceWithNonThmNestedInference(stepName: String, inference: Source.Inference) extends VerifiedUnknownReason {
+  def message: String = s"step $stepName has an inference parent with a non-thm status: $inference"
+}
+
+case class InferenceWithUnsupportedNestedInference(
+    stepName: String,
+    rootInference: Source.Inference,
+    inlineInference: Source.Inference
+) extends VerifiedUnknownReason {
+  def message: String = s"step $stepName has inline inference $inlineInference under non-thm root inference $rootInference"
 }
 
 case class NoRefutationFound() extends VerifiedBadReason {
