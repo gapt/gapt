@@ -85,19 +85,20 @@ private[check] def checkSkolemSymbolsAreNotOverloaded(
     }
   }
 
+  val occurringSymbolsByName = derivation.stepsInSourceOrderIterator.flatMap { step =>
+    constants.all(step.formula).toSeq.sortBy(_.toString).map(step.name -> _)
+  }.toSeq.groupMap(_._2.name)(identity)
   declaredSkolemSymbols.foreach { (skolemizationStepName, skolemSymbol) =>
-    derivation.stepsInSourceOrderIterator.foreach { step =>
-      constants.all(step.formula).toSeq.sortBy(_.toString).filter(_.name == skolemSymbol.name).foreach { symbol =>
-        if symbol != skolemSymbol then {
-          reportIncorrectSkolemization(
-            SkolemSymbolWithDifferentArity(
-              skolemizationStepName,
-              skolemSymbol,
-              step.name,
-              symbol
-            )
+    occurringSymbolsByName.getOrElse(skolemSymbol.name, Seq.empty).foreach { (occurrenceStepName, symbol) =>
+      if symbol != skolemSymbol then {
+        reportIncorrectSkolemization(
+          SkolemSymbolWithDifferentArity(
+            skolemizationStepName,
+            skolemSymbol,
+            occurrenceStepName,
+            symbol
           )
-        }
+        )
       }
     }
   }
