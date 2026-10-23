@@ -97,39 +97,52 @@ object TstpStatus {
   }
 }
 
-private sealed trait InferenceObligation {
+private sealed trait TstpReplayObligation {
   def step: ParsedTstpDerivationStep
   def sequents: Seq[Sequent[FOLFormula]]
 }
 
-private object InferenceObligation {
-  final case class Entailment(step: ParsedTstpPlainInferenceStep, premises: Seq[FOLFormula]) extends InferenceObligation {
+private object TstpReplayObligation {
+  final case class Axiom(step: ParsedTstpAxiomStep) extends TstpReplayObligation {
+    def sequents: Seq[Sequent[FOLFormula]] = Seq.empty
+  }
+  final case class Conjecture(step: ParsedTstpConjectureStep) extends TstpReplayObligation {
+    def sequents: Seq[Sequent[FOLFormula]] = Seq.empty
+  }
+  final case class Skolemization(step: ParsedTstpSkolemizationStep) extends TstpReplayObligation {
+    def sequents: Seq[Sequent[FOLFormula]] = Seq.empty
+  }
+  final case class Entailment(step: ParsedTstpPlainInferenceStep, premises: Seq[FOLFormula]) extends TstpReplayObligation {
     def sequents: Seq[Sequent[FOLFormula]] = Seq(Sequent(premises, Vector(step.formula)))
   }
 
   final case class NegatedConjectureEquivalence(
       step: ParsedTstpNegatedConjectureStep,
       conjecture: FOLFormula
-  ) extends InferenceObligation {
+  ) extends TstpReplayObligation {
     val negatedConjectureToFormula: Sequent[FOLFormula] = Neg(conjecture) +: Sequent() :+ step.formula
     val formulaToNegatedConjecture: Sequent[FOLFormula] = step.formula +: Sequent() :+ Neg(conjecture)
     def sequents: Seq[Sequent[FOLFormula]] = Seq(negatedConjectureToFormula, formulaToNegatedConjecture)
   }
 
-  def negatedConjecture(
-      step: ParsedTstpNegatedConjectureStep,
-      derivation: StructurallyCorrectTstpDerivation
-  ): NegatedConjectureEquivalence =
-    NegatedConjectureEquivalence(step, derivation.get(step.parent).get.formula)
-
-  def forStep(step: ParsedTstpDerivationStep, derivation: StructurallyCorrectTstpDerivation): Option[InferenceObligation] =
+  def forStep(step: ParsedTstpDerivationStep, derivation: StructurallyCorrectTstpDerivation): TstpReplayObligation =
     step match {
+      case axiom: ParsedTstpAxiomStep => Axiom(axiom)
+      case conjecture: ParsedTstpConjectureStep => Conjecture(conjecture)
+      case skolemization: ParsedTstpSkolemizationStep => Skolemization(skolemization)
       case plain: ParsedTstpPlainInferenceStep =>
-        Some(Entailment(plain, plain.parents.map(p => derivation.get(p).get.formula)))
-      case negated: ParsedTstpNegatedConjectureStep => Some(negatedConjecture(negated, derivation))
-      case _ => None
+        Entailment(plain, plain.parents.map(p => derivation.get(p).get.formula))
+      case negated: ParsedTstpNegatedConjectureStep =>
+        NegatedConjectureEquivalence(negated, derivation.get(negated.parent).get.formula)
     }
 }
+
+private def replayTstpDerivation[A](
+    derivation: VerifiedSkolemizationsTstpDerivation
+)(handle: TstpReplayObligation => A): Unit =
+  derivation.structurallyCorrect.stepsTopologicallyOrdered.foreach { step =>
+    handle(TstpReplayObligation.forStep(step, derivation.structurallyCorrect))
+  }
 
 /**
 * Attempts to replay the inferences in the given StructurallyCorrectTstpDerivation into a Context containing
@@ -173,45 +186,33 @@ def buildTstpDerivationToProofContext(
   def proofDeclaration(name: String, proof: LKProof): VariableCapturingProofDeclaration =
     VariableCapturingProofDeclaration(FOLConst(name), proof)
 
-  def handleStep(s: ParsedTstpDerivationStep) = {
-    s match {
-      case _: ParsedTstpConjectureStep =>
-      case s: ParsedTstpAxiomStep => {
-        addToContext(proofDeclaration(s.name, LogicalAxiom(s.formula)))
-      }
-
-      case s: ParsedTstpNegatedConjectureStep => {
-        val obligation = InferenceObligation.negatedConjecture(s, derivation.structurallyCorrect)
-
-        // TSTP requires equivalence between the negated conjecture and this formula.
-        val negatedConjectureToFormulaProof = replayProof(s.name, obligation.negatedConjectureToFormula)
-        val formulaToNegatedConjectureProof = replayProof(s.name, obligation.formulaToNegatedConjecture)
-        val iffProof = AndRightRule(
-          ImpRightRule(negatedConjectureToFormulaProof, Ant(0), Suc(0)),
-          Suc(0),
-          ImpRightRule(formulaToNegatedConjectureProof, Ant(0), Suc(0)),
-          Suc(0)
-        )
-        val weakenedProof = WeakeningLeftRule(negatedConjectureToFormulaProof, iffProof.conclusion.succedent.head)
-        val cutProof = CutRule(iffProof, weakenedProof)
-
-        addToContext(proofDeclaration(s.name, cutProof))
-      }
-
-      case s: ParsedTstpSkolemizationStep => {
-        val skolemizationStep = derivation.verifiedSkolemization(s.name).get
-        addToContext(proofDeclaration(s.name, skolemizationStep.proof))
-      }
-
-      case s: ParsedTstpPlainInferenceStep => {
-        val obligation = InferenceObligation.forStep(s, derivation.structurallyCorrect).get
-        val proof = replayProof(s.name, obligation.sequents.head)
-        addToContext(proofDeclaration(s.name, proof))
-      }
-    }
+  def handleObligation(obligation: TstpReplayObligation): Unit = obligation match {
+    case TstpReplayObligation.Conjecture(_) =>
+    case TstpReplayObligation.Axiom(s) =>
+      addToContext(proofDeclaration(s.name, LogicalAxiom(s.formula)))
+    case TstpReplayObligation.Skolemization(s) =>
+      val skolemizationStep = derivation.verifiedSkolemization(s.name).get
+      addToContext(proofDeclaration(s.name, skolemizationStep.proof))
+    case entailment: TstpReplayObligation.Entailment =>
+      val proof = replayProof(entailment.step.name, entailment.sequents.head)
+      addToContext(proofDeclaration(entailment.step.name, proof))
+    case equivalence: TstpReplayObligation.NegatedConjectureEquivalence =>
+      val s = equivalence.step
+      // TSTP requires equivalence between the negated conjecture and this formula.
+      val negatedConjectureToFormulaProof = replayProof(s.name, equivalence.negatedConjectureToFormula)
+      val formulaToNegatedConjectureProof = replayProof(s.name, equivalence.formulaToNegatedConjecture)
+      val iffProof = AndRightRule(
+        ImpRightRule(negatedConjectureToFormulaProof, Ant(0), Suc(0)),
+        Suc(0),
+        ImpRightRule(formulaToNegatedConjectureProof, Ant(0), Suc(0)),
+        Suc(0)
+      )
+      val weakenedProof = WeakeningLeftRule(negatedConjectureToFormulaProof, iffProof.conclusion.succedent.head)
+      val cutProof = CutRule(iffProof, weakenedProof)
+      addToContext(proofDeclaration(s.name, cutProof))
   }
 
-  derivation.structurallyCorrect.stepsTopologicallyOrdered.foreach(handleStep)
+  replayTstpDerivation(derivation)(handleObligation)
 
   Right(context.toImmutable)
 }
@@ -288,14 +289,18 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  val futures: Seq[Future[(ParsedTstpDerivationStep, Sequent[FOLFormula], Boolean)]] =
-    derivation.structurallyCorrect.stepsIterator.toSeq.flatMap { step =>
-      InferenceObligation.forStep(step, derivation.structurallyCorrect).toSeq.flatMap { obligation =>
-        obligation.sequents.map { sequent =>
-          Future { (step, sequent, isValid(step.name, sequent)) }
-        }
-      }
+  val futures = scala.collection.mutable.ArrayBuffer.empty[Future[(ParsedTstpDerivationStep, Sequent[FOLFormula], Boolean)]]
+  def checkObligation(obligation: TstpReplayObligation): Unit =
+    obligation.sequents.foreach { sequent =>
+      val step = obligation.step
+      futures += Future { (step, sequent, isValid(step.name, sequent)) }
     }
+
+  replayTstpDerivation(derivation) {
+    case obligation: TstpReplayObligation.Entailment => checkObligation(obligation)
+    case obligation: TstpReplayObligation.NegatedConjectureEquivalence => checkObligation(obligation)
+    case _ =>
+  }
   val incorrectStep = firstCompletedMatching(futures)((_, _, isValid) => !isValid)
   val result = Await.result(incorrectStep, Duration.Inf)
   result match {
