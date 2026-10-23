@@ -585,8 +585,8 @@ private object TstpCheckSyntax {
 
   extension (step: ParsedTstpDerivationStep)
     def annotationsOption: Option[Annotations] = step match {
-      case s: ParsedTstpConjectureStep        => s.annotationsOption
-      case s: ParsedTstpAxiomStep             => s.annotationsOption
+      case _: ParsedTstpConjectureStep        => None
+      case _: ParsedTstpAxiomStep             => None
       case s: ParsedTstpPlainInferenceStep    => Some(s.annotations)
       case s: ParsedTstpNegatedConjectureStep => Some(s.annotations)
       case s: ParsedTstpSkolemizationStep     => Some(s.annotations)
