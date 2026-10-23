@@ -97,6 +97,40 @@ object TstpStatus {
   }
 }
 
+private sealed trait InferenceObligation {
+  def step: ParsedTstpDerivationStep
+  def sequents: Seq[Sequent[FOLFormula]]
+}
+
+private object InferenceObligation {
+  final case class Entailment(step: ParsedTstpPlainInferenceStep, premises: Seq[FOLFormula]) extends InferenceObligation {
+    def sequents: Seq[Sequent[FOLFormula]] = Seq(Sequent(premises, Vector(step.formula)))
+  }
+
+  final case class NegatedConjectureEquivalence(
+      step: ParsedTstpNegatedConjectureStep,
+      conjecture: FOLFormula
+  ) extends InferenceObligation {
+    val negatedConjectureToFormula: Sequent[FOLFormula] = Neg(conjecture) +: Sequent() :+ step.formula
+    val formulaToNegatedConjecture: Sequent[FOLFormula] = step.formula +: Sequent() :+ Neg(conjecture)
+    def sequents: Seq[Sequent[FOLFormula]] = Seq(negatedConjectureToFormula, formulaToNegatedConjecture)
+  }
+
+  def negatedConjecture(
+      step: ParsedTstpNegatedConjectureStep,
+      derivation: StructurallyCorrectTstpDerivation
+  ): NegatedConjectureEquivalence =
+    NegatedConjectureEquivalence(step, derivation.get(step.parent).get.formula)
+
+  def forStep(step: ParsedTstpDerivationStep, derivation: StructurallyCorrectTstpDerivation): Option[InferenceObligation] =
+    step match {
+      case plain: ParsedTstpPlainInferenceStep =>
+        Some(Entailment(plain, plain.parents.map(p => derivation.get(p).get.formula)))
+      case negated: ParsedTstpNegatedConjectureStep => Some(negatedConjecture(negated, derivation))
+      case _ => None
+    }
+}
+
 /**
 * Attempts to replay the inferences in the given StructurallyCorrectTstpDerivation into a Context containing
 * LKProofs for every inference step in the StructurallyCorrectTstpDerivation
@@ -147,21 +181,11 @@ def buildTstpDerivationToProofContext(
       }
 
       case s: ParsedTstpNegatedConjectureStep => {
-        val parentFormula = derivation.structurallyCorrect.get(s.parent).get.formula
+        val obligation = InferenceObligation.negatedConjecture(s, derivation.structurallyCorrect)
 
-        // in the following we construct a proof of Neg(conjecture) :- s.formula
-        // which is the only thing that is necessary for the refutation.
-        // However, TSTP requires to check that the negated conjecture formula
-        // is equivalent to the negation of the conjecture.
-        // To represent this in the LKProof we construct a proof of
-        // :- Neg(conjecture) <-> s.formula and cut it with a proof of
-        // Neg(conjecture) <-> s.formula, Neg(conjecture) :- s.formula
-        // which results from the proof of Neg(conjecture) :- s.formula by
-        // weakening
-        val negatedConjectureToFormulaProof =
-          replayProof(s.name, Neg(parentFormula) +: Sequent() :+ s.formula)
-        val formulaToNegatedConjectureProof =
-          replayProof(s.name, s.formula +: Sequent() :+ Neg(parentFormula))
+        // TSTP requires equivalence between the negated conjecture and this formula.
+        val negatedConjectureToFormulaProof = replayProof(s.name, obligation.negatedConjectureToFormula)
+        val formulaToNegatedConjectureProof = replayProof(s.name, obligation.formulaToNegatedConjecture)
         val iffProof = AndRightRule(
           ImpRightRule(negatedConjectureToFormulaProof, Ant(0), Suc(0)),
           Suc(0),
@@ -180,9 +204,8 @@ def buildTstpDerivationToProofContext(
       }
 
       case s: ParsedTstpPlainInferenceStep => {
-        val parentFormulas = s.parents.map(p => derivation.structurallyCorrect.get(p).get.formula)
-        val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
-        val proof = replayProof(s.name, sequentToProve)
+        val obligation = InferenceObligation.forStep(s, derivation.structurallyCorrect).get
+        val proof = replayProof(s.name, obligation.sequents.head)
         addToContext(proofDeclaration(s.name, proof))
       }
     }
@@ -265,23 +288,14 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  val futures: Seq[Future[(ParsedTstpDerivationStep, Sequent[FOLFormula], Boolean)]] = derivation.structurallyCorrect.stepsIterator.toSeq.flatMap {
-    case s: ParsedTstpPlainInferenceStep => {
-      val parentFormulas = s.parents.map(p => derivation.structurallyCorrect.get(p).get.formula)
-      val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
-      Seq(Future { (s, sequentToProve, isValid(s.name, sequentToProve)) })
+  val futures: Seq[Future[(ParsedTstpDerivationStep, Sequent[FOLFormula], Boolean)]] =
+    derivation.structurallyCorrect.stepsIterator.toSeq.flatMap { step =>
+      InferenceObligation.forStep(step, derivation.structurallyCorrect).toSeq.flatMap { obligation =>
+        obligation.sequents.map { sequent =>
+          Future { (step, sequent, isValid(step.name, sequent)) }
+        }
+      }
     }
-    case s: ParsedTstpNegatedConjectureStep => {
-      val parentFormula = derivation.structurallyCorrect.get(s.parent).get.formula
-      val negatedConjectureToFormula = Neg(parentFormula) +: Sequent() :+ s.formula
-      val formulaToNegatedConjecture = s.formula +: Sequent() :+ Neg(parentFormula)
-      Seq(
-        Future { (s, negatedConjectureToFormula, isValid(s.name, negatedConjectureToFormula)) },
-        Future { (s, formulaToNegatedConjecture, isValid(s.name, formulaToNegatedConjecture)) }
-      )
-    }
-    case _ => Seq.empty
-  }
   val incorrectStep = firstCompletedMatching(futures)((_, _, isValid) => !isValid)
   val result = Await.result(incorrectStep, Duration.Inf)
   result match {
