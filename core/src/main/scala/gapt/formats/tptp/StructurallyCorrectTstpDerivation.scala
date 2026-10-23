@@ -213,7 +213,7 @@ object StructurallyCorrectTstpDerivation {
   ): Either[TstpDerivationError, StructurallyCorrectTstpDerivation] = {
     for
       map <- intoUniqueMap(parsed.steps)
-      topologicalOrder <- sortTopologically(map)
+      topologicalOrder <- sortTopologically(map, parsed.steps.map(_.name))
       derivation = StructurallyCorrectTstpDerivation(map, topologicalOrder, parsed.steps.map(_.name))
       _ <- checkRoleRelationships(derivation)
     yield derivation
@@ -263,26 +263,16 @@ object StructurallyCorrectTstpDerivation {
   }
 
   private def sortTopologically(
-      map: Map[String, ParsedTstpDerivationStep]
+      map: Map[String, ParsedTstpDerivationStep],
+      labelsInSourceOrder: Seq[String]
   ): Either[NonExistentStep | InferenceCycle, Iterable[String]] = boundary {
-    import scala.collection.mutable
-
-    val visited = mutable.Set[String]()
-    val reachableSteps = mutable.Buffer[ParsedTstpDerivationStep]()
-    def walk(label: String): Unit = {
-      if !visited.contains(label) then {
-        visited += label
-        val formula = map.get(label).getOrElse {
-          break(Left(NonExistentStep(label)))
-        }
-        reachableSteps += formula
-        formula.parents.foreach(walk)
-      }
+    labelsInSourceOrder.iterator.flatMap(map(_).parents).find(parent => !map.contains(parent)).foreach { parent =>
+      break(Left(NonExistentStep(parent)))
     }
-    map.keysIterator.foreach(walk)
 
+    val steps = labelsInSourceOrder.map(map(_))
     val orderedFromChildrenToParents =
-      linearizeStrictPartialOrder(reachableSteps.toSet, step => parentsOf(map, step.name)).getOrElse {
+      linearizeStrictPartialOrder(steps, step => parentsOf(map, step.name)).getOrElse {
         break(Left(InferenceCycle()))
       }
 

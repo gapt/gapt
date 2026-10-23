@@ -1602,6 +1602,20 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
         }
 
+        "sort a deep inference chain in stable source order" in {
+          val lastIndex = 100
+          val steps = (0 to lastIndex).map { i =>
+            val parent = if i == 0 then "[]" else s"[a${i - 1}]"
+            s"fof(a$i, plain, p, inference(copy, [status(thm)], $parent))."
+          }.mkString("\n")
+          val derivation = StructurallyCorrectTstpDerivation.fromInputFile(InputFile.fromString(steps))
+
+          derivation must beRight.like { derivation =>
+            val orderedLabels = derivation.stepsTopologicallyOrdered.iterator.map(_.name).toVector
+            (orderedLabels.size, orderedLabels.head, orderedLabels.last) must_== (lastIndex + 1, "a0", s"a$lastIndex")
+          }
+        }
+
         "fail on proof with inference parents that does not exist in proof" in {
           given resolver: FileNameResolver = {
             case "/input" => Right("""

@@ -4,10 +4,12 @@ import scala.collection.mutable
 
 object linearizeStrictPartialOrder {
 
+  private case class CycleException[T](cycle: Vector[T]) extends Throwable
+
   /**
    * Linearizes a strict partial order.
    *
-   * @param set The set of elements on which the relation is defined.
+   * @param set The elements on which the relation is defined, in the order used to break ties.
    * @param relation The relation to be linearized.
    * @tparam T The type of the elements.
    * @return Either (right) a sequence of elements e1,...,en containing all the
@@ -25,13 +27,11 @@ object linearizeStrictPartialOrder {
         relation.groupBy(_._1).view.mapValues(Nil ++ _.map(_._2)).toMap
     )
 
-  private case class CycleException[T](cycle: Vector[T]) extends Throwable
-
   def apply[T](
       set: Iterable[T],
       relation: T => Iterable[T]
   ): Either[Vector[T], Vector[T]] = {
-    val out = mutable.Buffer[T]()
+    val out = mutable.ArrayBuffer[T]()
     val seen = mutable.Set[T]()
 
     def go(t: T, stacktrace: List[T], stacktraceSet: Set[T]): Unit = {
@@ -46,13 +46,13 @@ object linearizeStrictPartialOrder {
       val stacktrace_ = t :: stacktrace
       val stacktraceSet_ = stacktraceSet + t
       relation(t).foreach { go(_, stacktrace_, stacktraceSet_) }
-      out.prepend(t)
+      out += t
       seen += t
     }
 
     try {
       for (s <- set) go(s, List(), Set())
-      Right(out.toVector)
+      Right(out.reverse.toVector)
     } catch {
       case CycleException[T @unchecked](cycle) => Left(cycle)
     }
