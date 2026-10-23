@@ -62,7 +62,7 @@ def simulateProoVerCompetition() = {
   }
 
   val results = Random.shuffle(derivationPaths).map { derivationPath =>
-    Console.println(s"Running checker on ${derivationPath.baseName}")
+    Console.println(s"Running checker on ${derivationPath.relativeTo(derivationsPath)}")
 
     val derivationStatus =
       if derivationPath.baseName.startsWith("claimed_correct_")
@@ -80,11 +80,14 @@ def simulateProoVerCompetition() = {
         Console.println(s"Unknown derivation status for ${derivationPath.baseName}")
         sys.exit(1)
       }
-    val (checkerProcess, checkerFuture) = {
+    val (checkerProcess, checkerFuture, checkerOutput) = {
       val processBuilder = buildCheckerProcess(derivationPath)
-      var checkerOutput: Option[String] = None
+      val checkerOutput = new StringBuilder
       val checkerProcess = processBuilder.run(
-        ProcessLogger(line => checkerOutput = Some(line), line => Console.err.println(line))
+        ProcessLogger(
+          line => checkerOutput.synchronized { checkerOutput.append(line).append('\n') },
+          line => Console.err.println(line)
+        )
       )
       (
         checkerProcess,
@@ -95,17 +98,16 @@ def simulateProoVerCompetition() = {
               throw new Exception(s"checker exited with code $checkerExitValue")
             }
 
-            val checkerStdOut = checkerOutput.getOrElse {
-              throw new Exception("checker did not produce any output")
-            }
+            val checkerStdOut = checkerOutput.synchronized { checkerOutput.toString }
+            val outputLines = checkerStdOut.linesIterator.toVector
 
-            if checkerStdOut.startsWith("% SZS status VerifiedGood") then {
+            if outputLines.exists(_.startsWith("% SZS status VerifiedGood")) then {
               CheckerResult.VerifiedGood
-            } else if checkerStdOut.startsWith("% SZS status VerifiedBad") then {
+            } else if outputLines.exists(_.startsWith("% SZS status VerifiedBad")) then {
               CheckerResult.VerifiedBad
-            } else if checkerStdOut.startsWith("% SZS status Unknown") then {
+            } else if outputLines.exists(_.startsWith("% SZS status Unknown")) then {
               CheckerResult.Unknown
-            } else if checkerStdOut.startsWith("% SZS status Timeout") then {
+            } else if outputLines.exists(_.startsWith("% SZS status Timeout")) then {
               CheckerResult.SignaledTimeout
             } else {
               CheckerResult.InvalidOutput
@@ -116,7 +118,8 @@ def simulateProoVerCompetition() = {
               CheckerResult.Crashed
             }
           }
-        }
+        },
+        checkerOutput
       )
     }
 
@@ -129,6 +132,8 @@ def simulateProoVerCompetition() = {
       } finally {
         checkerProcess.destroy()
       }
+    val stdout = checkerOutput.synchronized { checkerOutput.toString }
+
     val timeEnd = System.nanoTime()
     val timeElapsed = timeEnd - timeStart
     val duration = Duration(timeElapsed, NANOSECONDS)
@@ -142,8 +147,17 @@ def simulateProoVerCompetition() = {
     }
 
     val record = (derivation = derivationPath, derivationStatus = derivationStatus, checkerResult = checkerResult, score = score, duration = duration)
-
-    Console.println(s"${scoreMark(record.score)} $record")
+    Console.println(s"${scoreMark(record.score)} time: ${formatDuration(duration)}")
+    Console.println(s"Check result: ${record.checkerResult}")
+    derivationStatus match {
+      case DerivationStatus.Correct   => Console.println("Expected result: VerifiedGood")
+      case DerivationStatus.Incorrect => Console.println("Expected result: VerifiedBad")
+      case DerivationStatus.Removed   => Console.println("This example was removed from the competition")
+    }
+    Console.println(s"Score: ${record.score}")
+    Console.println("Output: ")
+    Console.print(stdout)
+    Console.println()
     record
   }
 
