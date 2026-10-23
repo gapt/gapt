@@ -136,19 +136,14 @@ def buildTstpDerivationToProofContext(
       s"VariableCapturingProofDeclaration($lhs, ${proof.endSequent})"
   }
 
-  def proofDeclaration(name: String, proof: LKProof, parents: Seq[String]): VariableCapturingProofDeclaration = {
-    val cutProof = parents.foldLeft(proof) { (proof, parent) =>
-      val parentProofLink = context.get[ProofNames].link(FOLConst(parent)).get
-      CutRule(parentProofLink, proof)
-    }
-    VariableCapturingProofDeclaration(FOLConst(name), cutProof)
-  }
+  def proofDeclaration(name: String, proof: LKProof): VariableCapturingProofDeclaration =
+    VariableCapturingProofDeclaration(FOLConst(name), proof)
 
   def handleStep(s: ParsedTstpDerivationStep) = {
     s match {
       case _: ParsedTstpConjectureStep =>
       case s: ParsedTstpAxiomStep => {
-        addToContext(proofDeclaration(s.name, LogicalAxiom(s.formula), Seq.empty))
+        addToContext(proofDeclaration(s.name, LogicalAxiom(s.formula)))
       }
 
       case s: ParsedTstpNegatedConjectureStep => {
@@ -176,19 +171,19 @@ def buildTstpDerivationToProofContext(
         val weakenedProof = WeakeningLeftRule(negatedConjectureToFormulaProof, iffProof.conclusion.succedent.head)
         val cutProof = CutRule(iffProof, weakenedProof)
 
-        addToContext(proofDeclaration(s.name, cutProof, Seq.empty))
+        addToContext(proofDeclaration(s.name, cutProof))
       }
 
       case s: ParsedTstpSkolemizationStep => {
         val skolemizationStep = derivation.verifiedSkolemization(s.name).get
-        addToContext(proofDeclaration(s.name, skolemizationStep.proof, Seq(s.parent)))
+        addToContext(proofDeclaration(s.name, skolemizationStep.proof))
       }
 
       case s: ParsedTstpPlainInferenceStep => {
         val parentFormulas = s.parents.map(p => derivation.structurallyCorrect.get(p).get.formula)
         val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
         val proof = replayProof(s.name, sequentToProve)
-        addToContext(proofDeclaration(s.name, proof, s.parents))
+        addToContext(proofDeclaration(s.name, proof))
       }
     }
   }
@@ -197,6 +192,52 @@ def buildTstpDerivationToProofContext(
 
   Right(context.toImmutable)
 }
+
+/**
+ * Combines a replayed TSTP proof with the proofs of its ancestors by adding cuts for the inference parents.
+ *
+ * The returned proof represents the proof structure inherent in the TSTP derivation, with cuts for its parent
+ * inferences, but without filling in those inferences' replay proofs. Use [[instantiateLKProof]] to obtain the full
+ * proof with the replay proofs instantiated. Proofs in the context are kept uncombined during replay to avoid
+ * duplicating shared parent proofs; this method combines only the requested step's ancestors and memoizes shared
+ * ancestors. Negated-conjecture steps are already represented by their own equivalence proof and have no proof
+ * parent to combine.
+ *
+ * @param derivation The structurally correct TSTP derivation that records each step's parents.
+ * @param proofContext The context containing the replayed proof definition for each inference step.
+ * @param name The label of the step whose proof should be combined with its ancestors.
+ * @return A proof with cuts connecting the requested step to its ancestor proofs.
+ */
+def combineTstpProofWithAncestors(
+    derivation: StructurallyCorrectTstpDerivation,
+    proofContext: Context,
+    name: String
+): LKProof = {
+  val steps = derivation.stepsIterator.map(step => step.name -> step).toMap
+  val combined = scala.collection.mutable.Map.empty[String, LKProof]
+  def combine(label: String): LKProof = combined.getOrElseUpdate(
+    label, {
+      val step = steps(label)
+      val proofLink = proofContext.get[ProofNames].link(FOLConst(label)).get
+      val parents = step match {
+        case _: ParsedTstpNegatedConjectureStep => Seq.empty
+        case _                                  => step.parents
+      }
+      parents.foldLeft(proofLink: LKProof) { (currentProof, parent) =>
+        CutRule(combine(parent), currentProof)
+      }
+    }
+  )
+  combine(name)
+}
+
+/** Instantiates the replay proofs into the TSTP proof structure for the requested step. */
+def instantiateLKProof(
+    derivation: StructurallyCorrectTstpDerivation,
+    proofContext: Context,
+    name: String
+): LKProof =
+  gapt.proofs.lk.util.instantiateProof(combineTstpProofWithAncestors(derivation, proofContext, name))(using proofContext)
 
 /**
 * Attempts to replay the inferences in the given StructurallyCorrectTstpDerivation, but does not create

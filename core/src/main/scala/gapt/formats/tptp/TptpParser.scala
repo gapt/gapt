@@ -24,10 +24,8 @@ import scala.util.{Failure, Success}
 import scala.util.Try
 import gapt.proofs.lk.LKProof
 import scala.util.boundary
-import gapt.proofs.lk.util.instantiateProof
-import gapt.proofs.lk.rules.ProofLink
 import gapt.proofs.context.Context
-import gapt.formats.tptp.check.{StructurallyCorrectTstpDerivation, buildTstpDerivationToProofContext, checkDerivationHasRefutation, TstpDerivationError}
+import gapt.formats.tptp.check.{StructurallyCorrectTstpDerivation, buildTstpDerivationToProofContext, checkDerivationHasRefutation, instantiateLKProof, TstpDerivationError}
 import scala.annotation.nowarn
 
 class TptpParser(val input: ParserInput) extends Parser {
@@ -272,7 +270,7 @@ object TptpImporter {
     checkDerivationHasRefutation(derivation).getOrBreak
     val uniqueRefutationLabel = derivation.nonConjectureRootRefutationLabels.head
     given context: Context = buildTstpDerivationToProofContext(derivation, gapt.provers.escargot.Escargot).getOrBreak
-    Right(instantiateProof(ProofLink(uniqueRefutationLabel)))
+    Right(instantiateLKProof(derivation, context, uniqueRefutationLabel))
   }
 
   def main(args: Array[String]): Unit =

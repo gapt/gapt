@@ -27,6 +27,7 @@ import gapt.formats.tptp.Source
 import gapt.formats.tptp.check.FindSkolemizableInstance.QuantifierType
 import gapt.logic.Polarity.Negative
 import gapt.provers.escargot.Escargot
+import gapt.formats.tptp.check.combineTstpProofWithAncestors
 import gapt.utils.EitherHelpers.RichEither
 import gapt.utils.withTimeout
 import gapt.proofs.lk.rules.ProofLink
@@ -2582,7 +2583,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
       context must beRight.like { context =>
-        val proof = ProofLink("cont")(using context)
+        val proof = combineTstpProofWithAncestors(derivation, context, "cont")
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x p(x), -(!x p(x)) :- ${Bottom()}")
       }
@@ -2621,6 +2622,24 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       }
     }
 
+    "avoid expanding repeated inference parents while building the proof context" in {
+      val derivedSteps = (1 to 14).map { i =>
+        s"fof(a$i, plain, p, inference(copy, [status(thm)], [a${i - 1}, a${i - 1}]))."
+      }.mkString("\n")
+      val input = InputFile.fromString(s"""
+        |fof(a0, axiom, p, file('problem.p', a0)).
+        |fof(c, conjecture, p, file('problem.p', c)).
+        |$derivedSteps
+      """.stripMargin)
+      val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).get
+      val context = withTimeout(10.seconds) { buildTstpDerivationToProofContext(derivation, Escargot) }
+
+      context must beRight.like { context =>
+        val proof = ProofLink("a14")(using context)
+        proof.conclusion.antecedent must haveSize(2)
+      }
+    }
+
     "work on example1_c" in {
       val input = ClasspathInputFile("ProofChecking/correct_example1_c_proof.p")
       val derivation = StructurallyCorrectTstpDerivation.fromInputFile(input).toOption.get
@@ -2628,7 +2647,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
       context must beRight.like { context =>
-        val proof = ProofLink("f1")(using context)
+        val proof = combineTstpProofWithAncestors(derivation, context, "f1")
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"p(a) & ~p(b), -(?x -(p(x) -> !y p(y))) :- ${Bottom()}")
       }
@@ -2641,7 +2660,7 @@ class tstpDerivationToProofContextTest extends mutable.Specification with Sequen
       val context = withTimeout(1.second) { buildTstpDerivationToProofContext(derivation, Escargot) }
 
       context must beRight.like { context =>
-        val proof = ProofLink("s5")(using context)
+        val proof = combineTstpProofWithAncestors(derivation, context, "s5")
         context.check(proof)
         proof.conclusion.multiSetEquals(fos"!x(p(x) -> p(f(x))), !x(p(x) -> p(f(x))), p(a), -p(f(f(a))), -p(f(f(a))) :- ${Bottom()}")
       }
