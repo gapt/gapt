@@ -405,7 +405,11 @@ def checkTstpDerivation(fileName: String)(using resolver: FileNameResolver): Szs
         verifiedDerivation <- VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation)
         _ <- checkDerivationHasNoIncorrectInferences(verifiedDerivation, Escargot)
       yield ()
-    } catch e => Left(UnexpectedException(e))
+    } catch {
+      case e: OutOfMemoryError   => Left(UnexpectedException(e))
+      case e: StackOverflowError => Left(UnexpectedException(e))
+      case NonFatal(e)           => Left(UnexpectedException(e))
+    }
 
   result match {
     case Left(reason: VerifiedUnknownReason) => SzsStatus.Unknown(reason)

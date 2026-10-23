@@ -57,6 +57,30 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         checkDerivation("/input") must_== SzsStatus.VerifiedGood
       }
 
+      "return Unknown for out-of-memory and stack-overflow errors" in {
+        Seq(new OutOfMemoryError("test"), new StackOverflowError("test")).foreach { error =>
+          val status = {
+            given resolver: FileNameResolver = _ => throw error
+            checkDerivation("/input")
+          }
+          status must beLike {
+            case SzsStatus.Unknown(UnexpectedException(cause)) => cause must_== error
+          }
+        }
+        ok
+      }
+
+      "let other fatal errors propagate instead of returning Unknown" in {
+        given resolver: FileNameResolver = _ => throw new LinkageError("fatal resolver failure")
+        val thrown = try {
+          checkDerivation("/input")
+          None
+        } catch {
+          case error: LinkageError => Some(error)
+        }
+        thrown must beSome
+      }
+
       "return unknown for a refutation that conflates a distinct object with an ordinary constant" in {
         given resolver: FileNameResolver = {
           case "/input" => Right("""
