@@ -73,12 +73,13 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
 
       "let other fatal errors propagate instead of returning Unknown" in {
         given resolver: FileNameResolver = _ => throw new LinkageError("fatal resolver failure")
-        val thrown = try {
-          checkDerivation("/input")
-          None
-        } catch {
-          case error: LinkageError => Some(error)
-        }
+        val thrown =
+          try {
+            checkDerivation("/input")
+            None
+          } catch {
+            case error: LinkageError => Some(error)
+          }
         thrown must beSome
       }
 
@@ -716,7 +717,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch))                        => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch)) => reason.stepName must_== "nc_skolem"
             case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: NoStrongQuantifierFittingSkolemization)) =>
               (reason.stepName must_== "nc_skolem").and(reason.message must contain("nc_skolem"))
           }
@@ -1698,7 +1699,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
 
         "include syntax errors retain the parser cause" in {
           given resolver: FileNameResolver = {
-            case "/input" => Right("include('broken.p').")
+            case "/input"    => Right("include('broken.p').")
             case "/broken.p" => Right("fof(a, axiom, p")
           }
           checkDerivation("/input") must beLike {
@@ -2140,10 +2141,11 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
         )
         StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
-          (x: TstpDerivationError) => x must beLike {
-            case SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(stepName, declared, used) =>
-              (stepName must_== "nc_skolemized").and((declared.name must_== "sK0").and(used.name must_== "sK1"))
-          }
+          (x: TstpDerivationError) =>
+            x must beLike {
+              case SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(stepName, declared, used) =>
+                (stepName must_== "nc_skolemized").and((declared.name must_== "sK0").and(used.name must_== "sK1"))
+            }
         }
       }
 

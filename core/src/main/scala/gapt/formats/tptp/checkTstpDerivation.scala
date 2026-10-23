@@ -127,8 +127,8 @@ private object TstpReplayObligation {
 
   def forStep(step: ParsedTstpDerivationStep, derivation: StructurallyCorrectTstpDerivation): TstpReplayObligation =
     step match {
-      case axiom: ParsedTstpAxiomStep => Axiom(axiom)
-      case conjecture: ParsedTstpConjectureStep => Conjecture(conjecture)
+      case axiom: ParsedTstpAxiomStep                 => Axiom(axiom)
+      case conjecture: ParsedTstpConjectureStep       => Conjecture(conjecture)
       case skolemization: ParsedTstpSkolemizationStep => Skolemization(skolemization)
       case plain: ParsedTstpPlainInferenceStep =>
         Entailment(plain, plain.parents.map(p => derivation.get(p).get.formula))
@@ -297,9 +297,9 @@ def checkDerivationHasNoIncorrectInferences(
     }
 
   replayTstpDerivation(derivation) {
-    case obligation: TstpReplayObligation.Entailment => checkObligation(obligation)
+    case obligation: TstpReplayObligation.Entailment                   => checkObligation(obligation)
     case obligation: TstpReplayObligation.NegatedConjectureEquivalence => checkObligation(obligation)
-    case _ =>
+    case _                                                             =>
   }
   val incorrectStep = firstCompletedMatching(futures)((_, _, isValid) => !isValid)
   val result = Await.result(incorrectStep, Duration.Inf)
@@ -970,4 +970,3 @@ case class UnexpectedException(e: Throwable) extends VerifiedUnknownReason {
     s"unexpected exception ${e.getClass.getName}: $details"
   }
 }
-

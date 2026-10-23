@@ -205,7 +205,7 @@ object StructurallyCorrectTstpDerivation {
       case TptpFileLoadingError.InvalidSyntax(fileName, cause)
           if fileName == os.Path(input.fileName, os.pwd).toString => InputSyntaxError(cause, fileName)
       case TptpFileLoadingError.InvalidSyntax(fileName, cause) => IncludeInvalidSyntax(fileName, cause)
-      case TptpFileLoadingError.IncludeCycle(fileName)     => IncludeCycle(fileName)
+      case TptpFileLoadingError.IncludeCycle(fileName)         => IncludeCycle(fileName)
     }.flatMap(tptpFile => ParsedTstpDerivation.parseTptpFile(tptpFile).flatMap(fromParsed))
 
   def fromParsed(
