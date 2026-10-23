@@ -123,7 +123,7 @@ def buildTstpDerivationToProofContext(
   def replayProof(inferenceName: String, sequentToProve: Sequent[FOLFormula]): LKProof =
     val replayContext = context
     prover.getLKProof(sequentToProve)(using replayContext).getOrElse {
-      break(Left(IncorrectInference(inferenceName)))
+      break(Left(IncorrectInference(inferenceName, sequentToProve)))
     }
 
   case class VariableCapturingProofDeclaration(lhs: Expr, proof: LKProof) extends Update {
@@ -248,7 +248,7 @@ def instantiateLKProof(
 def checkDerivationHasNoIncorrectInferences(
     derivation: StructurallyCorrectTstpDerivation,
     prover: ResolutionProver = Escargot
-): Either[IncorrectInference | IncorrectSkolemization | StepsWithOverloadedSymbols, Unit] =
+): Either[IncorrectInference | IncorrectSkolemization, Unit] =
   VerifiedSkolemizationsTstpDerivation.fromStructurallyCorrect(derivation).flatMap {
     checkDerivationHasNoIncorrectInferences(_, prover)
   }
@@ -256,7 +256,7 @@ def checkDerivationHasNoIncorrectInferences(
 def checkDerivationHasNoIncorrectInferences(
     derivation: VerifiedSkolemizationsTstpDerivation,
     prover: ResolutionProver
-): Either[IncorrectInference | StepsWithOverloadedSymbols, Unit] = boundary {
+): Either[IncorrectInference, Unit] = boundary {
   val ctx = buildTstpDerivationContext(derivation)
   val context: MutableContext = ctx.newMutable
 
@@ -265,34 +265,28 @@ def checkDerivationHasNoIncorrectInferences(
     prover.isValid(sequentToProve)(using replayContext)
   }
 
-  val futures: Seq[Future[(ParsedTstpDerivationStep, Boolean)]] = derivation.structurallyCorrect.stepsIterator.toSeq.flatMap {
+  val futures: Seq[Future[(ParsedTstpDerivationStep, Sequent[FOLFormula], Boolean)]] = derivation.structurallyCorrect.stepsIterator.toSeq.flatMap {
     case s: ParsedTstpPlainInferenceStep => {
       val parentFormulas = s.parents.map(p => derivation.structurallyCorrect.get(p).get.formula)
       val sequentToProve = Sequent(parentFormulas, Vector(s.formula))
-      Seq(Future { (s, isValid(s.name, sequentToProve)) })
+      Seq(Future { (s, sequentToProve, isValid(s.name, sequentToProve)) })
     }
     case s: ParsedTstpNegatedConjectureStep => {
       val parentFormula = derivation.structurallyCorrect.get(s.parent).get.formula
+      val negatedConjectureToFormula = Neg(parentFormula) +: Sequent() :+ s.formula
+      val formulaToNegatedConjecture = s.formula +: Sequent() :+ Neg(parentFormula)
       Seq(
-        Future {
-          val negatedConjectureToFormulaProof =
-            isValid(s.name, Neg(parentFormula) +: Sequent() :+ s.formula)
-          (s, negatedConjectureToFormulaProof)
-        },
-        Future {
-          val formulaToNegatedConjectureProof =
-            isValid(s.name, s.formula +: Sequent() :+ Neg(parentFormula))
-          (s, formulaToNegatedConjectureProof)
-        }
+        Future { (s, negatedConjectureToFormula, isValid(s.name, negatedConjectureToFormula)) },
+        Future { (s, formulaToNegatedConjecture, isValid(s.name, formulaToNegatedConjecture)) }
       )
     }
     case _ => Seq.empty
   }
-  val incorrectStep = firstCompletedMatching(futures)((_, p) => !p)
+  val incorrectStep = firstCompletedMatching(futures)((_, _, isValid) => !isValid)
   val result = Await.result(incorrectStep, Duration.Inf)
   result match {
-    case None            => Right(())
-    case Some((step, _)) => Left(IncorrectInference(step.name))
+    case None                     => Right(())
+    case Some((step, sequent, _)) => Left(IncorrectInference(step.name, sequent))
   }
 }
 
@@ -506,8 +500,8 @@ def checkDerivationHasCorrectFileDirectives(derivation: StructurallyCorrectTstpD
           ).left.map {
             case TptpFileLoadingError.FileNotFound(includedFileName) =>
               FileDirectiveFileNotFound(s.name, includedFileName)
-            case TptpFileLoadingError.InvalidSyntax(includedFileName, _) =>
-              FileDirectiveInvalidSyntax(s.name, includedFileName)
+            case TptpFileLoadingError.InvalidSyntax(includedFileName, cause) =>
+              FileDirectiveInvalidSyntax(s.name, includedFileName, cause)
             case TptpFileLoadingError.IncludeCycle(includedFileName) => IncludeCycle(includedFileName)
           }.getOrBreak
         }
@@ -605,19 +599,24 @@ private object TstpCheckSyntax {
 }
 
 case class InputSyntaxError(
-    cause: IllegalArgumentException
+    cause: IllegalArgumentException,
+    fileName: String
 ) extends VerifiedUnknownReason {
-  override def message: String = cause.getMessage
+  override def message: String = s"invalid TPTP syntax in $fileName: ${cause.getMessage}"
 }
 
 case class DistinctFormulasWithSameName(
-    label: String
+    label: String,
+    firstStep: ParsedTstpDerivationStep,
+    duplicateStep: ParsedTstpDerivationStep
 ) extends VerifiedBadReason {
-  override def message: String = s"there are multiple distinct formulas with the same name: $label"
+  override def message: String =
+    s"multiple proof steps use label '$label': ${firstStep.name} has formula ${firstStep.formula}, " +
+      s"while ${duplicateStep.name} has formula ${duplicateStep.formula}"
 }
 
-case class InferenceCycle() extends VerifiedBadReason {
-  def message: String = "inference cycle detected"
+case class InferenceCycle(cycle: Seq[String]) extends VerifiedBadReason {
+  def message: String = s"inference cycle detected: ${cycle.mkString(" -> ")}"
 }
 
 case class StepWithInvalidStatus(
@@ -625,7 +624,16 @@ case class StepWithInvalidStatus(
     actualStatuses: Seq[TstpStatus],
     validStatuses: Seq[TstpStatus]
 ) extends VerifiedBadReason {
-  override def message: String = s"$stepName has invalid statuses ${actualStatuses.mkString(", ")}. Expected one of ${validStatuses.mkString(", ")}"
+  override def message: String = {
+    val actualMessage =
+      if actualStatuses.isEmpty then s"$stepName has no status"
+      else s"$stepName has invalid statuses ${actualStatuses.map(_.value).mkString(", ")}"
+    val expectedMessage = validStatuses match {
+      case Seq(status) => s"Expected only to have status ${status.value}"
+      case statuses    => s"Expected one of ${statuses.map(_.value).mkString(", ")}"
+    }
+    s"$actualMessage. $expectedMessage"
+  }
 }
 
 case class StepWithInvalidInferenceRule(
@@ -637,9 +645,11 @@ case class StepWithInvalidInferenceRule(
 }
 
 case class NegatedConjectureStepWithNonConjectureParent(
-    stepName: String
+    stepName: String,
+    parent: ParsedTstpDerivationStep
 ) extends VerifiedBadReason {
-  def message: String = s"step with name $stepName has a non-conjecture parent"
+  def message: String =
+    s"negated conjecture step $stepName has parent ${parent.name} with role ${parent.role.value}; expected a conjecture parent"
 }
 
 case class NegatedConjectureWithoutParent(
@@ -648,14 +658,19 @@ case class NegatedConjectureWithoutParent(
   def message: String = s"negated conjecture step with name $stepName has no parent"
 }
 
-case class NegatedConjectureWithMultipleDistinctParents() extends VerifiedBadReason {
-  def message: String = "got negated conjecture with multiple distinct parents"
+case class NegatedConjectureWithMultipleDistinctParents(
+    stepName: String,
+    parents: Seq[String]
+) extends VerifiedBadReason {
+  def message: String = s"negated conjecture step $stepName has multiple distinct parents: ${parents.mkString(", ")}"
 }
 
 case class PlainInferenceWithConjectureParent(
-    step: ParsedTstpDerivationStep
+    step: ParsedTstpDerivationStep,
+    parents: Seq[ParsedTstpDerivationStep]
 ) extends VerifiedBadReason {
-  def message: String = s"plain inference step with name ${step.name} has a conjecture parent"
+  def message: String =
+    s"plain inference step ${step.name} has conjecture parent(s): ${parents.map(p => s"${p.name} (${p.role.value})").mkString(", ")}"
 }
 
 case class MultipleConjectures(
@@ -671,9 +686,10 @@ case class PlainInferenceWithoutSource(
 }
 
 case class IncorrectInference(
-    stepName: String
+    stepName: String,
+    sequent: Sequent[FOLFormula]
 ) extends VerifiedBadReason {
-  def message: String = s"inference step with name $stepName is incorrect"
+  def message: String = s"inference step $stepName is incorrect. the corresponding sequent is not valid: $sequent"
 }
 
 case class IncorrectSkolemization(
@@ -703,9 +719,10 @@ case class SkolemizationStepWithMultipleParents(
 }
 
 case class NonExistentStep(
-    stepName: String
+    stepName: String,
+    referencedByStepName: String
 ) extends VerifiedBadReason {
-  def message: String = s"step with name $stepName does not exist"
+  def message: String = s"step $referencedByStepName refers to missing parent step $stepName"
 }
 
 sealed trait IncorrectSkolemizationReason {
@@ -794,9 +811,12 @@ case class NonRectifiedFormula(
 }
 
 case class SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(
-    stepName: String
+    stepName: String,
+    declaredSymbol: Const,
+    termSymbol: Const
 ) extends VerifiedBadReason {
-  def message: String = s"skolemization step with name $stepName has differing skolem terms"
+  def message: String =
+    s"skolemization step $stepName declares new symbol $declaredSymbol, but its skolemize term uses $termSymbol"
 }
 
 case class SkolemizationStepWithoutNewSymbols(
@@ -819,8 +839,8 @@ case class IncludeFileNotFound(fileName: String) extends VerifiedUnknownReason {
   def message: String = s"included file not found: $fileName"
 }
 
-case class IncludeInvalidSyntax(fileName: String) extends VerifiedUnknownReason {
-  def message: String = s"included file has invalid TPTP syntax: $fileName"
+case class IncludeInvalidSyntax(fileName: String, cause: IllegalArgumentException) extends VerifiedUnknownReason {
+  def message: String = s"included file has invalid TPTP syntax in $fileName: ${cause.getMessage}"
 }
 
 case class IncludeCycle(fileName: String) extends VerifiedUnknownReason {
@@ -844,14 +864,14 @@ case class InferenceWithUnsupportedNestedInference(
 }
 
 case class NoRefutationFound() extends VerifiedBadReason {
-  def message: String = "no refutation found as there is no $false formula in the derivation"
+  def message: String = "no refutation found: the derivation has no non-conjecture root $false formula"
 }
 
 case class UnexpectedInput(message: String) extends VerifiedUnknownReason
 
 case class NoStrongQuantifierFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
     extends IncorrectSkolemizationReason {
-  def message: String = s"could not find a strong quantifier s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
+  def message: String = s"skolemization step $stepName: could not find a strong quantifier s.t. replacing $skVar with $skTerm transforms $inputFormula into $skolemizedFormula!"
 }
 
 case class MultipleStrongQuantifiersFittingSkolemization(stepName: String, inputFormula: FOLFormula, skolemizedFormula: FOLFormula, skVar: FOLVar, skTerm: FOLTerm)
@@ -876,8 +896,13 @@ case class FileDirectiveFileNotFound(stepName: String, fileName: String) extends
   override def message: String = s"step $stepName has a file source (${fileName}) that could not be found"
 }
 
-case class FileDirectiveInvalidSyntax(stepName: String, fileName: String) extends FileDirectiveError {
-  override def message: String = s"step $stepName has a file source (${fileName}) with invalid TPTP syntax"
+case class FileDirectiveInvalidSyntax(
+    stepName: String,
+    fileName: String,
+    cause: IllegalArgumentException
+) extends FileDirectiveError {
+  override def message: String =
+    s"step $stepName has a file source ($fileName) with invalid TPTP syntax: ${cause.getMessage}"
 }
 
 case class FileDirectiveFileDoesNotHaveLabel(
@@ -921,9 +946,9 @@ case class FileNotFound(fileName: String) extends VerifiedUnknownReason {
 }
 
 case class UnexpectedException(e: Throwable) extends VerifiedUnknownReason {
-  override def message: String = s"unexpected exception: ${e.getMessage}"
+  override def message: String = {
+    val details = Option(e.getMessage).filter(_.nonEmpty).fold(e.toString)(identity)
+    s"unexpected exception ${e.getClass.getName}: $details"
+  }
 }
 
-case class StepsWithOverloadedSymbols(symbolName: String, steps: Seq[ParsedTstpDerivationStep]) extends VerifiedUnknownReason {
-  override def message: String = s"cannot handle overloaded symbols. symbol $symbolName occurs overloaded in the following steps: ${steps.map(_.name).mkString(", ")}"
-}

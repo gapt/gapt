@@ -120,7 +120,7 @@ object ParsedTstpDerivation {
   private def loadAsTptpFile(input: InputFile): Either[InputSyntaxError, TptpFile] = {
     try Right(TptpImporter.loadWithoutIncludes(input))
     catch
-      case e: IllegalArgumentException => Left(InputSyntaxError(e))
+      case e: IllegalArgumentException => Left(InputSyntaxError(e, input.fileName))
   }
 
   private def intoAnnotatedFormulas(
@@ -214,9 +214,9 @@ object ParsedTstpDerivation {
       break(Left(StepWithInvalidInferenceRule(name, inference.rule, expectedRule.value)))
 
     inference.parentLabels.distinct match {
-      case Seq()       => break(Left(NegatedConjectureWithoutParent(name)))
-      case Seq(parent) => Right(ParsedTstpNegatedConjectureStep(name, folFormula, parent, annotations))
-      case Seq(_, _*)  => break(Left(NegatedConjectureWithMultipleDistinctParents()))
+      case Seq()                => break(Left(NegatedConjectureWithoutParent(name)))
+      case Seq(parent)          => Right(ParsedTstpNegatedConjectureStep(name, folFormula, parent, annotations))
+      case parents @ Seq(_, _*) => break(Left(NegatedConjectureWithMultipleDistinctParents(name, parents)))
     }
   }
 
@@ -283,10 +283,10 @@ object ParsedTstpDerivation {
     }
     val contextVariables = args.map {
       case variable: FOLVar => variable
-      case _                => break(Left(UnexpectedInput("expected skolem term arguments to be first-order variables")))
+      case _                => break(Left(UnexpectedInput(s"skolemization step $name: expected skolem term arguments to be first-order variables")))
     }
     if newSkolemSymbol.name != skolemFunctionConst.name then
-      break(Left(SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(name)))
+      break(Left(SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(name, newSkolemSymbol, skolemFunctionConst)))
 
     Right(ParsedTstpSkolemizationStep(
       name,

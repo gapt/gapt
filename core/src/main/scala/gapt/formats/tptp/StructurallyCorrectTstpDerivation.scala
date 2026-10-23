@@ -203,8 +203,8 @@ object StructurallyCorrectTstpDerivation {
     loadTptpFileWithIncludes(input).left.map {
       case TptpFileLoadingError.FileNotFound(fileName) => IncludeFileNotFound(fileName)
       case TptpFileLoadingError.InvalidSyntax(fileName, cause)
-          if fileName == os.Path(input.fileName, os.pwd).toString => InputSyntaxError(cause)
-      case TptpFileLoadingError.InvalidSyntax(fileName, _) => IncludeInvalidSyntax(fileName)
+          if fileName == os.Path(input.fileName, os.pwd).toString => InputSyntaxError(cause, fileName)
+      case TptpFileLoadingError.InvalidSyntax(fileName, cause) => IncludeInvalidSyntax(fileName, cause)
       case TptpFileLoadingError.IncludeCycle(fileName)     => IncludeCycle(fileName)
     }.flatMap(tptpFile => ParsedTstpDerivation.parseTptpFile(tptpFile).flatMap(fromParsed))
 
@@ -233,7 +233,8 @@ object StructurallyCorrectTstpDerivation {
       break(Left(MultipleConjectures(conjectures.map(_.name))))
 
     negatedConjectures.find(step => derivation.parentsOf(step.name).exists(_.role != TstpRole.Conjecture)).foreach { step =>
-      break(Left(NegatedConjectureStepWithNonConjectureParent(step.name)))
+      val parent = derivation.parentsOf(step.name).find(_.role != TstpRole.Conjecture).get
+      break(Left(NegatedConjectureStepWithNonConjectureParent(step.name, parent)))
     }
 
     if negatedConjectures.size > 1 then
@@ -242,7 +243,8 @@ object StructurallyCorrectTstpDerivation {
     derivation.stepsInSourceOrderIterator.filter(_.role == TstpRole.Plain)
       .find(step => derivation.parentsOf(step.name).exists(_.role == TstpRole.Conjecture))
       .foreach { step =>
-        break(Left(PlainInferenceWithConjectureParent(step)))
+        val parents = derivation.parentsOf(step.name).filter(_.role == TstpRole.Conjecture)
+        break(Left(PlainInferenceWithConjectureParent(step, parents)))
       }
 
     Right(())
@@ -253,8 +255,8 @@ object StructurallyCorrectTstpDerivation {
   ): Either[DistinctFormulasWithSameName, Map[String, ParsedTstpDerivationStep]] = boundary {
     val map = steps.foldLeft(Map.empty[String, ParsedTstpDerivationStep]) { (map, step) =>
       map.updatedWith(step.name) {
-        case Some(formula) =>
-          break(Left(DistinctFormulasWithSameName(formula.name)))
+        case Some(previousStep) =>
+          break(Left(DistinctFormulasWithSameName(step.name, previousStep, step)))
         case None => Some(step)
       }
     }
@@ -266,15 +268,18 @@ object StructurallyCorrectTstpDerivation {
       map: Map[String, ParsedTstpDerivationStep],
       labelsInSourceOrder: Seq[String]
   ): Either[NonExistentStep | InferenceCycle, Iterable[String]] = boundary {
-    labelsInSourceOrder.iterator.flatMap(map(_).parents).find(parent => !map.contains(parent)).foreach { parent =>
-      break(Left(NonExistentStep(parent)))
+    labelsInSourceOrder.iterator.flatMap { label =>
+      map(label).parents.iterator.map(parent => label -> parent)
+    }.find((_, parent) => !map.contains(parent)).foreach { (stepName, parent) =>
+      break(Left(NonExistentStep(parent, stepName)))
     }
 
     val steps = labelsInSourceOrder.map(map(_))
     val orderedFromChildrenToParents =
-      linearizeStrictPartialOrder(steps, step => parentsOf(map, step.name)).getOrElse {
-        break(Left(InferenceCycle()))
-      }
+      linearizeStrictPartialOrder(steps, step => parentsOf(map, step.name)).fold(
+        cycle => break(Left(InferenceCycle(cycle.map(_.name)))),
+        identity
+      )
 
     Right(orderedFromChildrenToParents.reverse.map(_.name))
   }

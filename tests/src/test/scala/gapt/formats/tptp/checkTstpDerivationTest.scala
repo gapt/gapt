@@ -64,7 +64,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             checkDerivation("/input")
           }
           status must beLike {
-            case SzsStatus.Unknown(UnexpectedException(cause)) => cause must_== error
+            case SzsStatus.Unknown(UnexpectedException(cause)) =>
+              (cause must_== error).and(UnexpectedException(cause).message must contain(error.getClass.getName))
           }
         }
         ok
@@ -94,8 +95,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           """.stripMargin)
         }
         checkDerivation("/input") must beLike {
-          case SzsStatus.Unknown(InputSyntaxError(e)) =>
-            e.getMessage must_== "TPTP distinct objects are not supported"
+          case SzsStatus.Unknown(InputSyntaxError(cause, fileName)) =>
+            (fileName must_== "/input").and(cause.getMessage must not beNull)
         }
       }
 
@@ -222,7 +223,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[StepWithInvalidStatus]
+            case SzsStatus.VerifiedBad(reason: StepWithInvalidStatus) =>
+              reason.message must contain("nc has no status")
           }
         }
 
@@ -271,7 +273,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[NegatedConjectureStepWithNonConjectureParent]
+            case SzsStatus.VerifiedBad(NegatedConjectureStepWithNonConjectureParent(stepName, parent)) =>
+              (stepName must_== "nc").and((parent.name must_== "a1").and(parent.role must_== TstpRole.Axiom))
           }
         }
 
@@ -305,7 +308,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[NegatedConjectureWithMultipleDistinctParents]
+            case SzsStatus.VerifiedBad(NegatedConjectureWithMultipleDistinctParents(stepName, parents)) =>
+              (stepName must_== "nc").and(parents must_== Seq("c", "a1"))
           }
         }
 
@@ -498,7 +502,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
+            case SzsStatus.VerifiedBad(PlainInferenceWithConjectureParent(step, parents)) =>
+              (step.name must_== "inf_p").and(parents.map(_.name) must_== Seq("c"))
           }
         }
 
@@ -620,7 +625,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[PlainInferenceWithConjectureParent]
+            case SzsStatus.VerifiedBad(PlainInferenceWithConjectureParent(step, parents)) =>
+              (step.name must_== "c_skolem").and(parents.map(_.name) must_== Seq("c"))
           }
         }
 
@@ -711,7 +717,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
           }
           checkDerivation("/input") must beLike {
             case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: FormulaMismatch))                        => reason.stepName must_== "nc_skolem"
-            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: NoStrongQuantifierFittingSkolemization)) => reason.stepName must_== "nc_skolem"
+            case SzsStatus.VerifiedBad(IncorrectSkolemization(reason: NoStrongQuantifierFittingSkolemization)) =>
+              (reason.stepName must_== "nc_skolem").and(reason.message must contain("nc_skolem"))
           }
         }
 
@@ -1087,7 +1094,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason: FileDirectiveInvalidSyntax) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveInvalidSyntax) =>
+              (reason.stepName must_== "a").and(reason.cause.getMessage.nonEmpty must beTrue)
           }
         }
 
@@ -1384,7 +1392,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason: FileDirectiveInvalidSyntax) => reason.stepName must_== "c"
+            case SzsStatus.VerifiedBad(reason: FileDirectiveInvalidSyntax) =>
+              (reason.stepName must_== "c").and(reason.cause.getMessage.nonEmpty must beTrue)
           }
         }
 
@@ -1543,7 +1552,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DistinctFormulasWithSameName]
+            case SzsStatus.VerifiedBad(DistinctFormulasWithSameName(label, firstStep, duplicateStep)) =>
+              (label must_== "a1").and(firstStep.formula must_!= duplicateStep.formula)
           }
         }
 
@@ -1561,7 +1571,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[DistinctFormulasWithSameName]
+            case SzsStatus.VerifiedBad(DistinctFormulasWithSameName(label, firstStep, duplicateStep)) =>
+              (label must_== "a1").and(firstStep.formula must_== duplicateStep.formula)
           }
         }
       }
@@ -1580,7 +1591,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[InferenceCycle]
+            case SzsStatus.VerifiedBad(InferenceCycle(cycle)) => cycle must_== Seq("cont", "cont")
           }
         }
 
@@ -1598,7 +1609,7 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason) => reason must beAnInstanceOf[InferenceCycle]
+            case SzsStatus.VerifiedBad(InferenceCycle(cycle)) => cycle must_== Seq("cont1", "cont2", "cont1")
           }
         }
 
@@ -1629,7 +1640,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             """.stripMargin)
           }
           checkDerivation("/input") must beLike {
-            case SzsStatus.VerifiedBad(reason: NonExistentStep) => reason.stepName must_== "a"
+            case SzsStatus.VerifiedBad(reason: NonExistentStep) =>
+              (reason.stepName must_== "a").and(reason.referencedByStepName must_== "cont2")
           }
         }
       }
@@ -1679,7 +1691,20 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
               |fof(c, conjecture, p).
             """.stripMargin)
           }
-          checkDerivation("/input") must beAnInstanceOf[SzsStatus.Unknown]
+          checkDerivation("/input") must beLike {
+            case SzsStatus.Unknown(_: InputSyntaxError) => ok
+          }
+        }
+
+        "include syntax errors retain the parser cause" in {
+          given resolver: FileNameResolver = {
+            case "/input" => Right("include('broken.p').")
+            case "/broken.p" => Right("fof(a, axiom, p")
+          }
+          checkDerivation("/input") must beLike {
+            case SzsStatus.Unknown(reason: IncludeInvalidSyntax) =>
+              (reason.fileName must_== "/broken.p").and(reason.cause.getMessage.nonEmpty must beTrue)
+          }
         }
 
         "verify proof and problem files with nested includes" in {
@@ -1782,6 +1807,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
             (reason.stepName must_== "refute")
               .and(reason.actualStatuses must_== Seq(TstpStatus.Esa))
               .and(reason.validStatuses must_== Seq(TstpStatus.Thm))
+              .and(reason.message must contain("esa"))
+              .and(reason.message must contain("Expected only to have status thm"))
         }
       }
 
@@ -1801,7 +1828,8 @@ class checkTstpDerivationUnitTest extends mutable.Specification {
         }
 
         checkDerivation("/input") must beLike {
-          case SzsStatus.VerifiedBad(IncorrectInference(stepName)) => stepName must_== "refute2"
+          case SzsStatus.VerifiedBad(IncorrectInference(stepName, sequent)) =>
+            (stepName, sequent) must_== ("refute2", fos"p :- ${Bottom()}")
         }
       }
 
@@ -2058,6 +2086,15 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
         StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft
       }
 
+      "include the step name when skolem term arguments are not variables" in {
+        val input = simpleSkolemConstantDerivation(
+          "fof(nc_skolemized, plain, ~p(sK0(a)), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK0(a))], [nc]))."
+        )
+        StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft.like {
+          case UnexpectedInput(message) => message must contain("nc_skolemized")
+        }
+      }
+
       "fail on skolemization with new_symbols that is not a constant" in {
         val input = simpleSkolemConstantDerivation(
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0(X)]), skolemize(X, sK0)], [nc]))."
@@ -2103,7 +2140,10 @@ class TstpDerivationParserUnitTest extends mutable.Specification {
           "fof(nc_skolemized, plain, ~p(sK0), inference(skolemize, [status(esa), new_symbols(skolem, [sK0]), skolemize(X, sK1)], [nc]))."
         )
         StructurallyCorrectTstpDerivation.fromInputFile(input) must beLeft {
-          (x: TstpDerivationError) => x must beAnInstanceOf[SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm]
+          (x: TstpDerivationError) => x must beLike {
+            case SkolemizationStepWithNewSymbolDifferingFromSkolemizeTerm(stepName, declared, used) =>
+              (stepName must_== "nc_skolemized").and((declared.name must_== "sK0").and(used.name must_== "sK1"))
+          }
         }
       }
 
