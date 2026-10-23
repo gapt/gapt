@@ -107,14 +107,15 @@ private[check] def checkSkolemSymbolsAreNotOverloaded(
     case step: ParsedTstpAxiomStep      => step.name -> constants.nonLogical(step.formula)
     case step: ParsedTstpConjectureStep => step.name -> constants.nonLogical(step.formula)
   }
-  inputSymbols.foreach { (inputStepName, symbols) =>
-    symbols.toSeq.sortBy(_.toString).foreach { symbol =>
-      declaredSkolemSymbols.find((_, skolemSymbol) => skolemSymbol.name == symbol.name).foreach {
-        (skolemizationStepName, _) =>
-          reportIncorrectSkolemization(
-            SkolemSymbolIsAConstantExistingInTheInput(inputStepName, skolemizationStepName, symbol)
-          )
-      }
+  val inputSymbolOccurrences = inputSymbols.flatMap { (stepName, symbols) =>
+    symbols.toSeq.sortBy(_.toString).map(symbol => symbol.name -> (stepName, symbol))
+  }.toSeq
+  val inputSymbolsByName = inputSymbolOccurrences.groupMap(_._1)(_._2)
+  declaredSkolemSymbols.foreach { (skolemizationStepName, skolemSymbol) =>
+    inputSymbolsByName.getOrElse(skolemSymbol.name, Seq.empty).foreach { (inputStepName, symbol) =>
+      reportIncorrectSkolemization(
+        SkolemSymbolIsAConstantExistingInTheInput(inputStepName, skolemizationStepName, symbol)
+      )
     }
   }
 
